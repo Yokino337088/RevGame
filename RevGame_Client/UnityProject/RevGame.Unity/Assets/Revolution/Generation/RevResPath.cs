@@ -97,6 +97,7 @@ namespace Revolution
         public const string Art_UI_BattleHud = "Art/UI/BattleHud/";
         public const string Art_UI_EndlessMenu = "Art/UI/EndlessMenu/";
         public const string Art_UI_Gal = "Art/UI/Gal/";
+        public const string Art_UI_Loading = "Art/UI/Loading/";
         public const string Art_UI_LobbyButtons = "Art/UI/LobbyButtons/";
         public const string Art_UI_ProjectOpenSource = "Art/UI/ProjectOpenSource/";
         public const string Art_UI_Pvp = "Art/UI/Pvp/";

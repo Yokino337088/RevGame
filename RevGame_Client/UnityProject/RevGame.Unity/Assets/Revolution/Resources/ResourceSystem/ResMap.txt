@@ -403,6 +403,9 @@ Art/UI/UI_Setting_Checkmark|atlas_uibattle|UI_Setting_Checkmark
 Atlases/UIBattle|atlas_uibattle|UIBattle
 Art/UI/Gal/GalControlsSheet|atlas_uigalcottage|GalControlsSheet
 Atlases/UIGalCottage|atlas_uigalcottage|UIGalCottage
+Art/UI/Loading/LoadingProgressFill|atlas_uiloading|LoadingProgressFill
+Art/UI/Loading/LoadingProgressTrack|atlas_uiloading|LoadingProgressTrack
+Atlases/UILoading|atlas_uiloading|UILoading
 Art/UI/LobbyButtons/LobbyEndlessButton|atlas_uimenus|LobbyEndlessButton
 Art/UI/LobbyButtons/LobbyOpenSourceButton|atlas_uimenus|LobbyOpenSourceButton
 Art/UI/LobbyButtons/LobbyPvpButton|atlas_uimenus|LobbyPvpButton

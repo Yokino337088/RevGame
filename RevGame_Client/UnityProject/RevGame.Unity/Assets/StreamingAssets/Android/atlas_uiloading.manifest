@@ -1,0 +1,26 @@
+ManifestFileVersion: 0
+CRC: 3489790629
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: da0cd58ac85ec36d0f522e7216af00ff
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 033fafe2c9f6c610c3a734393882fd4c
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: da0cd58ac85ec36d0f522e7216af00ff
+HashAppended: 0
+ClassTypes:
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 213
+  Script: {instanceID: 0}
+- Class: 687078895
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/GameRes/Atlases/UILoading.spriteatlasv2
+- Assets/GameRes/Art/UI/Loading/LoadingProgressTrack.png
+- Assets/GameRes/Art/UI/Loading/LoadingProgressFill.png
+Dependencies: []

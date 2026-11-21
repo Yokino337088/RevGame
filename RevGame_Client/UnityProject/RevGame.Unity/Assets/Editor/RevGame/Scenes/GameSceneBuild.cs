@@ -18,6 +18,14 @@ namespace RevGame.Editor
     /// </summary>
     public static class GameSceneBuild
     {
+        /// <summary>加载面板的正式预制体位置，局部换图和完整场景装配共用。</summary>
+        private const string LoadingPanelPath = "Assets/GameRes/UI/Panel/Loading/LoadingPanel.prefab";
+        /// <summary>过场独立图集使用的两张进度条源图目录。</summary>
+        private const string LoadingArtPath = "Assets/GameRes/Art/UI/Loading/";
+        /// <summary>进度条在 1920×1080 设计画布上的宽度。</summary>
+        private const float LoadingTrackWidth = 760f;
+
+        /// <summary>依次制作加载面板、图集晚绑定组件与两个场景，编辑态执行。</summary>
         public static string Apply()
         {
             if (EditorApplication.isPlaying)
@@ -105,7 +113,7 @@ namespace RevGame.Editor
             SceneManager.MoveGameObjectToScene(root, scene);
             return root.AddComponent<T>();
         }
-        /// <summary>单独的ui_loading包只依赖字体与程序背景材质，不能因为打开加载界面就先拉入整套战斗图集。</summary>
+        /// <summary>完整制作独立加载面板，资源仅涉及字体、程序背景与专用进度条。</summary>
         private static void BuildLoadingPanel()
         {
             const string folder = "Assets/GameRes/UI/Panel/Loading";
@@ -148,11 +156,83 @@ namespace RevGame.Editor
                 Position(button.rectTransform, new Vector2(0f, -240f), new Vector2(290f, 68f));
                 button.raycastTarget = true;
                 button.gameObject.AddComponent<Button>().targetGraphic = button;
-                Text label = NewText(button.transform, "label", "返回大厅", font, 28, Vector2.zero, new Vector2(290f, 68f));
-                PrefabUtility.SaveAsPrefabAsset(root, folder + "/LoadingPanel.prefab");
+                NewText(button.transform, "label", "返回大厅", font, 28, Vector2.zero, new Vector2(290f, 68f));
+                ConfigureLoadingProgress(root.transform);
+                PrefabUtility.SaveAsPrefabAsset(root, LoadingPanelPath);
                 AssetImporter.GetAtPath(folder).SetAssetBundleNameAndVariant("ui_loading", string.Empty);
             }
             finally { UnityEngine.Object.DestroyImmediate(root); }
+        }
+
+        /// <summary>只更新现有加载面板的进度条和百分比位置，保存原预制体并归还临时编辑实例。</summary>
+        public static string UpdateLoadingProgress()
+        {
+            GameObject root = PrefabUtility.LoadPrefabContents(LoadingPanelPath);
+            try
+            {
+                ConfigureLoadingProgress(root.transform);
+                PrefabUtility.SaveAsPrefabAsset(root, LoadingPanelPath, out bool saved);
+                if (!saved)
+                {
+                    throw new InvalidOperationException("加载面板保存失败：" + LoadingPanelPath);
+                }
+                return "加载进度条已写回，底槽按原画比例显示，填充横向裁切";
+            }
+            finally
+            {
+                PrefabUtility.UnloadPrefabContents(root);
+            }
+        }
+
+        /// <summary>沿用 Slider 控制进度。背景和填充共用等比缩放，Slider 只改变横向可见范围。</summary>
+        private static void ConfigureLoadingProgress(Transform root)
+        {
+            Sprite trackSprite = AssetDatabase.LoadAssetAtPath<Sprite>(LoadingArtPath + "LoadingProgressTrack.png");
+            Sprite fillSprite = AssetDatabase.LoadAssetAtPath<Sprite>(LoadingArtPath + "LoadingProgressFill.png");
+            Image track = root.Find("progress")?.GetComponent<Image>();
+            Image fill = root.Find("progress/fill")?.GetComponent<Image>();
+            RectTransform percent = root.Find("percent") as RectTransform;
+            Slider slider = track != null ? track.GetComponent<Slider>() : null;
+            if (trackSprite == null || fillSprite == null || slider == null || fill == null || percent == null)
+            {
+                throw new InvalidOperationException("加载面板缺少进度条 Sprite、Slider 或百分比节点");
+            }
+            if (fillSprite.rect.width > trackSprite.rect.width || fillSprite.rect.height > trackSprite.rect.height)
+            {
+                throw new InvalidOperationException("加载进度条填充原画应完全位于底槽尺寸内");
+            }
+
+            // 固定底槽的宽度按比例求高，留出边框对应的上下左右内边距。
+            float scale = LoadingTrackWidth / trackSprite.rect.width;
+            Vector2 trackSize = trackSprite.rect.size * scale;
+            Vector2 fillInset = (trackSize - fillSprite.rect.size * scale) * .5f;
+            track.sprite = trackSprite;
+            track.color = Color.white;
+            track.type = Image.Type.Simple;
+            track.preserveAspect = true;
+            track.useSpriteMesh = false;
+            track.raycastTarget = false;
+            track.rectTransform.sizeDelta = trackSize;
+
+            // Filled 模式让 Slider 更新 fillAmount 时保持整张图的排版矩形。
+            fill.sprite = fillSprite;
+            fill.color = Color.white;
+            fill.type = Image.Type.Filled;
+            fill.preserveAspect = true;
+            fill.fillMethod = Image.FillMethod.Horizontal;
+            fill.fillOrigin = (int)Image.OriginHorizontal.Left;
+            fill.fillAmount = 0f;
+            fill.raycastTarget = false;
+            Stretch(fill.rectTransform);
+            fill.rectTransform.offsetMin = fillInset;
+            fill.rectTransform.offsetMax = -fillInset;
+            slider.fillRect = fill.rectTransform;
+            slider.direction = Slider.Direction.LeftToRight;
+            slider.SetValueWithoutNotify(0f);
+
+            // 百分比随新底槽高度向下留出间距，避免文字压到金边。
+            percent.anchoredPosition = new Vector2(percent.anchoredPosition.x,
+                track.rectTransform.anchoredPosition.y - trackSize.y / 2f - percent.sizeDelta.y / 2f - 12f);
         }
         /// <summary>所有UI/事件通知的Image统一接入。保留原Sprite、字体、材质和布局，只加生命周期适配组件。</summary>
         private static int BindAtlasImages()

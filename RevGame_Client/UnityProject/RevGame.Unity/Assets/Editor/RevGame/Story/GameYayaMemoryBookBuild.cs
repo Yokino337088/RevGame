@@ -227,6 +227,7 @@ namespace RevGame.Editor
             return material;
         }
 
+        /// <summary>补齐收藏书的大堂入口与提示，同时保持大堂设置的统一外观。</summary>
         private static void PatchHome(Font font)
         {
             const string path = Root + "UI/Panel/HomePanel.prefab";
@@ -253,7 +254,7 @@ namespace RevGame.Editor
                 var memoryEntry = root.transform.Find("btnMemories").GetComponent<UnityEngine.UI.Image>();
                 memoryEntry.sprite = parchment;
                 memoryEntry.type = UnityEngine.UI.Image.Type.Sliced;
-                GameAudioSettingsBuild.ApplyHomeEntrySkin(root.transform.Find("btnSettings"));
+                GameAudioSettingsBuild.ApplyEntrySkin(root.transform.Find("btnSettings"));
 
                 if (root.transform.Find("MemorySpeech") == null)
                 {

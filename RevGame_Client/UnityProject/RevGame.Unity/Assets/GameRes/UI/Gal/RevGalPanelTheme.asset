@@ -145,17 +145,17 @@ MonoBehaviour:
     Tint: {r: 1, g: 1, b: 1, a: 1}
   - Part: 9
     Layout:
-      Override: 0
-      AnchorMin: {x: 0.79, y: 0.17}
-      AnchorMax: {x: 0.878, y: 0.83}
+      Override: 1
+      AnchorMin: {x: 0.834, y: 0.5}
+      AnchorMax: {x: 0.834, y: 0.5}
       Pivot: {x: 0.5, y: 0.5}
-      OffsetMin: {x: 0, y: 0}
-      OffsetMax: {x: 0, y: 0}
+      OffsetMin: {x: -28, y: -28}
+      OffsetMax: {x: 28, y: 28}
     ChoiceHeight: 0
-    Sprite: {fileID: -710294906003029944, guid: 50e19c53f66333940aa83fef8afe78f5, type: 3}
+    Sprite: {fileID: 21300000, guid: a4dd1e5afba9fe84dbd549d74dc1b788, type: 3}
     AtlasSprite: 
-    Sliced: 1
-    OverrideColor: 0
+    Sliced: 0
+    OverrideColor: 1
     Tint: {r: 1, g: 1, b: 1, a: 1}
   - Part: 10
     Layout:

@@ -4,7 +4,9 @@ using System.Linq;
 using Revolution.Editor;
 using Revolution.Gal;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace RevGame.Editor
 {
@@ -17,6 +19,8 @@ namespace RevGame.Editor
         private const string PanelPath = "Assets/GameRes/UI/Gal/RevGalPanel.prefab";
         private const string FontPath = "Assets/GameRes/Fonts/CJK/NotoSansCJKsc-Bold.otf";
         private const string HomePath = "Assets/GameRes/UI/Panel/HomePanel.prefab";
+        /// <summary>大厅、选关和剧情共用的绿色齿轮，引用现有 UIMenus 图集。</summary>
+        private const string SettingsGearPath = ArtRoot + "UI/UI_ChooseLevel_btnSetting.png";
 
         [RevAutomationAction("game.gal-art.import", Environment = "edit", Keys = new string[0], Description = "导入鸦鸦续篇背景、透明立绘和控件切片")]
         public static object Import(RevAutomationRequest request)
@@ -77,6 +81,7 @@ namespace RevGame.Editor
             return new SpriteMetaData { name = name, rect = rect, border = border, alignment = (int)SpriteAlignment.Center };
         }
 
+        /// <summary>完整装配现有 Gal 主题、立绘和玩家入口，设置按钮沿用共用齿轮。</summary>
         [RevAutomationAction("game.gal-art.assemble", Environment = "edit", Keys = new string[0], Description = "绑定 Gal 九宫格主题、左侧说话人立绘和大厅入口")]
         public static object Assemble(RevAutomationRequest request)
         {
@@ -92,6 +97,7 @@ namespace RevGame.Editor
             serializedTheme.ApplyModifiedPropertiesWithoutUndo();
             ConfigureTheme(theme, sprites["GalDialogueWood"], sprites["GalButton"], sprites["GalSettings"]);
             ConfigureSpeakerLayer();
+            ConfigureSettingsEntry();
             AddHomeEntry(font);
             AssetDatabase.SaveAssets();
             return new Dictionary<string, object>
@@ -100,6 +106,7 @@ namespace RevGame.Editor
             };
         }
 
+        /// <summary>装配剧情主题的对白、常规按钮和设置面板，绿色齿轮由设置入口配方单独处理。</summary>
         private static void ConfigureTheme(RevGalPanelTheme theme, Sprite dialogue, Sprite button, Sprite settings)
         {
             foreach (var style in theme.Parts)
@@ -121,7 +128,6 @@ namespace RevGame.Editor
                         ApplySkin(style, settings);
                         break;
                     case RevGalThemePart.Close:
-                    case RevGalThemePart.OpenSettings:
                     case RevGalThemePart.Advance:
                     case RevGalThemePart.ChoiceButton:
                     case RevGalThemePart.CloseSettings:
@@ -157,6 +163,65 @@ namespace RevGame.Editor
                 }
             }
             EditorUtility.SetDirty(theme);
+        }
+
+        /// <summary>只刷新剧情设置入口的预制体与运行时主题，沿用原有按钮中心与点击绑定。</summary>
+        internal static void ConfigureSettingsEntry()
+        {
+            if (PrefabStageUtility.GetCurrentPrefabStage()?.assetPath == PanelPath)
+            {
+                throw new InvalidOperationException("请先关闭正在编辑的 Gal 预制体");
+            }
+            var theme = AssetDatabase.LoadAssetAtPath<RevGalPanelTheme>(ThemePath);
+            var gear = AssetDatabase.LoadAssetAtPath<Sprite>(SettingsGearPath);
+            RevGalPartStyle style = theme?.Parts.FirstOrDefault(part => part?.Part == RevGalThemePart.OpenSettings);
+            if (style?.Layout == null || gear == null)
+            {
+                throw new InvalidOperationException("Gal 设置入口缺少主题部位或绿色齿轮素材");
+            }
+            var root = PrefabUtility.LoadPrefabContents(PanelPath);
+            try
+            {
+                Transform entry = root.transform.Find("View/Story/Header/OpenSettings");
+                var image = entry?.GetComponent<Image>();
+                Transform label = entry?.Find("Label");
+                if (image == null || label == null)
+                {
+                    throw new InvalidOperationException("Gal 设置入口缺少图标或文字节点：" + PanelPath);
+                }
+                if (image.sprite != gear || image.type != Image.Type.Simple || !image.preserveAspect ||
+                    image.color != Color.white || label.gameObject.activeSelf)
+                {
+                    image.sprite = gear;
+                    image.type = Image.Type.Simple;
+                    image.preserveAspect = true;
+                    image.color = Color.white;
+                    label.gameObject.SetActive(false);
+                    if (PrefabUtility.SaveAsPrefabAsset(root, PanelPath) == null)
+                    {
+                        throw new InvalidOperationException("Gal 设置入口保存失败：" + PanelPath);
+                    }
+                }
+            }
+            finally
+            {
+                PrefabUtility.UnloadPrefabContents(root);
+            }
+
+            // 运行时覆盖仍保留原中心，56 设计像素的正方形与顶部关闭按钮等高。
+            Vector2 center = (style.Layout.AnchorMin + style.Layout.AnchorMax) * .5f;
+            var halfSize = new Vector2(28f, 28f);
+            style.Layout.Override = true;
+            style.Layout.AnchorMin = style.Layout.AnchorMax = center;
+            style.Layout.OffsetMin = -halfSize;
+            style.Layout.OffsetMax = halfSize;
+            style.Sprite = gear;
+            style.AtlasSprite = string.Empty;
+            style.Sliced = false;
+            style.OverrideColor = true;
+            style.Tint = Color.white;
+            EditorUtility.SetDirty(theme);
+            AssetDatabase.SaveAssetIfDirty(theme);
         }
 
         /// <summary>说话人盖在对白框左栏上，始终位于设置和回看的输入层下方。</summary>

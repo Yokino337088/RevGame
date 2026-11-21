@@ -1,4 +1,6 @@
+using System;
 using DG.Tweening;
+using RevGame.View;
 using Revolution;
 using UnityEngine;
 using UnityEngine.UI;
@@ -8,7 +10,7 @@ namespace RevGame.UI
     /// <summary>
     /// 跨场景的全屏过场面板：只显示进度和播放动画，场景与资源的加载由GameFlow负责。
     /// 它由 RevUI 创建和关闭。流程从旧域解绑使遮挡持续到交接完成，关闭时由框架销毁并归还资源。
-    /// 背景复用绿色星雾共享材质，没有Sprite依赖，因此不会等UI图集时自己先变成白块。
+    /// 程序背景先提供全屏遮挡，等专用小图集准备完成后再显示进度条。
     /// </summary>
     [RevUIPanel(RevResPath.UI_Panel_Loading, RevUILayer.Top, InBackStack = false, Mask = RevUIMaskMode.None)]
     public sealed class LoadingPanel : RevUIPanel<LoadingPanel.ProgressData>
@@ -40,17 +42,83 @@ namespace RevGame.UI
         private Tween _fadeTween;
         private float _displayed;
 
+        /// <summary>LoadingPanel 专用图集标签，随这次过场单独加载与归还。</summary>
+        private const string ProgressAtlasName = "UILoading";
+        /// <summary>预制体的底槽图层，绑定后用于显示当前图集里的 Sprite。</summary>
+        private Image _progressTrack;
+        /// <summary>Slider 填充图层，按进度裁切一部分固定宽度的图。</summary>
+        private Image _progressFill;
+        /// <summary>当前打开过程持有的图集租约，也用来识别过期的加载结果。</summary>
+        private GameSpriteAtlasService.ScopedAtlasLease _progressAtlas;
+        /// <summary>本次过场取得的底槽 Sprite 副本，和租约一并释放。</summary>
+        private Sprite _packedTrack;
+        /// <summary>本次过场取得的填充 Sprite 副本，和租约一并释放。</summary>
+        private Sprite _packedFill;
+
+        /// <summary>只绑定当前预制体的控制和排版，资源等待交给打开过程。</summary>
         protected override void OnBindView()
         {
             RevGame.UI.GameMobileLayout.EnableSafePanel(transform, "screenBackground");
             _cover = GetComponent<CanvasGroup>();
+            _progressTrack = _progress.GetComponent<Image>();
+            _progressFill = _progress.fillRect.GetComponent<Image>();
+        }
+
+        /// <summary>真实 AB 先取得进度条图集，再结束打开流程；旧预制体与直读模式沿用各自已有图层。</summary>
+        protected override void PlayOpenTransition(Action onDone)
+        {
+#if UNITY_EDITOR
+            if (!RevResBootstrap.UseABInEditor)
+            {
+                onDone?.Invoke();
+                return;
+            }
+#endif
+            if (_progressTrack.sprite == null || _progressFill.sprite == null)
+            {
+                onDone?.Invoke();
+                return;
+            }
+            // AB 首次打开可能早于 Sprite 自动绑定。先避开白块，保留程序背景提供遮挡。
+            _progressTrack.enabled = _progressFill.enabled = false;
+            LoadProgressArtAsync(onDone).Forget();
+        }
+
+        /// <summary>显式取到图集像素后一次赋给两张图。资源失败时百分比和原有遮挡流程仍可用。</summary>
+        private async RevTask LoadProgressArtAsync(Action onDone)
+        {
+            GameSpriteAtlasService.ScopedAtlasLease lease = null;
+            try
+            {
+                lease = RevServices.GetRequired<GameSpriteAtlasService>().AcquireScopedAtlas(ProgressAtlasName);
+                _progressAtlas = lease;
+                await lease.WaitReadyAsync();
+                if (this == null || State != RevUIPanelState.Opening || !ReferenceEquals(_progressAtlas, lease))
+                {
+                    return;
+                }
+                _packedTrack = lease.GetPackedSprite(_progressTrack.sprite.name);
+                _packedFill = lease.GetPackedSprite(_progressFill.sprite.name);
+                _progressTrack.overrideSprite = _packedTrack;
+                _progressFill.overrideSprite = _packedFill;
+                _progressTrack.enabled = _progressFill.enabled = true;
+            }
+            catch (Exception error)
+            {
+                if (this == null || State != RevUIPanelState.Opening || !ReferenceEquals(_progressAtlas, lease))
+                {
+                    return;
+                }
+                RevLog.Warn("加载进度条图集不可用：" + error.Message, "LoadingPanel");
+                ReleaseProgressArt();
+            }
+            onDone?.Invoke();
         }
         /// <summary>开始一次过场时归零，恢复遮挡、输入规则与默认按钮状态。</summary>
         public void ResetCover()
         {
             KillAnimations();
-            _displayed = 0f;
-            _progress.value = 0f;
+            SetDisplayed(0f);
             _cover.alpha = 1f;
             _cover.blocksRaycasts = true;
             _cover.interactable = true;
@@ -70,6 +138,7 @@ namespace RevGame.UI
             _progressTween = DOTween.To(() => _displayed, SetDisplayed, target, 0.22f)
                 .SetEase(Ease.OutCubic).SetUpdate(true).OnComplete(() => _progressTween = null);
         }
+        /// <summary>用同一个缓动值驱动 Slider 的裁切范围和百分比。</summary>
         private void SetDisplayed(float value)
         {
             _displayed = value;
@@ -99,13 +168,35 @@ namespace RevGame.UI
         {
             RevServices.GetRequired<Flow.GameFlow>().DismissLoadingFailure();
         }
+        /// <summary>关闭本轮过场时停止动画并归还图集，供后续重新打开。</summary>
         protected override void OnClose()
         {
             KillAnimations();
+            ReleaseProgressArt();
         }
+        /// <summary>直接销毁或取消打开时也执行同样的清理。</summary>
         protected override void OnRelease()
         {
             KillAnimations();
+            ReleaseProgressArt();
+        }
+        /// <summary>摘下当前图层引用，再销毁 Sprite 副本及归还租约；重复关闭安全。</summary>
+        private void ReleaseProgressArt()
+        {
+            if (_packedTrack != null)
+            {
+                _progressTrack.overrideSprite = null;
+                Destroy(_packedTrack);
+                _packedTrack = null;
+            }
+            if (_packedFill != null)
+            {
+                _progressFill.overrideSprite = null;
+                Destroy(_packedFill);
+                _packedFill = null;
+            }
+            _progressAtlas?.Dispose();
+            _progressAtlas = null;
         }
         private void KillAnimations()
         {

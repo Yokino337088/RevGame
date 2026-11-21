@@ -22,6 +22,7 @@ namespace RevGame.Editor
             importer.mipmapEnabled = false;
             importer.SaveAndReimport();
             _font = GameAssetBuilder.Font();
+            ConfigureMenuSlices();
             BuildAgentMenu();
             // 只在旧 Prefab 缺入口时追加节点，保留现有对局控件配置。
             string path = "Assets/GameRes/UI/Panel/Pvp/PvpPanel.prefab";
@@ -70,20 +71,21 @@ namespace RevGame.Editor
             }
             Menu("PvpAgentSettingsPanel", typeof(PvpAgentSettingsPanel), root =>
             {
-                // 告知文案允许换行，Key 和模型各占一行。操作按钮放到底部同一行，避免挤压输入区。
-                Label("heading", root, "DeepSeek Agent 设置", .16f, .83f, .84f, .93f, 37, true);
-                Label("disclosure", root, "启用后人机对手和落子建议可调用DeepSeek并消耗API额度。\nKey在本机加密保存；本地人机你只手动落子。", .10f, .67f, .90f, .82f, 23, true);
-                Label("keyLabel", root, "API Key（本机加密保存）", .17f, .61f, .83f, .67f, 20, true);
+                // 留出三行告知文案的高度，适配加密保存和明文存储两种运行时提示。
+                Label("heading", root, "DeepSeek Agent 设置", .16f, .835f, .84f, .94f, 40, true);
+                Label("disclosure", root, "启用后人机对手和落子建议可调用DeepSeek并消耗API额度。\nKey在本机加密保存；本地人机你只手动落子。", .15f, .665f, .85f, .825f, 32, true);
+                Label("keyLabel", root, "API Key（本机加密保存）", .17f, .607f, .83f, .665f, 26, true);
                 Input("key", root, "", .17f, .50f, .83f, .60f, 512);
-                Label("modelLabel", root, "DeepSeek V4.1 Flash · 1017（10月17日版）", .23f, .42f, .83f, .49f, 19, true);
+                Label("modelLabel", root, "DeepSeek V4.1 Flash · 1017（10月17日版）", .23f, .42f, .83f, .49f, 25, true);
                 var logo = Rect("deepseekLogo", root, .14f, .31f, .22f, .41f).gameObject.AddComponent<Image>();
                 logo.sprite = logoSprite;
                 logo.preserveAspect = true;
                 logo.raycastTarget = false;
                 Input("model", root, "deepseek-flash", .24f, .31f, .83f, .41f, 128);
-                Label("state", root, "填写API Key与模型", .14f, .18f, .86f, .29f, 22, true);
-                Button("enable", root, "保存并授权云端调用", .28f, .06f, .59f, .16f, 24);
-                Button("disable", root, "关闭云端并清除Key", .62f, .06f, .92f, .16f, 24);
+                Label("state", root, "填写API Key与模型", .16f, .18f, .82f, .29f, 27, true);
+                // 右下插画留白用于展示棋子图案，操作按钮止于其左侧。
+                MenuButton("enable", root, "保存并授权云端调用", .29f, .06f, .53f, .16f, 27);
+                MenuButton("disable", root, "关闭云端并清除Key", .56f, .06f, .80f, .16f, 27);
             });
         }
     }

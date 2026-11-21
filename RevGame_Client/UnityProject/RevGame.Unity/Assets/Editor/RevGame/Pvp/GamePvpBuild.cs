@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using RevGame.Pvp;
+using RevGame.UI;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -186,7 +187,7 @@ namespace RevGame.Editor
             RectTransform rect = Rect(name, parent, x0, y0, x1, y1);
             Image image = Plate(rect, "PvpMenu/PvpTextInput", Color.white, true);
             // 输入框宽度随用途变化，只拉伸平直中段，176 像素的圆角按安全框里的显示高度等比缩小。
-            image.pixelsPerUnitMultiplier = image.sprite.rect.height / ((y1 - y0) * MenuPlateRatio * 1080f);
+            FitMenuSlices(image, (y1 - y0) * MenuPlateRatio * GameBattleLayout.DesignResolution.y);
             Text text = Label("text", rect, value, .08f, .05f, .92f, .95f, 26, true);
             text.alignment = TextAnchor.MiddleLeft;
             InputField field = rect.gameObject.AddComponent<InputField>();

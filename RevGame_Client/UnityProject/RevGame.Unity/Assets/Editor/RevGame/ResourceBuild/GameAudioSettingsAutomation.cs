@@ -20,6 +20,13 @@ namespace RevGame.Editor
         {
             return Call("AddDisplayModes");
         }
+        /// <summary>统一四种玩家设置入口的齿轮外观，保留设置面板内容和既有点击绑定。</summary>
+        [RevAutomationAction("game.audio-settings.entry-skins", Environment = "edit", Keys = new string[0], Description = "应用大厅、选关、章节战斗和 Gal 剧情的绿色齿轮入口")]
+        public static object EntrySkins(RevAutomationRequest request)
+        {
+            GameGalArtBuild.ConfigureSettingsEntry();
+            return Call("ApplyEntrySkins");
+        }
         private static object Call(string method)
         {
             Type type = Type.GetType("RevGame.Editor.GameAudioSettingsBuild, Assembly-CSharp-Editor", true);

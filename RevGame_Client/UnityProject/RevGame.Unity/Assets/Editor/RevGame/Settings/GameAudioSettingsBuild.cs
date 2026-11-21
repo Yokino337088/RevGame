@@ -16,6 +16,7 @@ using UnityEngine.U2D;
 
 namespace RevGame.Editor
 {
+    /// <summary>装配声音设置面板以及大厅、选关与章节战斗的通用设置入口。</summary>
     public static class GameAudioSettingsBuild
     {
         private const string Folder = "Assets/GameRes/UI/Panel/Settings";
@@ -246,9 +247,7 @@ namespace RevGame.Editor
 
                 if (existing == null)
                 {
-                    Button button = Button("btnSettings", root.transform, "设置", new Vector2(battle ? 130 : 155, battle ? 78 : 68), Vector2.zero);
-                    button.GetComponent<Image>().sprite = Sprite("UI_Tavern_Background");
-                    button.GetComponent<Image>().type = UnityEngine.UI.Image.Type.Sliced;
+                    Button button = Button("btnSettings", root.transform, "设置", new Vector2(76f, 76f), Vector2.zero);
                     existing = button.transform;
                 }
                 var rect = (RectTransform)existing;
@@ -262,28 +261,76 @@ namespace RevGame.Editor
                     home.anchoredPosition = new Vector2(-317, -72);
                     home.sizeDelta = new Vector2(270, 78);
                 }
-                else
-                {
-                    ApplyHomeEntrySkin(existing);
-                }
+                ApplyEntrySkin(existing);
                 PrefabUtility.SaveAsPrefabAsset(root, path);
             }
             finally { PrefabUtility.UnloadPrefabContents(root); }
         }
-        /// <summary>大厅设置使用原版齿轮，以正方形保留图标比例，原按钮点击路径不变。</summary>
-        internal static void ApplyHomeEntrySkin(Transform entry)
+        /// <summary>局部刷新大厅、选关和准备／战斗共享顶栏的现有设置按钮，保留原有位置和点击绑定。</summary>
+        public static string ApplyEntrySkins()
+        {
+            string[] names = { "HomePanel", "LevelSelectPanel", "BattleHudPanel" };
+            PrefabStage stage = PrefabStageUtility.GetCurrentPrefabStage();
+            foreach (string name in names)
+            {
+                if (stage?.assetPath == "Assets/GameRes/UI/Panel/" + name + ".prefab")
+                {
+                    throw new InvalidOperationException("请先关闭正在编辑的设置入口预制体：" + name);
+                }
+            }
+
+            int updated = 0;
+            foreach (string name in names)
+            {
+                string path = "Assets/GameRes/UI/Panel/" + name + ".prefab";
+                GameObject root = PrefabUtility.LoadPrefabContents(path);
+                try
+                {
+                    Transform entry = root.transform.Find("btnSettings");
+                    if (entry == null)
+                    {
+                        throw new InvalidOperationException("找不到设置按钮：" + path);
+                    }
+                    if (ApplyEntrySkin(entry))
+                    {
+                        if (PrefabUtility.SaveAsPrefabAsset(root, path) == null)
+                        {
+                            throw new InvalidOperationException("设置按钮保存失败：" + path);
+                        }
+                        updated++;
+                    }
+                }
+                finally
+                {
+                    PrefabUtility.UnloadPrefabContents(root);
+                }
+            }
+            return "已检查大厅、选关、章节战斗顶栏，更新预制体 " + updated + " 个";
+        }
+
+        /// <summary>使用现有绿色齿轮和等比例图标。返回外观是否发生变化，让调用方只保存实际改动。</summary>
+        internal static bool ApplyEntrySkin(Transform entry)
         {
             var image = entry.GetComponent<Image>();
-            image.sprite = Sprite("UI_ChooseLevel_btnSetting");
+            Sprite gear = Sprite("UI_ChooseLevel_btnSetting");
+            var size = new Vector2(76f, 76f);
+            Transform label = entry.Find("label");
+            if (image.sprite == gear && image.type == UnityEngine.UI.Image.Type.Simple && image.preserveAspect &&
+                image.color == Color.white && image.rectTransform.sizeDelta == size &&
+                (label == null || !label.gameObject.activeSelf))
+            {
+                return false;
+            }
+            image.sprite = gear;
             image.type = UnityEngine.UI.Image.Type.Simple;
             image.preserveAspect = true;
             image.color = Color.white;
-            image.rectTransform.sizeDelta = new Vector2(76, 76);
-            Transform label = entry.Find("label");
+            image.rectTransform.sizeDelta = size;
             if (label != null)
             {
                 label.gameObject.SetActive(false);
             }
+            return true;
         }
 
         /// <summary>临时PlayerPrefs键验证保存/重建/静音/恢复默认，不改玩家设置或当前声音总线。</summary>

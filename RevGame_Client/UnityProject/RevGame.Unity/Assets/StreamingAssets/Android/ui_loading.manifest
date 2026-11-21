@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 2200893250
+CRC: 1507192477
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 33a30fcf069ab886187ab48c8aca7836
+    Hash: c703d612e2ff85463fa707dc6ba0350b
   TypeTreeHash:
     serializedVersion: 2
-    Hash: 9e891f3c4efdd0c7fa198b47854525a9
+    Hash: 192b614fecddee2af38a1318cdd38cd1
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 33a30fcf069ab886187ab48c8aca7836
+    Hash: c703d612e2ff85463fa707dc6ba0350b
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -35,6 +35,8 @@ ClassTypes:
 - Class: 115
   Script: {instanceID: 0}
 - Class: 128
+  Script: {instanceID: 0}
+- Class: 213
   Script: {instanceID: 0}
 - Class: 222
   Script: {instanceID: 0}
@@ -64,5 +66,6 @@ SerializeReferenceClassIdentifiers:
 Assets:
 - Assets/GameRes/UI/Panel/Loading/LoadingPanel.prefab
 Dependencies:
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_uiloading"
 - "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/font_cjk"
 - "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/material_background"

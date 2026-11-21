@@ -1,5 +1,5 @@
 ManifestFileVersion: 0
-CRC: 2148028253
+CRC: 3969407857
 AssetBundleManifest:
   AssetBundleInfos:
     Info_0:
@@ -92,6 +92,7 @@ AssetBundleManifest:
       Dependencies:
         Dependency_0: font_cjk
         Dependency_1: material_background
+        Dependency_2: atlas_uiloading
     Info_21:
       Name: background_chapter06_temple
       Dependencies: {}
@@ -409,7 +410,8 @@ AssetBundleManifest:
       Name: gal_ui
       Dependencies:
         Dependency_0: font_cjk
-        Dependency_1: atlas_uigalcottage
+        Dependency_1: atlas_uimenus
+        Dependency_2: atlas_uigalcottage
     Info_103:
       Name: atlas_heartpeaktrailatlas
       Dependencies: {}
@@ -454,4 +456,7 @@ AssetBundleManifest:
       Dependencies: {}
     Info_117:
       Name: atlas_endlessmenu
+      Dependencies: {}
+    Info_118:
+      Name: atlas_uiloading
       Dependencies: {}

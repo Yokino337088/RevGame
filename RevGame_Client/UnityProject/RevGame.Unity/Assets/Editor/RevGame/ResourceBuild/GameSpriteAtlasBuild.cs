@@ -263,6 +263,11 @@ namespace RevGame.Editor
             }
             if (path.Contains("/Art/UI/"))
             {
+                // 加载用的两张小图随单独的图集装载，冷过场无需借用大厅或战斗的图集。
+                if (path.StartsWith("Assets/GameRes/Art/UI/Loading/", StringComparison.Ordinal))
+                {
+                    return "UILoading";
+                }
                 if (path.StartsWith("Assets/GameRes/Art/UI/YayaMemories/", StringComparison.Ordinal))
                 {
                     return "UIYayaMemories";
