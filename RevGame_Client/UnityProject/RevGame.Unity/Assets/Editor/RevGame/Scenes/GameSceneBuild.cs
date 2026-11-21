@@ -20,8 +20,12 @@ namespace RevGame.Editor
     {
         /// <summary>加载面板的正式预制体位置，局部换图和完整场景装配共用。</summary>
         private const string LoadingPanelPath = "Assets/GameRes/UI/Panel/Loading/LoadingPanel.prefab";
-        /// <summary>过场独立图集使用的两张进度条源图目录。</summary>
+        /// <summary>过场正式美术目录，保存进度条源图和传送门整图。</summary>
         private const string LoadingArtPath = "Assets/GameRes/Art/UI/Loading/";
+        /// <summary>过场整图采样所用的共享材质路径，使用原画 UV 渲染动效。</summary>
+        private const string LoadingPortalMaterialPath = "Assets/GameRes/Material/UI/LoadingPortal.mat";
+        /// <summary>预制体内保存传送门原画的独立背景图层名。</summary>
+        private const string PortalBackgroundName = "portalBackground";
         /// <summary>进度条在 1920×1080 设计画布上的宽度。</summary>
         private const float LoadingTrackWidth = 760f;
 
@@ -113,7 +117,7 @@ namespace RevGame.Editor
             SceneManager.MoveGameObjectToScene(root, scene);
             return root.AddComponent<T>();
         }
-        /// <summary>完整制作独立加载面板，资源仅涉及字体、程序背景与专用进度条。</summary>
+        /// <summary>完整制作独立加载面板，保留已交付面板的背景选择。</summary>
         private static void BuildLoadingPanel()
         {
             const string folder = "Assets/GameRes/UI/Panel/Loading";
@@ -158,10 +162,135 @@ namespace RevGame.Editor
                 button.gameObject.AddComponent<Button>().targetGraphic = button;
                 NewText(button.transform, "label", "返回大厅", font, 28, Vector2.zero, new Vector2(290f, 68f));
                 ConfigureLoadingProgress(root.transform);
+                LoadingPanel oldPanel = AssetDatabase.LoadAssetAtPath<GameObject>(LoadingPanelPath)?.GetComponent<LoadingPanel>();
+                if (oldPanel != null && oldPanel.transform.Find(PortalBackgroundName) != null)
+                {
+                    var oldOptions = new SerializedObject(oldPanel);
+                    var newOptions = new SerializedObject(root.GetComponent<LoadingPanel>());
+                    newOptions.FindProperty("usePortalBackdrop").boolValue = oldOptions.FindProperty("usePortalBackdrop").boolValue;
+                    newOptions.ApplyModifiedPropertiesWithoutUndo();
+                }
+                ConfigureLoadingBackdrop(root.transform);
                 PrefabUtility.SaveAsPrefabAsset(root, LoadingPanelPath);
                 AssetImporter.GetAtPath(folder).SetAssetBundleNameAndVariant("ui_loading", string.Empty);
             }
             finally { UnityEngine.Object.DestroyImmediate(root); }
+        }
+
+        /// <summary>局部写回加载背景，保留旧漩涡材质和已设定的背景选择。</summary>
+        public static string UpdateLoadingBackdrop()
+        {
+            GameObject root = PrefabUtility.LoadPrefabContents(LoadingPanelPath);
+            try
+            {
+                ConfigureLoadingBackdrop(root.transform, updatingExistingPrefab: true);
+                PrefabUtility.SaveAsPrefabAsset(root, LoadingPanelPath, out bool saved);
+                if (!saved)
+                {
+                    throw new InvalidOperationException("加载背景保存失败：" + LoadingPanelPath);
+                }
+                return "传送门背景已写回，原彩虹漩涡仍可通过 LoadingPanel 的背景选择使用";
+            }
+            finally
+            {
+                PrefabUtility.UnloadPrefabContents(root);
+            }
+        }
+
+        /// <summary>在旧漩涡图层旁装配完整原画，选中的背景负责拦截全屏点击。</summary>
+        private static void ConfigureLoadingBackdrop(Transform root, bool updatingExistingPrefab = false)
+        {
+            string path = LoadingArtPath + "LoadingPortalBackdrop.png";
+            var importer = AssetImporter.GetAtPath(path) as TextureImporter;
+            Material material = AssetDatabase.LoadAssetAtPath<Material>(LoadingPortalMaterialPath);
+            LoadingPanel panel = root.GetComponent<LoadingPanel>();
+            Transform rainbow = root.Find("screenBackground");
+            if (importer == null || material == null || panel == null || rainbow == null)
+            {
+                throw new InvalidOperationException("加载背景缺少独立原画、共享动效材质或现有漩涡与面板");
+            }
+            ConfigureLoadingBackdropImporter(importer);
+            Texture2D artwork = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+            if (artwork == null)
+            {
+                throw new InvalidOperationException("无法读取加载背景整图：" + path);
+            }
+
+            // 新旧图层都保留全屏锚点。新图的 UV 由 GameMobileLayout 根据视口等比裁切。
+            Transform existing = root.Find(PortalBackgroundName);
+            RawImage portal;
+            if (existing == null)
+            {
+                var node = new GameObject(PortalBackgroundName, typeof(RectTransform), typeof(RawImage));
+                node.transform.SetParent(root, false);
+                portal = node.GetComponent<RawImage>();
+            }
+            else
+            {
+                portal = existing.GetComponent<RawImage>();
+                if (portal == null)
+                {
+                    throw new InvalidOperationException("传送门背景节点缺少 RawImage");
+                }
+            }
+            Stretch(portal.rectTransform);
+            portal.transform.SetAsFirstSibling();
+            portal.texture = artwork;
+            portal.material = material;
+            portal.color = Color.white;
+            portal.uvRect = new Rect(0f, 0f, 1f, 1f);
+            portal.raycastTarget = true;
+            var options = new SerializedObject(panel);
+            SerializedProperty selection = options.FindProperty("usePortalBackdrop");
+            // 更新没有传送门图层的旧预制体时，显式保存新版默认值。
+            if (updatingExistingPrefab && existing == null)
+            {
+                selection.boolValue = true;
+                options.ApplyModifiedPropertiesWithoutUndo();
+            }
+            bool showPortal = selection.boolValue;
+            portal.gameObject.SetActive(showPortal);
+            rainbow.gameObject.SetActive(!showPortal);
+        }
+
+        /// <summary>按整图导入过场插画，保留原始宽高比并为两个目标平台压缩。已达标时跳过重导。</summary>
+        private static void ConfigureLoadingBackdropImporter(TextureImporter importer)
+        {
+            const int maxSize = 2048;
+            TextureImporterPlatformSettings pc = importer.GetPlatformTextureSettings("Standalone");
+            TextureImporterPlatformSettings android = importer.GetPlatformTextureSettings("Android");
+            if (importer.textureType == TextureImporterType.Default && importer.alphaSource == TextureImporterAlphaSource.None &&
+                !importer.alphaIsTransparency && !importer.mipmapEnabled && !importer.isReadable && importer.sRGBTexture &&
+                importer.npotScale == TextureImporterNPOTScale.None && importer.wrapMode == TextureWrapMode.Clamp &&
+                importer.filterMode == FilterMode.Bilinear && pc.overridden && android.overridden &&
+                pc.maxTextureSize == maxSize && android.maxTextureSize == maxSize &&
+                pc.format == TextureImporterFormat.BC7 && android.format == TextureImporterFormat.ASTC_6x6)
+            {
+                return;
+            }
+
+            // 全屏插画没有透明区，由 CanvasGroup 统一淡出。关掉 Mip 与 CPU 副本来控制过场纹理驻留。
+            importer.textureType = TextureImporterType.Default;
+            importer.alphaSource = TextureImporterAlphaSource.None;
+            importer.alphaIsTransparency = false;
+            importer.mipmapEnabled = false;
+            importer.isReadable = false;
+            importer.sRGBTexture = true;
+            importer.npotScale = TextureImporterNPOTScale.None;
+            importer.wrapMode = TextureWrapMode.Clamp;
+            importer.filterMode = FilterMode.Bilinear;
+            // 采用项目已用的压缩格式，保留夜景暗部渐变。保存后再用实际导入的纹理写回预制体。
+            importer.SetPlatformTextureSettings(new TextureImporterPlatformSettings
+            {
+                name = "Standalone", overridden = true, maxTextureSize = maxSize,
+                format = TextureImporterFormat.BC7, compressionQuality = 100
+            });
+            importer.SetPlatformTextureSettings(new TextureImporterPlatformSettings
+            {
+                name = "Android", overridden = true, maxTextureSize = maxSize,
+                format = TextureImporterFormat.ASTC_6x6, compressionQuality = 100
+            });
+            importer.SaveAndReimport();
         }
 
         /// <summary>只更新现有加载面板的进度条和百分比位置，保存原预制体并归还临时编辑实例。</summary>

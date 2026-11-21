@@ -14,6 +14,9 @@ namespace RevGame.Editor
 {
     public static class GameResourceBuild
     {
+        /// <summary>加载过场 RawImage 独立采样的完整原画，图集工具据此排除单张全幅背景。</summary>
+        internal const string LoadingPortalBackdrop = "Assets/GameRes/Art/UI/Loading/LoadingPortalBackdrop.png";
+
         // Data保持导表工具约定的根目录：它只放生成表；手工美术配置已独立到Config/Art。
         // 配置由团队入库，下一次新增同类资源会自动继承所在目录的分包，不需要每个文件重新打标。
         private static readonly string[,] Groups =
@@ -186,6 +189,14 @@ namespace RevGame.Editor
             foreach (string guid in AssetDatabase.FindAssets("t:Shader", new[] { "Assets/GameShader" }))
             {
                 desired[AssetDatabase.GUIDToAssetPath(guid)] = "shared_shaders";
+            }
+            // 专用材质、Shader 和原画与加载页同包，冷启动不必先拉入整个公共材质或图集。
+            desired["Assets/GameShader/UI/LoadingPortalEffect.shader"] = "ui_loading";
+            desired["Assets/GameRes/Material/UI/LoadingPortal.mat"] = "ui_loading";
+            if (AssetImporter.GetAtPath(LoadingPortalBackdrop) != null)
+            {
+                string[] loadingDependencies = AssetDatabase.GetDependencies("Assets/GameRes/UI/Panel/Loading/LoadingPanel.prefab", false);
+                desired[LoadingPortalBackdrop] = Array.IndexOf(loadingDependencies, LoadingPortalBackdrop) >= 0 ? "ui_loading" : string.Empty;
             }
             // 每章的图/材质/Shader归同一个包。UI使用的ArcaneBackdrop保留在公共Shader包，
             // 第一章改用Chapter01_Tutorial，避免大厅因共享Shader把第一章包作为依赖带入。

@@ -1,12 +1,12 @@
 {
   "revision": 1,
   "sourceSha256": "b5f0d1a190a7f9b43c310a8850630af12553df32c4c050543f9059732d9b4c0a",
-  "outputSha256": "3c1110c19df64406792e6341dd0cca9f180b3a38ca42d2ef2944a1e72e46c66c",
-  "inputDigest": "80173eb7548c53f94be8805fa4bfb4f0029cf256063c92172eea322f0cdc4ac9",
+  "outputSha256": "a7caf6a143072f71ac20f6f7e5e79e7925475d313b6204135f69d73369613073",
+  "inputDigest": "ef644e490de79dff23b8e1f0b8e0fcafd2aaecb31d9303b67d31681082bb4c7c",
   "originalBytes": 17002248,
-  "outputBytes": 872900,
-  "characterCount": 1944,
-  "glyphCount": 3840,
+  "outputBytes": 873076,
+  "characterCount": 1945,
+  "glyphCount": 3841,
   "codepoints": [
     32,
     33,
@@ -1584,6 +1584,7 @@
     34321,
     34385,
     34394,
+    34425,
     34429,
     34432,
     34502,
@@ -2224,7 +2225,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameRes/UI/Panel/Loading/LoadingPanel.prefab",
-      "sha256": "8c9334d34541bc2b45da76691238ec39040b7c4d9be0bbb79fb0ec3325364dbf"
+      "sha256": "3514cfec09277536bf83a0559d7bff6038ef44f2f255bbb8bbfde7160f192d38"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameRes/UI/Panel/PreparePanel.prefab",
@@ -3400,7 +3401,7 @@
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/UI/Panels/Loading/LoadingPanel.cs",
-      "sha256": "24fd0209298ca73d584a145c79b2bc26f6af517f2b19db60035af85402620602"
+      "sha256": "ddad42e586b895f44727cf00a68dc474c3726ff44408277e0a77176eefb7dea1"
     },
     {
       "path": "RevGame_Client/UnityProject/RevGame.Unity/Assets/GameScripts/UI/Panels/Lobby/AudioSettingsPanel.cs",

@@ -124,7 +124,8 @@ namespace RevGame.Editor
             {
                 string path = AssetDatabase.GUIDToAssetPath(guid);
 
-                if (!usedSources.Contains(path))
+                // 新版加载背景由分包配方显式管理，图集配置只清空普通闲置源图的标记。
+                if (path != GameResourceBuild.LoadingPortalBackdrop && !usedSources.Contains(path))
                 {
                     GameResourceBuild.SetBundleIfChanged(AssetImporter.GetAtPath(path), string.Empty);
                 }
@@ -160,6 +161,8 @@ namespace RevGame.Editor
                     && !p.StartsWith("Assets/GameRes/HelperTextures/", StringComparison.Ordinal)
                     // 大厅小屋原画和RGB遮罩由专用Shader采样完整UV，非Sprite，随lobby_cottage独立包交付。
                     && !p.StartsWith("Assets/GameRes/Lobby/", StringComparison.Ordinal)
+                    // Loading RawImage 以等比裁切的图像 UV 采样独立原画，仅进 ui_loading。
+                    && p != GameResourceBuild.LoadingPortalBackdrop
                     // 收藏的各层与书本纸面以全画幅UV采样，由独立包加载。
                     && !p.StartsWith("Assets/GameRes/YayaMemories/", StringComparison.Ordinal)
                     && !p.StartsWith("Assets/GameRes/UI/Panel/YayaMemories/Book/", StringComparison.Ordinal)

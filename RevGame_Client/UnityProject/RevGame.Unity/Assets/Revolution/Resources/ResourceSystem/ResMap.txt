@@ -790,7 +790,10 @@ UI/Panel/Endless/EndlessEntryPanel|ui_endless|EndlessEntryPanel
 UI/Panel/Endless/EndlessHudPanel|ui_endless|EndlessHudPanel
 UI/Item/Card/CardItem|ui_items|CardItem
 UI/Item/Notice/BattleEventNotice|ui_items|BattleEventNotice
+Art/UI/Loading/LoadingPortalBackdrop|ui_loading|LoadingPortalBackdrop
+Material/UI/LoadingPortal|ui_loading|LoadingPortal
 UI/Panel/Loading/LoadingPanel|ui_loading|LoadingPanel
+GameShader/UI/LoadingPortalEffect|ui_loading|LoadingPortalEffect
 UI/Panel/HomePanel|ui_lobby|HomePanel
 UI/Panel/LevelSelectPanel|ui_lobby|LevelSelectPanel
 UI/Panel/ProjectOpenSource/ProjectOpenSourceConfig|ui_project_open_source|ProjectOpenSourceConfig

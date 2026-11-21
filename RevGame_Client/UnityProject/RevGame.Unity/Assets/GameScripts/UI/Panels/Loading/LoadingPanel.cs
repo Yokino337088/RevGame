@@ -10,7 +10,7 @@ namespace RevGame.UI
     /// <summary>
     /// 跨场景的全屏过场面板：只显示进度和播放动画，场景与资源的加载由GameFlow负责。
     /// 它由 RevUI 创建和关闭。流程从旧域解绑使遮挡持续到交接完成，关闭时由框架销毁并归还资源。
-    /// 程序背景先提供全屏遮挡，等专用小图集准备完成后再显示进度条。
+    /// 已选背景先提供全屏遮挡，等专用小图集准备完成后再显示进度条。
     /// </summary>
     [RevUIPanel(RevResPath.UI_Panel_Loading, RevUILayer.Top, InBackStack = false, Mask = RevUIMaskMode.None)]
     public sealed class LoadingPanel : RevUIPanel<LoadingPanel.ProgressData>
@@ -44,6 +44,9 @@ namespace RevGame.UI
 
         /// <summary>LoadingPanel 专用图集标签，随这次过场单独加载与归还。</summary>
         private const string ProgressAtlasName = "UILoading";
+        /// <summary>预制体选择。默认使用传送门，取消勾选即可切回原彩虹漩涡。</summary>
+        [SerializeField, Tooltip("勾选使用新版传送门背景，取消勾选切回彩虹漩涡")]
+        private bool usePortalBackdrop = true;
         /// <summary>预制体的底槽图层，绑定后用于显示当前图集里的 Sprite。</summary>
         private Image _progressTrack;
         /// <summary>Slider 填充图层，按进度裁切一部分固定宽度的图。</summary>
@@ -58,15 +61,32 @@ namespace RevGame.UI
         /// <summary>只绑定当前预制体的控制和排版，资源等待交给打开过程。</summary>
         protected override void OnBindView()
         {
-            RevGame.UI.GameMobileLayout.EnableSafePanel(transform, "screenBackground");
+            RevGame.UI.GameMobileLayout.EnableSafePanel(transform, "screenBackground", "portalBackground");
             _cover = GetComponent<CanvasGroup>();
             _progressTrack = _progress.GetComponent<Image>();
             _progressFill = _progress.fillRect.GetComponent<Image>();
         }
 
-        /// <summary>真实 AB 先取得进度条图集，再结束打开流程；旧预制体与直读模式沿用各自已有图层。</summary>
+        /// <summary>按预制体选择启用一层背景。旧包里没有新节点时仍由原漩涡承接全屏遮挡。</summary>
+        private void ApplyBackdrop()
+        {
+            Transform rainbow = transform.Find("screenBackground");
+            RawImage portal = transform.Find("portalBackground")?.GetComponent<RawImage>();
+            bool showPortal = usePortalBackdrop && portal != null && portal.texture != null;
+            if (rainbow != null)
+            {
+                rainbow.gameObject.SetActive(!showPortal);
+            }
+            if (portal != null)
+            {
+                portal.gameObject.SetActive(showPortal);
+            }
+        }
+
+        /// <summary>先启用已选的全屏背景，再等真实 AB 进度图集结束打开流程。直读模式使用预制体图片。</summary>
         protected override void PlayOpenTransition(Action onDone)
         {
+            ApplyBackdrop();
 #if UNITY_EDITOR
             if (!RevResBootstrap.UseABInEditor)
             {
@@ -79,7 +99,7 @@ namespace RevGame.UI
                 onDone?.Invoke();
                 return;
             }
-            // AB 首次打开可能早于 Sprite 自动绑定。先避开白块，保留程序背景提供遮挡。
+            // AB 首次打开可能早于 Sprite 自动绑定。先避开白块，已选背景继续提供遮挡。
             _progressTrack.enabled = _progressFill.enabled = false;
             LoadProgressArtAsync(onDone).Forget();
         }
