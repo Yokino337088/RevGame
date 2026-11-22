@@ -4,6 +4,8 @@
 
 [**▶ 在浏览器试玩围棋大作战**](https://yokino337088.github.io/RevGame/)
 
+RevGame 是用 Unity 制作的围棋主题游戏，也是 Revolution 框架的实际业务验证工程。项目把玩法、跨平台交付和自动化验收放在同一条开发流程里。想先玩可以直接打开上面的试玩页，想看实现和实测可以从 Wiki 进入。 [RevGame Wiki](https://github.com/Yokino337088/RevGame/wiki)
+
 ## 🗣️ 作者原话
 
 #### 其实我并不是为了做游戏而做游戏，而是因为我搞了一套具有革命性的Unity客户端框架，我为了验证这一套框架的可行性，才来做了这一个游戏，因为实践是检验真理的唯一标准，如果只是做框架的话，很容易变成纸上谈兵，所以必须要让自己站在一个独立游戏开发者的角度，从零开始使用Revolution框架做一个游戏，上线各大游戏平台，支持跨平台适配，跑通全链路的业务流程，才能说明这一套Revolution框架是可以投入到实际的生产当中的。并且能够在开发过程当中及时发现框架的问题，把问题回灌进框架当中，让框架更加完善。
@@ -14,280 +16,72 @@
 
 ---
 
-> 🎯 **这不是一个游戏 Demo。** 这是把 Revolution 的每一层门面放进真实业务里压过一遍的验证工程，也是"AI 能自己写完、自己跑、自己判定、自己出报告"的第一次完整落地。
+## 🎮 可以玩什么
 
-游戏本身（9×9 棋盘、六章战役、Boss 战、助阵帮手）只是压力来源。真正要交付的结论是三个：
+| 玩法 | 入口与内容 |
+| --- | --- |
+| **六章远征** | 从序章和教学进入 9 × 9 棋盘，布置不同棋子，经历自动交火、助阵、Boss、结算和奖励。 [远征玩法](RevGame_Client/策划案/玩法拓展策划案.html) |
+| **无尽模式** | 面对持续敌潮，在选址、守点与升级之间作取舍。大量敌人的移动、显示和回收也用来验证框架在长时间压力下的表现。 [无尽模式策划案](RevGame_Client/策划案/无尽模式策划案_棋阵幸存者_2026-11-01.html) |
+| **九路围棋与决斗** | 本地人机用九路围棋规则推进，对局可以进入选角和原生决斗。仓库内的联机实现包含棋力匹配、房间分配、断线恢复和服务端确认决斗帧，部署依赖对应服务器。 [对战玩法](RevGame_Client/策划案/九路围棋PvP策划案_2026-10-26.html) · [WebGL 人机与决斗验证](https://github.com/Yokino337088/RevGame/wiki/%E6%9E%84%E5%BB%BA-WebGL%E5%8E%9F%E7%94%9F%E6%8F%92%E4%BB%B6%E4%B8%8EPInvoke) · [联机部署与压测](RevGame_Server/RevGame.Server/Config/README.md) |
 
-1️⃣ **这套框架的门面组合起来，能不能做出一个完整游戏？** —— 能，而且每一层都被真实业务压过。
+## 🌍 平台进展与性能证据
 
-2️⃣ **它的边界在哪？** —— 资源晚绑定、生命周期误停、生成清单未编译、真机性能，这些坑都被踩到并记录下来。
+下面的数字跟着当时的设备、游戏包和实测窗口一起读。**平均帧率看一秒画了多少张，P95/P99（约 95%/99% 的帧间隔在多长时间以内）和长帧次数用来找慢的那几下。** 一套通用方法落到不同平台，要按各自的画面、设备和真实工作量重测。 [性能压测导论](https://github.com/Yokino337088/RevGame/wiki/%E6%94%BB%E5%9D%9A-%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%E5%AF%BC%E8%AE%BA) · [CPU、GPU 与内存](https://github.com/Yokino337088/RevGame/wiki/%E9%80%9A%E7%94%A8%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96)
 
-3️⃣ **AI 能不能独立完成开发闭环？** —— 能，因为框架把"可验证性"做进了设计，而不是事后补测试。
+| 平台 | 当前有据可查的结果 |
+| --- | --- |
+| **Windows** | 有 Editor 诊断，以及 Mono 和 IL2CPP 独立包的实测。2026-10-31，Iris Xe、D3D11、1920 × 1080 窗口、默认 VSync=1，IL2CPP 版六章 81 棋每段热身 5 秒、实采至少 30 秒，平均 **59.86～59.93 FPS**，P95 **18.09～18.23 ms**。原记录同时保留了 48 棋变成 50 棋的失败样本。 [Windows 优化](https://github.com/Yokino337088/RevGame/wiki/%E6%94%BB%E5%9D%9A-%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96-Windows%E4%BC%98%E5%8C%96) |
+| **安卓** | 已有 IL2CPP ARM64 的 APK（安卓安装包）构建、签名和验包记录。宽屏 **1.0.1 Release 为 70.93 MiB**，对应当时的资源版本。现有真机反馈来自旧版，最终包的热态帧率和多轮退场内存仍需在目标机复测。 [安卓优化](https://github.com/Yokino337088/RevGame/wiki/%E6%94%BB%E5%9D%9A-%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96-%E5%AE%89%E5%8D%93%E4%BC%98%E5%8C%96) · [安卓构建复盘](RevGame_Client/文档/安卓构建踩坑报告/安卓构建踩坑复盘_2026-11-08.html) |
+| **WebGL** | GitHub Pages 提供网页试玩。性能对照覆盖面板首开、真实绘制尺寸、首次特效与飘字。第 4 章 **81 棋、1600 × 899、每轮两分钟**的同包轻量复测中，启用同批避让复用的三轮为 **59.769～59.956 FPS**，最慢飘字等待分别为 **216.6、182.6、168.1 ms**。发布和实测各有对应版本记录。 [Web 端优化](https://github.com/Yokino337088/RevGame/wiki/%E6%94%BB%E5%9D%9A-%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96-web%E7%AB%AF%E4%BC%98%E5%8C%96) · [网页发布过程](https://github.com/Yokino337088/RevGame/wiki/%E6%9E%84%E5%BB%BA-GitHubPages%E9%83%A8%E7%BD%B2WebGL) |
 
-📅 本文数据截至 **2026-11-03**，由代码、导表配置和验证记录统计得出。历史报告中的旧数值以对应版本为准。
+## 🧩 RevGame 怎样验证 Revolution
 
----
+项目用真实玩法来验证框架的使用方式。资源没到时界面能不能等，跨章后旧操作会不会晚到，特效用完能不能归还，这些都要在玩家会走的流程里检查。
 
-## 🧩 一、它到底验证了 Revolution 的什么
+- **场景和界面交接**。从 `StartScene` 进入首页，再到选关、战斗、结算或退出。由 `GameFlow` 管理阶段，`RevScope` 管理这一段流程的资源与事件，`RevUI` 等界面具备显示条件再交给玩家。 [项目架构](RevGame_Client/文档/架构/RevGame项目架构与Revolution框架讲解.html)
+- **真实资源和显示**。通过 `RevResManager` 读资源包、`RevPool` 借还棋子与特效。让能等一帧的飘字和特效按预算显示，伤害、占格和计分沿实际业务入口结算。 [战斗性能优化规则](RevGame_Client/文档/战斗性能优化规则/战斗性能优化规则.html) · [全场景实测](RevGame_Client/文档/AI自动化测试报告/全场景性能优化/全场景性能优化实测_2026-11-19.html)
+- **把问题反馈到框架**。从 RevGame 的真实入口复现，定位属于项目还是框架。框架层的问题回到 Revolution 源仓库改，发布后按范围同步。可复用的做法整理到官方 Skill，工作条件和正反实测留在 Wiki。 [Revolution 框架](https://github.com/Yokino337088/Revolution) · [官方性能 Skill](https://github.com/Yokino337088/Revolution/tree/skill/revolution-performance) · [RevGame Wiki](https://github.com/Yokino337088/RevGame/wiki)
 
-Revolution 有 20 多个公开门面。RevGame 的做法不是"逐个写 demo 证明能调用"，而是**每个门面都必须在一个真实业务里承担后果**——错了游戏就崩、卡、白图、掉帧。
-
-下面每一行的"验证结论"都能在代码或报告里查到。✅
-
-| 框架能力 | 在 RevGame 里的真实落点 | 验证到了什么 |
-|---|---|---|
-| `RevScope` / `RevLogic` | 首页 / 选关 / 战斗 / 结算 / 退出五条流程，每屏一个域 | 域随屏幕进出真实创建与销毁；跨域误用会直接暴露为服务找不到 |
-| `RevServices` | 流程、战斗、资源、存储、自动化五类服务 | 服务注册顺序、域退出后取不到、热重载后重新注册 |
-| `RevLightFSM` | `GameFlow` 的屏幕状态机 | 异步交割与"过场中拒绝重入"的竞态 |
-| `RevHeavyFSM` | 玩家棋 AI、敌方 AI、Boss AI、助阵帮手 | 4 套状态机并行跑 60 回合，状态泄漏与清理 |
-| `RevTimer` | 0.3125 秒固定步长驱动整场战斗 | 帧率波动下节奏不变；暂停、切后台、域退出时计时器回收 |
-| `RevEvent` | 战斗事件总线（命中、死亡、积分、HP 变化、屏幕切换） | 70 个文件的事件订阅，验证了解绑与重入 |
-| `RevUI` | 准备、HUD、剧情、教学、设置、结算、奖励、Boss 演出面板 | 面板池复用、Back 语义、数据刷新时机、图集晚绑定 |
-| `RevResManager` | 编辑器直读 / 真实 AB 双模式、图集租约、引用计数 | **发现并修复了两条资源泄漏链**（返回大厅 24 包 → 14 包） |
-| `RevPool` | 棋子、格子、弹道、飘字、积分粒子、短时特效 | 高密度战斗下的池预算与回池时机 |
-| `RevTask` | 场景交割、资源等待、取消与失败回退 | 异步取消、跨帧等待、异常路径不留半成品 |
-| `RevScene` | StartScene → GameScene 的跨场景交割 | 真正卸载而非仅切页 |
-| `RevSequence` | Boss 登场 / 退场 / 击败演出 | 可取消的串行演出，退出时逐步清理 |
-| `RevSound` | 六章 BGM、打字机、战斗与 Boss 音效 | 流式压缩、章节切换、玩家音量设置落盘 |
-| `RevInput` | 棋盘点击、长按攻击范围、换位 | 触屏与 GM 共用同一入口 |
-| `RevDataTableManager` + Excel 工具 | 5 份 Excel、14 张导表、启动校验 | 数值真源 → 生成类型 → 强类型读取 → 缺表报错 |
-| `RevGM` | 96 条受控命令，单文件注册 | 幂等注册、异常回滚、完整注销、阶段校验 |
-| `RevAB` 工具链 | 50 个包（PC / Android 各一套）、图集唯一归属 | 重复依赖、循环依赖、漏标、重名、平台 Shader 门禁 |
-| `RevCLI` / `RevMCP` | 181 条可编程动作、MCP 协议、活动日志 | 见第二节——这是本工程最特殊的地方 🤖 |
-
-📊 **规模**：业务代码 256 个 C# 文件 / 53,900 行，编辑器工具 114 个文件 / 21,083 行；111 次提交，跨度 18 天。
-
-### 🔄 一个容易被忽略的点：它不只是"用"框架，还反哺框架
-
-RevGame 踩到的坑会回源修框架，再同步回工程。框架仓库里 `93cbc58 以 RevGame 真实工程完善 Revolution 官方技能实践规范` 这类提交，以及技能包中 `revgame-engineering.md` / `revgame-editor-practice.md` / `revgame-ai-workflow.md` 等文档，都是在这个项目里总结出来的。📝
-
-💡 **验证工程的最高价值不是"跑通了"，而是"发现了框架自己不知道的问题"。**
-
----
-
-## 🤖 二、为什么这里能跑通"全链路 AI 自动化开发"
-
-大多数 Unity 项目做不到这件事，不是因为 AI 不够强，而是因为**项目本身对 AI 不可见**：按钮只能人点、状态只能人看、结果只能人判断。🚫
-
-RevGame 把这条链路打通了，靠的是六个已经落地的设计。👇
-
-### 🔍 2.1 能力可发现，不用猜
-
-AI 的第一个失败模式是"编 API"。这里有 `discover`：
-
-```
-rev_discover → 返回当前工程真实注册的动作、参数 schema、运行环境、是否只读、是否需要 confirm
-```
-
-181 条动作、96 条 GM 全部带参数契约。AI 先查再调，不存在"猜一个不存在的方法"。✅
-
-### 📐 2.2 参数有契约，不会传错
-
-每条动作都有 JSON Schema 校验。参数名写错、类型不对、多传字段，都会被拒绝并说明原因，而不是静默失败。
-
-### 🚪 2.3 操作有统一入口，AI 与人走同一条路
-
-玩家点按钮、GM 发命令、AI 调动作，最终都进同一套业务逻辑。所以 AI 验的就是玩家走的路，不存在"测试专用旁路"。🛣️
-
-### ✅ 2.4 结果可断言，不是"看起来对了"
-
-`pipeline` / `scenario` 计划支持 `assert`：
-
-```
-执行动作 → 读真实状态 → 比对期望值 → 失败即停 → finally 清理
-```
-
-"接口返回 success" 从来不算通过。例如改完特效后要断言的是：棋子还在、血条数值正确、图集不是白图、回合结束资源已回收。
-
-### 📸 2.5 过程可取证，AI 能自证
-
-- 视觉验收按需检查本次的实际画面
-- 每步操作、耗时、失败原因进**活动日志**（`editor.activity`）
-- 用户明确要求时，才在指定目录或项目现有文档目录导出 HTML 与必要截图/GIF
-
-日常测试直接在对话汇报实际断言与清理结果。临时工单用完立即永久删除。 [项目验收规范](.codex/skills/revgame-development/references/project-acceptance.md#自动化工单与报告)
-
-### ⚡ 2.6 迭代成本够低
-
-`batch.call` 让多个动作合并成一次往返：实测 10 步从 994ms 降到 111ms（约 9 倍）。AI 高频试错的成本因此可以接受。
-
-### 🔗 闭环长什么样
-
-```
-① 发现能力      rev_discover / editor.capabilities
-② 调用真实工程   rev_call / ui.click / gm.exec / pipeline
-③ 断言业务结果   assert（不是看返回值，是查真实状态）
-④ 汇报证据       对话中给出实测与断言，明确要求时导出报告
-⑤ 清理现场       finally 复位输入、计时器、临时存档、场景
-```
-
-🎯 **这五步能连起来，才叫"全链路"。缺任何一环，AI 都只能算"帮你敲代码的编辑器"。**
-
----
-
-## 📚 三、为什么说它是"教科书级"的实践
-
-不是自我评价，是四个可核对的标准。🔍
-
-### 🏗️ 3.1 每一层都有真实业务压过，而不是 demo
-
-Demo 证明"能调用"，真实业务才会暴露"什么时候会坏"。
-
-这个项目真实发生过的：图集晚绑定导致首帧白图、短效特效清理误停了常驻刷新、AB 生成清单未参与编译导致路径对不上、六章背景包互相依赖、根布局尺寸依赖 Canvas 定义……这些都不是看文档能想到的。💥
-
-### 📊 3.2 数字可查，不是形容词
-
-| 验证项 | 已记录结果 |
-|---|---|
-| 六章完整实战 | 60 个章回，58 胜 / 2 负，玩家死亡 63 枚 |
-| 固定策略回放 | 三种子 180 局，180 胜 / 0 负 |
-| 规则与战术断言 | 单轮 741 条业务 + 745 条战术 |
-| 积分规则断言 | 1,149 条 |
-| 棋盘 / 帮手 / 共鸣 | 41 条断言 |
-| 真实 PC AB 视觉与输入 | 278 条断言，新增 Unity 错误 0 |
-| 资源构建 | PC / Android 各 50 包，14 张图集、248 张图片唯一覆盖 |
-| 文档沉淀 | 1,209 个文件，其中 89 份 HTML 报告 |
-
-### 🧾 3.3 失败也记录，不粉饰
-
-README 的前身里就保留着这些，重写后继续保留：⚠️
-
-- 第六章前两回合真实失败
-- 一次自动化桥接的文件共享冲突（作业完成，但不能报"零错误"）
-- 旧完整控制台套件里存在失败夹具，不能用新报告替代旧回归
-- 数值方向是"合理布阵应稳定取胜"，**不承诺任意策略保胜**
-
-❗ **一个只写成功的验证工程，价值约等于零。**
-
-### 💬 3.4 代码即文档
-
-项目里高频出现这种注释：
-
-```csharp
-// ★ 每帧最多触发一次：不够的部分留在 Elapsed 里，下一帧继续（不 while 连爆）
-// ★ 余量结转（不是归零）：连续循环不会因帧长抖动而越走越偏
-```
-
-写的是"为什么是这样，不那样会坏什么"。这类注释配合 89 份报告，构成了"新人能读懂的工程"——这恰好也是 AI 能接手的前提。🤝
-
----
-
-## 🚀 四、Agent 时代的新范式
-
-传统 Unity 客户端的开发循环是这样的：
-
-| 环节 | 传统 | RevGame |
-|---|---|---|
-| 写代码 | 人写 | AI 写，人审 |
-| 编译 | 人点 Unity、人看 Console | AI 触发并读取编译诊断 |
-| 验证 | 人点 UI、肉眼看画面 | AI 驱动真实 UI 输入与 GM |
-| 判定 | 人凭经验判断"应该没问题" | 机器断言，失败即停 |
-| 取证 | 人手动截图、事后回忆 | 自动截图 / GIF / 报告 / 活动日志 |
-| 回归 | 人记得就重跑，不记得就算 | 一条命令重跑，结果可比对 |
-
-范式转变的关键不是"AI 写得更快"，而是**开发过程本身变成了可执行、可断言、可复现的东西**。✨
-
-人剩下的工作是两件：决定做什么，以及审查 AI 有没有自欺欺人。🧑‍⚖️
-
-这也是为什么这个项目值得作为框架的验证工程：**它证明的不是"框架能跑游戏"，而是"框架能支撑一个 AI 可以独立负责的开发流程"。**
-
----
-
-## 🏁 五、快速开始
-
-**环境**：Unity `2022.3.15f1c1`、Python `3.10+`、.NET 10（仅独立规则回归需要）。🧰
+## 🏁 本地开始
 
 ```bash
 git clone https://github.com/Yokino337088/RevGame.git
+cd RevGame
 ```
 
-1. 用指定 Unity 版本打开 `RevGame_Client/UnityProject/RevGame.Unity`，等待包解析与脚本编译完成。
-2. 打开 `Assets/Scenes/StartScene.unity` 并进入 Play。
-3. 首次进入播放开场与教学；首页 → 选关 → 战斗由 `GameFlow` 异步交割。
+1. 用 **Unity `2022.3.15f1c1`** 打开 `RevGame_Client/UnityProject/RevGame.Unity`，等导入和脚本编译完成。
+2. 打开 `Assets/Scenes/StartScene.unity` 进入 Play，沿序章、教学和首页走到目标玩法。
+3. 开发阶段可用编辑器直读资源。验证首帧白图、图集晚绑定或退场归还时，用真实 PC AB（游戏资源包）从冷启动走正式入口。安卓与网页实包用各自目标的 AB。 [资源迭代与验证](.codex/skills/revgame-development/references/unity-and-assets.md)
 
-**跑自动化** ⚙️：
+## 🔍 自动化怎么验
+
+**先发现已注册能力，再调用真实动作、断言业务结果，最后清理。** RevCLI 是命令行入口，RevMCP 通过 MCP（让工具发现并调用工程能力的协议）提供同类入口。进战斗时查的是场景与资源到位后能否开始，收尾时查是否正式回到首页，以及本局的对象和资源引用是否已归还。 [项目验收规范](.codex/skills/revgame-development/references/project-acceptance.md) · [RevMCP 使用说明](RevGame_Client/UnityProject/Revolution.RevMCP/README.md)
+
+需要命令行时，使用 **Python 3.10+**，在仓库根目录运行下列命令。在线能力查询需要打开目标 Unity 编辑器。
 
 ```powershell
 $gameProject = "RevGame_Client/UnityProject/RevGame.Unity"
 $revCli = "RevGame_Client/UnityProject/Revolution.RevCLI/rev.py"
 
-python $revCli --project $gameProject doctor                  # 环境自检
-python $revCli --project $gameProject --mode live commands --live   # 发现真实能力
-python $revCli --project $gameProject --mode live call editor.status
-python $revCli --project $gameProject --mode live call game.helper.rules   # 编辑态规则断言
+python $revCli --project $gameProject doctor
+python $revCli --project $gameProject --mode live commands --live
 ```
 
-⚠️ **注意两种验证模式**：编辑器直读资源 ≠ 真实 AB 加载。验证首帧白图、图集绑定、资源释放必须用 **PC AB 冷启动**，不能预热后再测。
+远征规则和九路围棋规则也可用 **.NET 10 SDK** 跑离线回归。GitHub Actions 还验证项目规范和 Windows 原生决斗预测。 [CI 流程](.github/workflows/revgame-policy.yml)
 
----
-
-## 📁 六、工程结构
-
-```text
-RevGame/
-├─ RevGame_Client/
-│  ├─ UnityProject/
-│  │  ├─ RevGame.Unity/
-│  │  │  ├─ Assets/
-│  │  │  │  ├─ Revolution/       框架 package 快照（只读，改框架回源仓库）
-│  │  │  │  ├─ GameScripts/      Core / Data / Services / Battle / Board / Pieces
-│  │  │  │  │                   Bootstrap / Flow / UI / View / Automation / Generated
-│  │  │  │  ├─ GameRes/          配置、图集、预制体、音频、导表数据
-│  │  │  │  ├─ GameShader/       章节背景、棋盘、Boss 与帮手 Shader
-│  │  │  │  ├─ Scenes/           StartScene / GameScene / 测试场景
-│  │  │  │  ├─ Editor/RevGame/   制作、检查与资源构建入口（114 个脚本）
-│  │  │  │  └─ StreamingAssets/  PC / Android 随包资源
-│  │  │  └─ Packages/ · ProjectSettings/
-│  │  ├─ Revolution.RevCLI/      181 条动作的编辑器/运行时 CLI
-│  │  └─ Revolution.RevMCP/      MCP 协议适配（12 个模块 / 1,366 行）
-│  ├─ Tests/                    纯规则回归与业务流程计划
-│  ├─ 配置表/ · 策划案/ · 文档/
-│  └─ 美术/ · 音乐/             素材与来源
-├─ RevGame_Server/              Fantasy 接入与开发环境
-├─ tools/                       框架同步、字体子集等辅助工具
-└─ AGENTS.md                    开发与自动化硬约定
+```powershell
+dotnet run --project RevGame_Client/Tests/CombatAttackRegression/CombatAttackRegression.csproj -c Release
+dotnet run --project tools/PvpRulesChecks/PvpRulesChecks.csproj -c Release
 ```
 
-📌 **数值真源**：`RevGame_Client/配置表/` 下 5 份 Excel，共 14 张表；剧情单独用 ScriptableObject。框架快照不手工改，修改回到 Revolution 仓库进行后同步。
+## 📁 代码与资料从哪儿找
 
----
+| 目录 | 内容 |
+| --- | --- |
+| [Unity 工程](RevGame_Client/UnityProject/RevGame.Unity/) | `Assets/GameScripts` 放玩法和界面，`GameRes` 放资源，`GameShader` 放绘制实现，`Assets/Revolution` 是框架的导出快照。 |
+| [RevGameCore](RevGame_Client/RevGameCore/) | 九路围棋决斗的原生内核、检查点与跨平台编译。 |
+| [RevGame_Server](RevGame_Server/) | 基于 Fantasy 的连接、匹配与权威对局。配置、构建和部署指引在服务端 README。 |
+| [策划案](RevGame_Client/策划案/) · [配置表](RevGame_Client/配置表/) | 查关卡与玩法意图、数值源表。剧情资源与运行端按项目入口查。 |
+| [项目 Wiki](https://github.com/Yokino337088/RevGame/wiki) · [项目 Skill](.codex/skills/revgame-development/SKILL.md) | Wiki 分立项、攻坚、构建和开发日志。项目 Skill 把做资源、调试和验收的人带到各自入口。 |
 
-## ⚠️ 七、边界：没验证的比验证过的重要
-
-这个项目**没有**做到、也不宣称做到：🚧
-
-- ❌ **Android 真机性能与热稳定**未完整验收；现有性能数据来自桌面编辑器与 PC AB。
-- ❌ **正式发行**未完成，APK 体积目标（20–30 MB）未达成验收。
-- ❌ **联机 PvP** 只有服务端工程与框架接入，业务未实现。
-- ❌ **iOS / 小游戏平台**未验证。
-- ❌ **数值平衡**只到"可玩"，不承诺任意策略保胜。
-- ⚠️ **框架适配成本**无法省略：图集归属、资源所有权、生成物编译参与，这些在真实工程里必须显式处理。
-
-💬 **把边界写清楚，是这类工程能被信任的前提。** 一个声称"全链路零问题"的验证工程，通常只是没测到。
-
----
-
-## 📚 八、文档索引
-
-- 🏛️ [项目架构与 Revolution 框架讲解](RevGame_Client/文档/架构/RevGame项目架构与Revolution框架讲解.html)
-- 🧑‍💻 [面向新手的代码阅读指南](RevGame_Client/文档/架构/RevGame代码阅读指南-新手版.html)
-- ⚡ [战斗性能优化规则](RevGame_Client/文档/战斗性能优化规则/战斗性能优化规则.html)
-- 🗂️ [进度与验收归档](RevGame_Client/文档/进度同步/)
-- 🛠️ [RevCLI 使用说明](RevGame_Client/UnityProject/Revolution.RevCLI/README.md)
-- 🤖 [RevMCP 使用说明](RevGame_Client/UnityProject/Revolution.RevMCP/README.md)
-- 📏 [协作与自动化硬约定](AGENTS.md)
-- 🧩 [Revolution 框架仓库](https://github.com/Yokino337088/Revolution)
-
----
-
-🏆 **一句话总结**：RevGame 用 60 个章回、96 条 GM、181 条可编程动作和 89 份报告证明了——Revolution 不只是能跑游戏，它能撑起一个 AI 可以独立负责、每一步都能被验证的客户端开发流程。这是 Agent 时代 Unity 客户端开发的一个可复制的起点。✨
-
-
-## 2026-11-03 鸦鸦待机动画与资源验证
-
-- 原始89帧保留美术源目录，制作24帧与16帧候选，最终选择24帧。
-- 正式切片在 `Assets/GameRes/Art/Characters/Yaya/Idle24`；Prefab、Clip与Controller在 `Assets/GameRes/Characters/Yaya`；唯一Sprite Atlas V2在 `Assets/GameRes/Atlases/YayaIdle24.spriteatlasv2`。
-- TestScene提供真实PC AB预览，使用RevInitialize、RevResManager与GameSpriteAtlasService接线，显式等待图集就绪后显示。
-- 待机采用 `0..23,22..1` 往返无限循环，46个换帧关键点复用24张图片，周期约5.93秒；反向段属于倒放运动，避免末帧直接跳首帧。
-- PC采用DXT5：隔离同条件AB实测20.08 MiB降至5.42 MiB；正式拆包为atlas_yayaidle24与character_yaya。Android ETC2设置未做真机验收。
-- 通过RevCLI完成制作、迁移、正式构建和TestScene截图/换帧检查；复用项目GameResourceBuild与GameSpriteAtlasBuild，不修改框架内核。
+深入阅读可从 [新手代码导读](RevGame_Client/文档/架构/RevGame代码阅读指南-新手版.html)、[RevCLI 使用说明](RevGame_Client/UnityProject/Revolution.RevCLI/README.md) 和 [协作规范](AGENTS.md) 开始。旧版 README 里的早期回归数据、失败记录和鸦鸦待机验证可查阅 [历史 README](https://github.com/Yokino337088/RevGame/blob/262dcf11944c4519328f706db4a13e211081554a/README.md)。

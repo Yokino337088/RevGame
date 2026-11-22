@@ -1,5 +1,7 @@
 # RevGame技术积累与来源
 
+按 [通用 CPU、GPU 与内存实测](common-performance.md#revgame-实测保留对应条件)、[Windows 证据](windows-performance.md#revgame-独立包实测)、[安卓证据](android-performance.md#revgame-已有的安卓证据) 和 [WebGL 证据](#webgl-定制优化实测) 选适用案例。每组数值附测试条件及原报告。
+
 规则资料位于 `RevGame_Client/文档/战斗性能优化规则/`，2026-10-30 批次的实现锚点为 `7706f7bf9eaa19f9f2d5910d4dbdd8c70b7b8a5b`。2026-11-19 的分场景、敌潮和慢帧实践见下节。本地优先核对当前代码及数据，历史断言只说明对应版本的结果。 [10 月固定资料版本](https://github.com/Yokino337088/RevGame/tree/0e41fcefc866d28e53dde961f1c9a5a246fe080f/RevGame_Client/文档/战斗性能优化规则)
 
 ## 2026-11-19 战斗与场景实践

@@ -1,6 +1,6 @@
 ---
 name: revolution-performance
-description: 编写、修改、审查 Revolution Unity 项目的战斗、AI、密集 UI/特效或其他性能敏感代码时使用，也用于瓶颈诊断和收益验收。检查 CPU 逻辑与提交、GPU、内存与 GC、缓存与资源寿命。WebGL 首开等待、浏览器慢帧、首次绘制与飘字延迟使用目标实包按 RevGame 的固定负载和分段计时方法验证。
+description: 编写、修改、审查 Revolution Unity 项目的战斗、AI、密集 UI/特效或其他性能敏感代码时使用，也用于瓶颈诊断和收益验收。检查 CPU、GPU、内存、GC、缓存和资源寿命。按 Windows Editor 与独立 Player、安卓真机或 WebGL 实包选择测法，复用 RevGame 的固定负载、分段计时和实测案例。
 ---
 
 # Revolution 性能优化
@@ -35,11 +35,14 @@ description: 编写、修改、审查 Revolution Unity 项目的战斗、AI、�
 
 ## 按瓶颈读取
 
-初始读测量与命中的一个热点专题，其它在依赖/证据需要时增读，不通读内核。
+先读测量，按实际运行平台与症状选专题。已有瓶颈证据时，继续读相应实现与回归。
 
 | 工作 | 读取 |
 |---|---|
 | 帧率波动、基线/CPU-GPU归因/目标机验收 | [测量](references/measurement.md) |
+| 跨平台定位重复计算、透明过绘、加载峰值或退场增长 | [通用 CPU、GPU 与内存优化](references/common-performance.md)。沿同帧证据和资源所有权选实现 |
+| Windows Editor 与独立包、核显与独显、主线程或送屏等待 | [Windows 性能优化](references/windows-performance.md)。固定同步、显示和图形条件，分开解释 Editor 与目标包 |
+| 安卓冷启动、热态帧节奏、画质档或重复进出内存 | [安卓性能优化](references/android-performance.md)。分开核对验包、预览和目标真机证据 |
 | WebGL 面板冷开、画布、首次特效、浏览器回调或战斗反馈 | [WebGL 定制性能优化](references/webgl-performance.md)。选首开、首次效果或持续战斗的窗口，按实际症状读取对应小节 |
 | 射界/路径/棋群/AI试算、缓存与数据布局、ECS选型 | [CPU与缓存](references/cpu-cache.md) |
 | 固定步、位移跳格、快照插值、顶点更新频率 | [逻辑帧与表现帧](references/frame-presentation.md) |
