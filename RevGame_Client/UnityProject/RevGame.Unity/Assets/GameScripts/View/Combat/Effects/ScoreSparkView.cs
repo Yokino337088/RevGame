@@ -13,6 +13,10 @@ namespace RevGame.View
     public sealed class ScoreSparkView : MonoBehaviour, IRevPoolable
     {
         [SerializeField] private Image glow;
+#if UNITY_WEBGL && !UNITY_EDITOR && !UNITY_WEIXINMINIGAME && !UNITY_BYTEDANCE_MINIGAME && !UNITY_BYTEDANCEMINIGAME
+        /// <summary>积分飞星真正绘制的材质，网页读条从池里借出时使用此引用。</summary>
+        internal Material BrowserSparkMaterial => glow == null ? null : glow.material;
+#endif
         private RectTransform _rect;
         private Tween _flight;
         private System.Action<ScoreSparkView> _finished;

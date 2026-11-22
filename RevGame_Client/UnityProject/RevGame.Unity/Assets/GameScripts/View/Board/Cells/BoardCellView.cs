@@ -27,6 +27,10 @@ namespace RevGame.View
         [Tooltip("区域波动专用底图，独立于落点勾号；由项目图集统一管理。")]
         [SerializeField] private Sprite hazardSprite;
         [SerializeField] private Material hazardMaterial;
+#if UNITY_WEBGL && !UNITY_EDITOR && !UNITY_WEIXINMINIGAME && !UNITY_BYTEDANCE_MINIGAME && !UNITY_BYTEDANCEMINIGAME
+        /// <summary>返回本格真实区域技能材质，预热时不用创建覆盖节点。</summary>
+        internal Material BrowserHazardMaterial => hazardMaterial;
+#endif
         private MaterialPropertyBlock _hazardProperties;
         [Tooltip("按住多久算长按（秒）。纯表现手感，不影响战斗规则。")]
         [SerializeField]

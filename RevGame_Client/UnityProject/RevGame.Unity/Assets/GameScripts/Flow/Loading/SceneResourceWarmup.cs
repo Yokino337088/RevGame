@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using RevGame.View;
 using Revolution;
 using UnityEngine;
+#if UNITY_WEBGL && !UNITY_EDITOR && !UNITY_WEIXINMINIGAME && !UNITY_BYTEDANCE_MINIGAME && !UNITY_BYTEDANCEMINIGAME
+using UnityEngine.Rendering;
+#endif
 
 namespace RevGame.Flow
 {
@@ -100,7 +103,7 @@ namespace RevGame.Flow
         }
         /// <summary>
         /// 预创建24颗棋子、按本平台表现预算准备弹道/飘字/近战实例，并预建2条事件通知。它们仍由RevPool管理，第一次交火不再集中Instantiate。
-        /// 每帧最多2个，且单批累计超过3毫秒就主动让帧；单个Unity实例化不可拆分，不能承诺绝对无卡帧。
+        /// 每帧最多2个，且单批累计超过3毫秒就主动让帧。浏览器还在过场中准备首次交火会用的着色程序。
         /// </summary>
         public async RevTask WarmBattlePoolsAsync(Action<float> progress)
         {
@@ -157,10 +160,30 @@ namespace RevGame.Flow
                         throw new InvalidOperationException("对象池预热失败，序号" + i);
                     }
                     _instances.Add(instance);
+#if UNITY_WEBGL && !UNITY_EDITOR && !UNITY_WEIXINMINIGAME && !UNITY_BYTEDANCE_MINIGAME && !UNITY_BYTEDANCEMINIGAME
+                    if (i == 24 && instance is BattleEffectView feedback)
+                    {
+                        // 这两种程序在第一波交火就要用，各等一帧再准备，保持过场可刷新。
+                        await WarmBrowserVariantAsync(feedback.BrowserRangedMaterial);
+                        await WarmBrowserVariantAsync(feedback.BrowserMeleeMaterial);
+                        await WarmBrowserVariantAsync(feedback.BrowserDamageTextMaterial);
+                    }
+                    if (i == feedbackEnd && instance is ScoreSparkView spark)
+                    {
+                        await WarmBrowserVariantAsync(spark.BrowserSparkMaterial);
+                    }
+#endif
                     if (instance is BossSkillFxView skill)
                     {
                         // 先登记租约再await：取消/异常会由finally成对归还，不能在await后才记账。
                         await skill.WarmSlotsAsync(() => _disposed);
+#if UNITY_WEBGL && !UNITY_EDITOR && !UNITY_WEIXINMINIGAME && !UNITY_BYTEDANCE_MINIGAME && !UNITY_BYTEDANCEMINIGAME
+                        if (i == regularEnd)
+                        {
+                            // 炸弹和 Boss 共用同一份程序。从首个已登记租约取材质，本次交接只准备一次。
+                            await WarmBrowserVariantAsync(skill.BrowserSkillMaterial);
+                        }
+#endif
                     }
                     progress?.Invoke((i + 1f) / count);
 
@@ -173,6 +196,81 @@ namespace RevGame.Flow
             }
             finally { ReturnInstances(); }
         }
+#if UNITY_WEBGL && !UNITY_EDITOR && !UNITY_WEIXINMINIGAME && !UNITY_BYTEDANCE_MINIGAME && !UNITY_BYTEDANCEMINIGAME
+        /// <summary>实际棋盘就绪后准备本章地面裂隙和帮手短效。只借一件帮手攻击池实例，结束或取消都归还。</summary>
+        public async RevTask WarmBrowserBoardEffectsAsync(BoardView board)
+        {
+            if (board == null)
+            {
+                return;
+            }
+
+            // 棋盘就绪已包含帮手材质及格面。取本章真正持有的引用，其他章节的弹幕不提前加载。
+            await WarmBrowserVariantAsync(board.BrowserHazardMaterial);
+            await WarmBrowserVariantAsync(board.BrowserHelperProjectileMaterial);
+            await WarmBrowserVariantAsync(board.BrowserHelperBeamMaterial);
+            if (_disposed)
+            {
+                throw new OperationCanceledException("帮手预热已取消");
+            }
+
+            HelperAttackView helper = await GetAsync<HelperAttackView>();
+            if (helper == null)
+            {
+                return;
+            }
+
+            try
+            {
+                // 飞行符文和激光落点各有自己的材质。原对象保持池借用状态，整个预热过程不播放攻击。
+                await WarmBrowserVariantAsync(helper.BrowserRuneMaterial);
+                await WarmBrowserVariantAsync(helper.BrowserImpactMaterial);
+            }
+            finally
+            {
+                if (helper != null)
+                {
+                    RevPool.Return(helper, 0);
+                }
+            }
+        }
+
+        /// <summary>在过场里准备实际材质使用的普通 Pass。让读条先绘制一次，取消时由原预热仍持有的实例清单收尾。</summary>
+        private async RevTask WarmBrowserVariantAsync(Material material)
+        {
+            await RevTask.Yield();
+            if (_disposed)
+            {
+                throw new OperationCanceledException("着色程序预热已取消");
+            }
+
+            Shader shader = material == null ? null : material.shader;
+            if (shader == null || !shader.isSupported)
+            {
+                return;
+            }
+
+            // 装入 AB 和创建 Renderer 都只准备了资源。这里让 WebGL 在真正交火前完成驱动链接。
+            // 只用现有材质的关键字，预热普通 Pass，保留原 Shader、材质和全部技能画面。
+            var variants = new ShaderVariantCollection();
+            try
+            {
+                var variant = new ShaderVariantCollection.ShaderVariant(shader, PassType.Normal, material.shaderKeywords);
+                if (variants.Add(variant))
+                {
+                    variants.WarmUp();
+                }
+            }
+            catch (ArgumentException error)
+            {
+                RevLog.Warn("着色程序预热跳过：" + error.Message, "RevGame");
+            }
+            finally
+            {
+                UnityEngine.Object.Destroy(variants);
+            }
+        }
+#endif
         /// <summary>从已进入的目标域借实例，冷读返回失败时由上层交接处理。</summary>
         private static RevTask<T> GetAsync<T>() where T : Component
         {

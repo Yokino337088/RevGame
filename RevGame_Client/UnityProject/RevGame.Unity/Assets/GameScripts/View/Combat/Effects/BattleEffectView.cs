@@ -71,6 +71,16 @@ namespace RevGame.View
         [SerializeField] private ProjectileAppearance[] projectileStyles = new ProjectileAppearance[0];
         [SerializeField] private Sprite swordSlash, shieldImpact;
         [SerializeField] private Material swordMaterial, shieldMaterial, assassinMaterial;
+#if UNITY_WEBGL && !UNITY_EDITOR && !UNITY_WEIXINMINIGAME && !UNITY_BYTEDANCE_MINIGAME && !UNITY_BYTEDANCEMINIGAME
+        /// <summary>重弩实际弹头材质。普通网页在入场时据此准备共用弹道程序。</summary>
+        internal Material BrowserRangedMaterial => FindProjectileAppearance(PieceKind.Crossbow)?.BodyMaterial;
+
+        /// <summary>普通近战材质。网页读条会准备其与盾击等效果共用的程序。</summary>
+        internal Material BrowserMeleeMaterial => swordMaterial;
+
+        /// <summary>伤害字随池创建时绑定的材质，读条中准备首次漂字所用程序。</summary>
+        internal Material BrowserDamageTextMaterial => _textRenderer == null ? null : _textRenderer.sharedMaterial;
+#endif
         private bool _magicAura;
         [Tooltip("最长飞行秒数，仅表现；命中伤害已由服务结算。")]
         [SerializeField] private float projectileDuration = 0.36f;
@@ -428,15 +438,7 @@ namespace RevGame.View
             _projectileExpiresAt = Time.time + duration + 0.12f;
             damageText.gameObject.SetActive(false);
             spriteRenderer.enabled = true;
-            ProjectileAppearance style = null;
-            for (int i = 0; i < projectileStyles.Length; i++)
-            {
-                if (projectileStyles[i].Kind == sourceKind)
-                {
-                    style = projectileStyles[i];
-                    break;
-                }
-            }
+            ProjectileAppearance style = FindProjectileAppearance(sourceKind);
 
             if (style == null || style.Sprite == null || style.BodyMaterial == null || style.TrailMaterial == null)
             {
@@ -478,6 +480,20 @@ namespace RevGame.View
             _animationScale = normalScale;
             _animation = DOTween.To(_readProgress, _writeProgress, 1f, duration).SetEase(Ease.Linear).OnComplete(_finishAnimation);
         }
+        /// <summary>从池预制体的配方里按职业取第一份正式弹道引用。没有匹配时交给调用方处理。</summary>
+        private ProjectileAppearance FindProjectileAppearance(PieceKind kind)
+        {
+            for (int i = 0; i < projectileStyles.Length; i++)
+            {
+                if (projectileStyles[i].Kind == kind)
+                {
+                    return projectileStyles[i];
+                }
+            }
+
+            return null;
+        }
+
         /// <summary>生命周期保险：寿命到期先停止旧动画再归池；不能让失去Tween驱动的弹头永久停留在棋子上。</summary>
         private void LateUpdate()
         {

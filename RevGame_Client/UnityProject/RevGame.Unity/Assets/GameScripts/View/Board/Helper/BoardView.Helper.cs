@@ -24,6 +24,16 @@ namespace RevGame.View
         private int _helperAttackGeneration;
         private readonly HashSet<HelperAttackView> _helperAttacks = new HashSet<HelperAttackView>();
         private Material _helperProjectile, _helperBeam;
+#if UNITY_WEBGL && !UNITY_EDITOR && !UNITY_WEIXINMINIGAME && !UNITY_BYTEDANCE_MINIGAME && !UNITY_BYTEDANCEMINIGAME
+        /// <summary>当前棋格持有的区域裂隙材质，用于读条时提前准备区域波动。</summary>
+        internal Material BrowserHazardMaterial => _cells.Count == 0 ? null : _cells[0].BrowserHazardMaterial;
+
+        /// <summary>当前章的帮手弹幕材质，由原棋盘持有并归还。</summary>
+        internal Material BrowserHelperProjectileMaterial => _helperProjectile;
+
+        /// <summary>当前棋盘复用的帮手激光材质，由原棋盘持有并归还。</summary>
+        internal Material BrowserHelperBeamMaterial => _helperBeam;
+#endif
         private int _helperVisualChapter, _helperVisualGeneration, _helperPendingAttacks;
         // 表现硬预算，不影响实际攻击数量与扣血；同屏最多40个帮手弹道（含预约），忙时只合并视觉。
         public int HelperAttackVisualCount => _helperAttacks.Count;

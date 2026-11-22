@@ -14,6 +14,13 @@ namespace RevGame.View
         [Tooltip("独立菱形几何Quad与CC0魔法符文叠层，共用资产Mesh和Material，不逐发新建。")]
         [SerializeField] private MeshRenderer diamond, rune, impact;
         [SerializeField] private HelperStormVisual stormVisual;
+#if UNITY_WEBGL && !UNITY_EDITOR && !UNITY_WEIXINMINIGAME && !UNITY_BYTEDANCE_MINIGAME && !UNITY_BYTEDANCEMINIGAME
+        /// <summary>帮手弹幕叠层实际绘制的符文材质，供网页读条复用。</summary>
+        internal Material BrowserRuneMaterial => rune == null ? null : rune.sharedMaterial;
+
+        /// <summary>蓝色激光落点实际绘制的材质，供网页读条复用。</summary>
+        internal Material BrowserImpactMaterial => impact == null ? null : impact.sharedMaterial;
+#endif
         private Transform _source;
         private PieceView _target;
         private int _targetId;

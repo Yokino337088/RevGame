@@ -270,6 +270,11 @@ namespace RevGame.View
                 RevLog.Exception(error, "局外面板装配失败", "RevGame");
             }
         }
+#if UNITY_WEBGL && !UNITY_EDITOR && !UNITY_WEIXINMINIGAME && !UNITY_BYTEDANCE_MINIGAME && !UNITY_BYTEDANCEMINIGAME
+        /// <summary>过场确认画面就绪后，交给网页预热读取当前场景已绑定的棋盘。</summary>
+        internal BoardView BrowserReadyBoard => _backgroundBoard;
+#endif
+
         /// <summary>先让棋盘正常OnDisable回收对象，再交给RevScene清池/卸场景，避免双重归还或旧弹幕残留。</summary>
         public void SuspendBattle()
         {

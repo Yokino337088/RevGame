@@ -331,8 +331,18 @@ namespace RevGame.Flow
                         PublishScreenChanged();
                     }
                 },
-                WaitReady = _ => presentation.WaitUntilReadyAsync(target,
-                    value => Report(0.78f + value * 0.20f, target == GameScreen.Battle ? "正在铺开棋盘与手牌…" : "正在布置营地…")),
+                WaitReady = async _ =>
+                {
+                    await presentation.WaitUntilReadyAsync(target,
+                        value => Report(0.78f + value * 0.20f, target == GameScreen.Battle ? "正在铺开棋盘与手牌…" : "正在布置营地…"));
+#if UNITY_WEBGL && !UNITY_EDITOR && !UNITY_WEIXINMINIGAME && !UNITY_BYTEDANCE_MINIGAME && !UNITY_BYTEDANCEMINIGAME
+                    if (target == GameScreen.Battle)
+                    {
+                        // 格面和当前章帮手材质都已就绪，此时还能在加载遮挡下准备首次绘制。
+                        await warmup.WarmBrowserBoardEffectsAsync(presentation.BrowserReadyBoard);
+                    }
+#endif
+                },
                 Cleanup = async _ =>
                 {
                     warmup.Dispose();

@@ -60,6 +60,10 @@ namespace RevGame.View
         [SerializeField] private Sprite[] extendedSprites;
         [Header("共享材质（BossSkill.mat）：所有片共用，逐片参数走 MaterialPropertyBlock")]
         [SerializeField] private Material material;
+#if UNITY_WEBGL && !UNITY_EDITOR && !UNITY_WEIXINMINIGAME && !UNITY_BYTEDANCE_MINIGAME && !UNITY_BYTEDANCEMINIGAME
+        /// <summary>实际炸弹和 Boss 特效使用的同一份材质，让过场按这个引用准备网页驱动程序。</summary>
+        internal Material BrowserSkillMaterial => material;
+#endif
         [Header("中心光晕 / 通用特效底图（Glow）")]
         [Tooltip("用于环绕激光蓄力的中心光，以及预警区、冲击波、爆炸、传送门和汲取效果的底图。建议使用居中光晕 Sprite；部分外观由 Shader 生成，换图不等于替换整个效果。")]
         [SerializeField] private Sprite glow;
