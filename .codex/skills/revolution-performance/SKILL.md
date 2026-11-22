@@ -1,6 +1,6 @@
 ---
 name: revolution-performance
-description: 编写、修改、审查 Revolution Unity 项目的战斗、AI、密集 UI/特效或其他性能敏感代码时使用，也用于瓶颈诊断和收益验收。检查 CPU 逻辑与提交、GPU、内存与 GC、缓存与资源寿命。采用 RevGame 的固定负载测量、逻辑与表现分离、资源复用和回归实践。
+description: 编写、修改、审查 Revolution Unity 项目的战斗、AI、密集 UI/特效或其他性能敏感代码时使用，也用于瓶颈诊断和收益验收。检查 CPU 逻辑与提交、GPU、内存与 GC、缓存与资源寿命。WebGL 首开等待、浏览器慢帧、首次绘制与飘字延迟使用目标实包按 RevGame 的固定负载和分段计时方法验证。
 ---
 
 # Revolution 性能优化
@@ -40,6 +40,7 @@ description: 编写、修改、审查 Revolution Unity 项目的战斗、AI、�
 | 工作 | 读取 |
 |---|---|
 | 帧率波动、基线/CPU-GPU归因/目标机验收 | [测量](references/measurement.md) |
+| WebGL 面板冷开、画布、首次特效、浏览器回调或战斗反馈 | [WebGL 定制性能优化](references/webgl-performance.md)。选首开、首次效果或持续战斗的窗口，按实际症状读取对应小节 |
 | 射界/路径/棋群/AI试算、缓存与数据布局、ECS选型 | [CPU与缓存](references/cpu-cache.md) |
 | 固定步、位移跳格、快照插值、顶点更新频率 | [逻辑帧与表现帧](references/frame-presentation.md) |
 | HUD/Layout/TextMesh、飘字/弹道队列、Tween/闭包/回池 | [UI与反馈](references/ui-feedback.md) |

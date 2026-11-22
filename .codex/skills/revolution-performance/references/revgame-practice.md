@@ -15,6 +15,23 @@
 
 源文件按 `Assets/GameScripts` 定位。逻辑读 `Flow/Logic/BattleLogic.cs`、`Flow/Logic/Endless/EndlessLogic.cs` 与 `Services/Endless/Ecs/EndlessHordeComponents.cs`。显示读 `View/Endless/EndlessHordePresentation.cs`、`EndlessArena*.cs`、`EndlessQuadBatch.cs` 和 `View/Pvp/PvpDuelView.cs`。只挑和任务同职责的代码，使用目标项目真实的步长、场景和性能门槛。 [当前敌潮实现锚点](https://github.com/Yokino337088/RevGame/commit/305515292faf515728746e7dbc868a967abfc24a)
 
+## WebGL 定制优化实测
+
+2026-11-21 至 22 的案例以普通浏览器版 RevGame 为主。先读 [WebGL 定制性能优化](webgl-performance.md) 的对应路径，再对照场景、目标机、当前版本和真实业务数据。下表里的配置、阈值和结果属于各自的对照，供定位和复测时选条件。
+
+| 问题 | 做法与当时证据 |
+| --- | --- |
+| 大厅点开无尽要等下载 | 可交互后按设置、对战、无尽顺序，由正式面板元数据串行准备，并另持有无尽入口使用的 `EndlessMenu` 图集。Edge 同一批 WebGL AB，1366 × 768、DPR 1、模拟 85 ms 与 2.5 MB/s，首页就绪约 7 秒后点真实按钮，每版三轮。可见区间的中位数从 1.68–2.22 到 0.53–0.99 秒，较晚的一端减少约 55.4%。点击后发出的无尽请求从 5 到 0，候选合计提前传约 1.77 MiB。 [大厅与画布实测](https://github.com/Yokino337088/RevGame/wiki/%E8%AE%A9%E7%BD%91%E9%A1%B5%E7%89%88%E7%82%B9%E5%BE%97%E5%BF%AB%E3%80%81%E6%89%93%E5%BE%97%E9%A1%BA) |
+| 大厅资源的独立依赖原先串行 | 该版普通浏览器加载器每批最多 3 个独立依赖，全局 HTTP 实际并发上限 4，目标仍等依赖成功。匹配缓存版本，防部分失败、首个等待者取消、旧代迟到。五个无尽相关请求的一对样本，总区间 1.362→1.232 秒，实际最大重叠数 1→2。 [加载器实现提交](https://github.com/Yokino337088/Revolution/commit/959d04f38f9966fc3485988267ca68041f3c6daf) · [开发日志](https://github.com/Yokino337088/RevGame/wiki/%E5%BC%80%E5%8F%91%E6%97%A5%E5%BF%97-2026-11-22) |
+| 高 DPR 画了过多像素 | 网页保持全屏视口，缓冲上限 1600 × 900 像素量。1366 × 768、DPR 2 时实物 2732 × 1536→1600 × 899。同 Wasm 的第 4 章 81 棋短窗为 49.9→59.1 FPS，P95/P99 为 43.9/95.4→16.8/17.0 ms，超过 50 ms 从 26 到 2。第 6 章单改尺寸的对照收益很小，另测缩小也仍有慢帧。浏览器正式战斗的显示额度为同屏 14 文字、24 弹道、12 近战短效，每帧最多新增 3 条弹道。 [画布与战斗预算](https://github.com/Yokino337088/RevGame/wiki/%E8%AE%A9%E7%BD%91%E9%A1%B5%E7%89%88%E7%82%B9%E5%BE%97%E5%BF%AB%E3%80%81%E6%89%93%E5%BE%97%E9%A1%BA) |
+| 棋盘遮住的动态背景仍计算 | Built-in 前向正交相机用合并九宫格内芯网格，在 `BeforeForwardOpaque` 背景绘制前以 `ColorMask 0` 只写深度。背景 `ZTest LEqual`，生效图集的完全不透明区域才遮挡。第 1 章兼容 UI 仍走原路径。PC 真 AB 同帧第 4/6 章最终 RGB 差异 0，诊断各挡 92,144/123,358 个背景像素。Web 第 6 章四段约 59.9 FPS，单笔背景 GPU 中位数有波动，计算净收益还需纳入深度 Pass。 [棋盘遮挡实测](https://github.com/Yokino337088/RevGame/wiki/%E6%94%BB%E5%9D%9A-%E6%A3%8B%E7%9B%98%E9%81%AE%E6%8C%A1%E8%83%8C%E6%99%AFGPU%E4%BC%98%E5%8C%96%E5%AE%9E%E8%B7%B5) |
+| 首枚炸弹等待驱动链接 | 同包约 40 秒各三轮，最慢帧间隔从 1,516.7 到 193.6 ms，平均 FPS 的组内中间值从 57.4 到 60.0。可见的首次链接挪进读条，仍有 53.90 FPS 的慢轮，另一次两分钟为 57.62 FPS。读条按实际材质分批准备弹道、近战、积分飞星、炸弹与帮手技能。 [首次链接复盘](https://github.com/Yokino337088/RevGame/wiki/%E6%94%BB%E5%9D%9A-WebGL%E7%AC%AC4%E7%AB%A081%E6%A3%8B%E9%95%BF%E5%B8%A7%E5%A4%8D%E7%9B%98) |
+| 持续慢帧、字形和飘字等待 | 先缩绘制尺寸、停绘、停字做排除。缩小画布让 GPU 样本 P95 约 6.2→4.9 ms，仍有绘制前耗时。35 秒四组试验把飘字每帧从 8 条限到 3 条，最慢处理 6.6→5.6 ms。读条分批准备常用字形，单批最多 16 字符，组合方案三轮满盘约 60 FPS，超过 50 ms 为 0，最老启动等待却约 184→483 ms。字形重建数在部分组合轮次反增。 [81 棋控制变量实测](https://github.com/Yokino337088/RevGame/wiki/%E6%94%BB%E5%9D%9A-WebGL%E7%AC%AC4%E7%AB%A081%E6%A3%8B%E6%8E%A7%E5%88%B6%E5%8F%98%E9%87%8F%E5%8E%8B%E6%B5%8B) |
+| 把数字等半秒的情况拉回来 | 常态 3 条或约 1.5 ms，积压 8 条或队头等到 80 ms 时升到最多 8 条、约 3.25 ms。提早停止失去竞争的摆位候选，只优先换掉批前旧字。同包两轮实际提交最长从 466.2–467.2 ms 降到 183.5–184.7 ms，仍接近 60 FPS。超过 25 ms 合计从 26 到 30 次。 [飘字等待实测](https://github.com/Yokino337088/RevGame/wiki/%E6%94%BB%E5%9D%9A-WebGL%E7%AC%AC4%E7%AB%A081%E6%A3%8B%E9%A3%98%E5%AD%97%E7%AD%89%E5%BE%85%E4%BC%98%E5%8C%96) |
+| 追查超 25 ms 增多与同批复用 | 固定 3 条两轮仍有 123 次，当前额度两轮有 137 次，其中有一帧完全没新飘字，回调运行 5.3 ms 后等 103.7 ms。当前额度长帧中，68 次启动至少 4 条，其中 15 次仅在算术上减去额外用时才回到 25 ms 内。减少写字号与颜色未得到一致收益。最终复用同一同步批次的避让范围，同工作量的一对里队列用时 P95 3.0→2.8 ms。轻量复测复用三轮为 59.769～59.956 FPS，最老实际提交等待 216.6、182.6、168.1 ms。浏览器空档和慢轮均保留，整体收益按六轮完整对照理解。 [逐帧归因与复用实测](https://github.com/Yokino337088/RevGame/wiki/%E6%94%BB%E5%9D%9A-WebGL%E7%AC%AC4%E7%AB%A081%E6%A3%8B%E9%A3%98%E5%AD%97%E9%95%BF%E5%B8%A7%E5%BD%92%E5%9B%A0) |
+
+RevGame 源码从 `Assets/WebGLTemplates/RevGameFullscreen/index.html` 的画布配置入口、`HomePanel.BrowserWarmup` 的大厅域预热、`SceneResourceWarmup` 的读条预热、`BoardView.BackgroundDepth` 的深度命令和 `BoardView.Feedback`、`BattleEffectView` 的反馈实现查起。项目开发测试包中的 `GamePlayerPerformanceSession` 注册 `game.performance.prepare/state/cleanup`，实际调用前核对隔离会话与入口。第 4 章满盘用真实 81 棋、1600 × 899 和 120 秒验证，攻击、炸弹、退场逻辑数量与 `PieceFrames` 引用均有正式回执。 [同批复用提交](https://github.com/Yokino337088/RevGame/commit/9949fd8054fe92fd35044b3d6d9169727438d62f) · [网页游戏卡顿怎么量](https://github.com/Yokino337088/RevGame/wiki/%E7%BD%91%E9%A1%B5%E6%B8%B8%E6%88%8F%E5%8D%A1%E9%A1%BF%E6%80%8E%E4%B9%88%E9%87%8F)
+
 ## 2026-10-30 覆盖来源
 
 盘点51文件：22份文本（md/html/txt/json）、27媒体、2历史ZIP。md/html配对叙述，图/GIF辅助证明画面，ZIP仅历史采样索引，未解包Profiler录制。技能不复制原始大数据/图或凭据。

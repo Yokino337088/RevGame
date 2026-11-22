@@ -1,5 +1,7 @@
 # RevGame Web 与棋盘渲染性能
 
+通用流程和数据口径见 [官方 WebGL 性能专题](../../revolution-performance/references/webgl-performance.md)。本页定位 RevGame 的实现入口，历次结果和参数见 [官方 Skill 实测索引](../../revolution-performance/references/revgame-practice.md#webgl-定制优化实测) 与 [RevGame Wiki《Web 端优化》](https://github.com/Yokino337088/RevGame/wiki/%E6%94%BB%E5%9D%9A-%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96-web%E7%AB%AF%E4%BC%98%E5%8C%96)。
+
 ## 大厅资源准备
 
 - 首页、选关和战斗首屏的必要资源走现有场景交接。仅在大厅可交互后，`HomePanel.BrowserWarmup` 按设置、对战、无尽登记三个高频入口。读取正式面板路径与显式等待的 `EndlessMenu` 图集，每次只处理一个候选，成功留在本次大厅域，失败提前归还。先测冷开率、实际依赖和驻留，再决定是否给其他域增加候选。
@@ -10,6 +12,12 @@
 
 - `RevGameFullscreen/index.html` 让 CSS 画布满屏，绘制缓冲约束在约 144 万像素。普通浏览器远征用 `BoardView.Feedback` 的 14/24/12 同屏表现额度和每帧 3 条新弹道，其它宿主保持自己的配置。帧差测试固定棋局、采样阶段、DPR 与实际尺寸，核对真实攻击数及 P95/P99。第 4 章 81 棋的像素主对照 49.9 → 59.1 FPS，仍有超过 50 ms 的帧，第 6 章 48 棋的多轮结果有明显波动。稳定 60 FPS 继续按目标设备验收。
 - 分清真实目标帧率和 CSS 画布显示大小。高 DPI 用普通入口实测点击相同棋格、落子、全屏和大小变化。没有 GPU 用时的浏览器帧间隔不能直接标成 GPU 时间。
+
+## 首次特效与 81 棋长帧
+
+- `Flow/Loading/SceneResourceWarmup.cs` 在读条里从实际池对象和已准备好的棋盘取材质，按常用弹道、近战、飘字、飞星、炸弹与帮手效果分批准备。动态字形准备在 `BattleEffectView.WarmBrowserTextGlyphsAsync`。分别测读条、真实首次技能和稳态持续交火，核对预热失败或取消时的归还。
+- `BoardView.Feedback` 负责普通浏览器飘字的合并、队头年龄与升档，`BattleEffectView.ReservationForDamageBatch` 只在相机和已有文字保持稳定的同一同步批次内复用避让范围。用实际配置核对软时间预算，分别量最老启动、实际提交和帧间隔，同时核对该轮攻击、反馈覆盖与清理。
+- `Automation/Diagnostics/GamePlayerPerformanceSession.cs` 提供隔离会话的 `game.performance.prepare/state/cleanup`。第 4 章满盘可用 `chapter=4, pieces=81`，等 `ready=true` 且已进战斗再采样，按实际 1600 × 899 与 120 秒条件比较。绘制回调内外分段计时，复测后核对 `cleaned`、逻辑数量和 `PieceFrames` 引用。
 
 ## 棋盘挡住背景
 
