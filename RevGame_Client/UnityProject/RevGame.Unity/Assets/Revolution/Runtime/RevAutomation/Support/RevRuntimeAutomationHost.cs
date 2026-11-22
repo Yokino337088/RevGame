@@ -13,6 +13,7 @@ using UnityEngine;
 
 namespace Revolution
 {
+    /// <summary>持有一次测试会话的回环监听，并把后台网络请求交给 Unity 主线程处理。</summary>
     internal sealed class RevRuntimeAutomationHost : MonoBehaviour
     {
         // 工单分三个阶段：HTTP 线程入队 → Unity Update 执行业务 → HTTP 线程读取结果。
@@ -47,10 +48,17 @@ namespace Revolution
         private volatile bool _stopping;
         private int _connections;
         public static bool HasPendingWork => _instance != null && (_instance._active != null || !_instance._queue.IsEmpty);
-        public static string StartServer(int port, string token)
+        /// <summary>启动只绑定回环地址的测试监听。安卓 Intent 会话由电脑持有凭据，其他入口返回本机端点文件。</summary>
+        public static string StartServer(int port, string token, string androidLaunchId = null, int androidPid = 0)
         {
-            if (_instance != null) { throw new InvalidOperationException("运行时服务已启动，请先停止再切换配置"); }
-            if (port < 1024 || port > 65535) { throw new ArgumentOutOfRangeException(nameof(port)); }
+            if (_instance != null)
+            {
+                throw new InvalidOperationException("运行时服务已启动，请先停止再切换配置");
+            }
+            if (port < 1024 || port > 65535)
+            {
+                throw new ArgumentOutOfRangeException(nameof(port));
+            }
             if (token != null && (token.Length < 32 || token.Any(char.IsWhiteSpace))) { throw new ArgumentException("token 至少 32 字符且不能含空白"); }
             var go = new GameObject("[RevRuntimeAutomation]") { hideFlags = HideFlags.HideInHierarchy };
             DontDestroyOnLoad(go);
@@ -58,41 +66,25 @@ namespace Revolution
             try
             {
                 host._token = token ?? Guid.NewGuid().ToString("N") + Guid.NewGuid().ToString("N");
-                host._session = Guid.NewGuid().ToString("N");
+                host._session = androidLaunchId ?? Guid.NewGuid().ToString("N");
                 host._listener = new HttpListener();
                 string url = "http://127.0.0.1:" + port;
                 host._listener.Prefixes.Add(url + "/"); host._listener.Start();
-                string folder = Application.isEditor ? Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Library", "RevolutionAutomation")) : Path.Combine(Application.persistentDataPath, "RevolutionAutomation");
-                // launcher为每次进程指定独立凭据目录，不进入构建资源或Git。
-                string customEndpoint = Environment.GetEnvironmentVariable("REV_AUTOMATION_ENDPOINT");
-                if (!Application.isEditor && !string.IsNullOrEmpty(customEndpoint))
+                var endpoint = new Dictionary<string, object> { ["protocol"] = 1, ["url"] = url, ["token"] = host._token,
+                    ["sessionId"] = host._session, ["pid"] = androidLaunchId == null ? System.Diagnostics.Process.GetCurrentProcess().Id : androidPid,
+                    ["product"] = Application.productName, ["platform"] = Application.platform.ToString(), ["project"] = Application.isEditor ? Path.GetFullPath(Path.Combine(Application.dataPath, "..")) : "" };
+                endpoint["launchId"] = androidLaunchId ?? (Environment.GetEnvironmentVariable("REV_AUTOMATION_LAUNCH_ID") ?? "");
+                endpoint["buildId"] = Application.buildGUID;
+                endpoint["memoryJobs"] = true;
+                if (androidLaunchId == null)
                 {
-                    if (!Path.IsPathRooted(customEndpoint))
-                    {
-                        throw new ArgumentException("REV_AUTOMATION_ENDPOINT必须是绝对路径");
-                    }
-                    host._endpoint = Path.GetFullPath(customEndpoint);
-                    folder = Path.GetDirectoryName(host._endpoint);
+                    host.PublishEndpoint(endpoint);
                 }
                 else
                 {
-                    host._endpoint = Path.Combine(folder, "runtime.json");
+                    // USB 会话的端点由电脑生成，Android 沙盒无需写出令牌或活动日志。
+                    endpoint["applicationId"] = Application.identifier;
                 }
-                Directory.CreateDirectory(folder);
-                RevAutomationActivity.Configure(Path.Combine(folder, "activity"));
-                var endpoint = new Dictionary<string, object> { ["protocol"] = 1, ["url"] = url, ["token"] = host._token,
-                    ["sessionId"] = host._session, ["pid"] = System.Diagnostics.Process.GetCurrentProcess().Id,
-                    ["product"] = Application.productName, ["platform"] = Application.platform.ToString(), ["project"] = Application.isEditor ? Path.GetFullPath(Path.Combine(Application.dataPath, "..")) : "" };
-                endpoint["launchId"] = Environment.GetEnvironmentVariable("REV_AUTOMATION_LAUNCH_ID") ?? "";
-                endpoint["buildId"] = Application.buildGUID;
-                endpoint["memoryJobs"] = true;
-                string temporary = host._endpoint + ".tmp";
-                File.WriteAllText(temporary, RevAutomationJson.Write(endpoint), new UTF8Encoding(false));
-                if (File.Exists(host._endpoint))
-                {
-                    File.Delete(host._endpoint);
-                }
-                File.Move(temporary, host._endpoint);
                 endpoint.Remove("token"); host._health = RevAutomationJson.Write(endpoint);
                 host._wasBackground = Application.runInBackground;
                 Application.runInBackground = true;
@@ -100,7 +92,42 @@ namespace Revolution
                 host._thread = new Thread(host.Accept) { IsBackground = true, Name = "RevRuntimeAutomation.HTTP" };
                 _instance = host; host._thread.Start(); return host._endpoint;
             }
-            catch { host.Shutdown(); Destroy(go); throw; }
+            catch
+            {
+                host.Shutdown();
+                Destroy(go);
+                throw;
+            }
+        }
+
+        /// <summary>为桌面或显式启动入口写出本会话凭据，保留原路径规则和活动记录。</summary>
+        private void PublishEndpoint(Dictionary<string, object> endpoint)
+        {
+            string folder = Application.isEditor ? Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Library", "RevolutionAutomation")) : Path.Combine(Application.persistentDataPath, "RevolutionAutomation");
+            // launcher 为每次进程指定独立的本机凭据目录。
+            string customEndpoint = Environment.GetEnvironmentVariable("REV_AUTOMATION_ENDPOINT");
+            if (!Application.isEditor && !string.IsNullOrEmpty(customEndpoint))
+            {
+                if (!Path.IsPathRooted(customEndpoint))
+                {
+                    throw new ArgumentException("REV_AUTOMATION_ENDPOINT必须是绝对路径");
+                }
+                _endpoint = Path.GetFullPath(customEndpoint);
+                folder = Path.GetDirectoryName(_endpoint);
+            }
+            else
+            {
+                _endpoint = Path.Combine(folder, "runtime.json");
+            }
+            Directory.CreateDirectory(folder);
+            RevAutomationActivity.Configure(Path.Combine(folder, "activity"));
+            string temporary = _endpoint + ".tmp";
+            File.WriteAllText(temporary, RevAutomationJson.Write(endpoint), new UTF8Encoding(false));
+            if (File.Exists(_endpoint))
+            {
+                File.Delete(_endpoint);
+            }
+            File.Move(temporary, _endpoint);
         }
         /// <summary>主线程关闭当前宿主。取消回调重入时由原调用完成销毁。</summary>
         public static void StopServer()
@@ -122,15 +149,53 @@ namespace Revolution
                 }
             }
         }
+        /// <summary>启动后检查显式测试配置，安卓从本次 Activity Intent 获取 USB 会话身份。</summary>
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void StartOptIn()
         {
+#if UNITY_ANDROID && !UNITY_EDITOR
+            if (TryStartAndroidIntent())
+            {
+                return;
+            }
+#endif
             string[] args = Environment.GetCommandLineArgs();
-            if (!args.Contains("-revAutomation")) { return; }
+            if (!args.Contains("-revAutomation"))
+            {
+                return;
+            }
             int index = Array.IndexOf(args, "-revAutomationPort");
             int port = index >= 0 && index + 1 < args.Length ? int.Parse(args[index + 1]) : 18766;
             RevRuntimeAutomation.Start(port, Environment.GetEnvironmentVariable("REV_AUTOMATION_TOKEN"));
         }
+
+#if UNITY_ANDROID && !UNITY_EDITOR
+        /// <summary>使用本次受控启动携带的临时会话、令牌和端口，未启用时保留原启动行为。</summary>
+        private static bool TryStartAndroidIntent()
+        {
+            using var unity = new AndroidJavaClass("com.unity3d.player.UnityPlayer");
+            using var activity = unity.GetStatic<AndroidJavaObject>("currentActivity");
+            using var intent = activity?.Call<AndroidJavaObject>("getIntent");
+            if (intent == null || !intent.Call<bool>("getBooleanExtra", "revAutomation", false))
+            {
+                return false;
+            }
+
+            // 电脑在启动前生成这组身份，通过 ADB 转发后直接核对 /health。
+            string token = intent.Call<string>("getStringExtra", "revAutomationToken");
+            string launchId = intent.Call<string>("getStringExtra", "revAutomationLaunchId");
+            int port = intent.Call<int>("getIntExtra", "revAutomationPort", 0);
+            if (token == null || token.Length != 64 || token.Any(c => !Uri.IsHexDigit(c)) ||
+                launchId == null || launchId.Length != 32 || launchId.Any(c => !Uri.IsHexDigit(c)))
+            {
+                throw new ArgumentException("安卓自动化启动缺少有效的临时会话身份");
+            }
+
+            using var process = new AndroidJavaClass("android.os.Process");
+            StartServer(port, token, launchId, process.CallStatic<int>("myPid"));
+            return true;
+        }
+#endif
         private void Accept()
         {
             // HttpListener.GetContext 是阻塞等待，因此放后台线程；这里绝不调用 Unity API。

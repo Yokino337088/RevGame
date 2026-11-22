@@ -132,35 +132,20 @@ namespace Revolution.Editor
             Description = "用一份 JSON 一次建好对象树：节点可写 primitive/prefab/ui、变换、rect、active/layer/tag/isStatic、components（type 或脚本路径 + properties）、children；属性值写 \"@相对路径\" 可引用同批节点。先预检，任何失败都销毁本次创建的全部对象，整批一次 Undo")]
         public static object Compose(RevAutomationRequest request)
         {
-            var values = RevAutomationJson.Object(RevAutomationJson.Parse(request.payloadJson ?? "{}"));
-            if (!values.TryGetValue("nodes", out object rawNodes) || !(rawNodes is List<object> rawRoots) || rawRoots.Count == 0)
-            { throw new ArgumentException("需要非空 nodes 数组"); }
+            var roots = ParseRoots(request);
             var p = RevAutomationEditorOptions.Read(request);
-
-            // 第一步只解析和校验，什么都不创建：能在这里发现的错误绝不留下半个场景。
-            int count = 0;
-            var roots = rawRoots.Select(raw => ParseNode(raw, "", 0, ref count)).ToList();
             Transform parent = RevAutomationWorkspace.Parent(p.parent);
             Scene scene = RevAutomationWorkspace.FindScene(p.scene);
             if (parent != null && !string.IsNullOrEmpty(p.scene) && parent.gameObject.scene != scene) { throw new ArgumentException("parent 与 scene 不一致"); }
             Scene destination = parent != null ? parent.gameObject.scene : scene;
 
-            var all = new List<NodeSpec>();
-            foreach (NodeSpec root in roots) { Flatten(root, all); }
-            var byPath = new Dictionary<string, NodeSpec>(StringComparer.Ordinal);
-            var ambiguous = new HashSet<string>(StringComparer.Ordinal);
-            foreach (NodeSpec node in all) { if (byPath.ContainsKey(node.RelativePath)) { ambiguous.Add(node.RelativePath); } else { byPath[node.RelativePath] = node; } }
-
             Undo.IncrementCurrentGroup();
             int undoGroup = Undo.GetCurrentGroup();
             var created = new List<GameObject>();
+            List<NodeSpec> all;
             try
             {
-                foreach (NodeSpec root in roots) { Build(root, parent, destination, created); }
-                // 分两轮：引用可能指向任意同批节点上的组件，如果边挂边写，排在后面的节点组件还不存在，
-                // 字段类型又是组件时就会赋值失败。所以先全部挂好，再统一写属性。
-                foreach (NodeSpec node in all) { AddComponents(node); }
-                foreach (NodeSpec node in all) { ApplyProperties(node, byPath, ambiguous); }
+                all = BuildGraph(roots, parent, destination, created);
                 foreach (GameObject go in created) { Undo.RegisterCreatedObjectUndo(go, "Revolution Automation Compose"); }
                 Undo.CollapseUndoOperations(undoGroup);
             }
@@ -175,6 +160,128 @@ namespace Revolution.Editor
                 scene = destination.path, created = all.Count,
                 nodes = all.Select(n => new ComposedNode { path = RevAutomationEditorModel.HierarchyPath(n.Created.transform), id = RevAutomationEditorModel.Identity(n.Created) }).ToArray()
             };
+        }
+
+        [Serializable]
+        private sealed class ComposedPrefab
+        {
+            public string path, guid;
+            public int created;
+        }
+
+        /// <summary>用场景编排的同一套节点规则创建一个新资产。临时场景只持有本次对象，成功和失败都要关闭。</summary>
+        [RevAutomationAction("prefab.compose", Keys = new[] { "path", "nodes" },
+            Description = "从单根 JSON 对象树直接创建新 Prefab，复用 scene.compose 节点与同批引用，不改现有场景或覆盖资产")]
+        public static object ComposePrefab(RevAutomationRequest request)
+        {
+            var p = RevAutomationEditorOptions.Read(request);
+            RevAutomationEditorModel.RequireNewAsset(p.path);
+            if (!p.path.EndsWith(".prefab", StringComparison.OrdinalIgnoreCase) || File.Exists(p.path + ".meta"))
+            {
+                throw new ArgumentException("需要全新的 .prefab 路径（不能复用残留 .meta）");
+            }
+            List<NodeSpec> roots = ParseRoots(request);
+            if (roots.Count != 1)
+            {
+                throw new ArgumentException("prefab.compose 只允许一个根节点");
+            }
+            if (PrefabStageUtility.GetCurrentPrefabStage() != null)
+            {
+                throw new InvalidOperationException("请先退出 Prefab 模式，避免新对象被放入当前 Prefab 编辑舞台");
+            }
+
+            Scene previous = SceneManager.GetActiveScene();
+            Object[] selection = Selection.objects;
+            // CreatePrimitive 和 UGUI 工厂默认使用活动场景。把空场景设为活动后，连创建的第一刻也不会修改用户的场景。
+            Scene temporary = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Additive);
+            try
+            {
+                if (!SceneManager.SetActiveScene(temporary))
+                {
+                    throw new InvalidOperationException("无法激活临时编排场景");
+                }
+                List<NodeSpec> nodes = BuildGraph(roots, null, temporary, null);
+                // 等全部引用写好才落盘。之前抛错时没有目标资产，关闭临时场景即可回收对象。
+                try
+                {
+                    PrefabUtility.SaveAsPrefabAsset(roots[0].Created, p.path, out bool success);
+                    if (!success)
+                    {
+                        throw new IOException("Prefab 保存失败：" + p.path);
+                    }
+                }
+                catch
+                {
+                    // 目标在入口已验证为新路径。Unity 若留下部分文件，只回收本次写入的目标。
+                    if ((File.Exists(p.path) || File.Exists(p.path + ".meta")) && !AssetDatabase.DeleteAsset(p.path))
+                    {
+                        throw new IOException("Prefab 保存失败且无法回收本次目标：" + p.path);
+                    }
+                    throw;
+                }
+                return new ComposedPrefab { path = p.path, guid = AssetDatabase.AssetPathToGUID(p.path), created = nodes.Count };
+            }
+            finally
+            {
+                try
+                {
+                    if (previous.IsValid() && previous.isLoaded)
+                    {
+                        SceneManager.SetActiveScene(previous);
+                    }
+                    EditorSceneManager.CloseScene(temporary, true);
+                }
+                finally
+                {
+                    if (!Selection.objects.SequenceEqual(selection))
+                    {
+                        Selection.objects = selection;
+                    }
+                }
+            }
+        }
+
+        private static List<NodeSpec> ParseRoots(RevAutomationRequest request)
+        {
+            var values = RevAutomationJson.Object(RevAutomationJson.Parse(request.payloadJson ?? "{}"));
+            if (!values.TryGetValue("nodes", out object rawNodes) || !(rawNodes is List<object> rawRoots) || rawRoots.Count == 0)
+            {
+                throw new ArgumentException("需要非空 nodes 数组");
+            }
+            int count = 0;
+            return rawRoots.Select(raw => ParseNode(raw, "", 0, ref count)).ToList();
+        }
+
+        /// <summary>先完整创建对象与组件，再按路径填引用，后声明的节点也能被前面的节点引用。</summary>
+        private static List<NodeSpec> BuildGraph(List<NodeSpec> roots, Transform parent, Scene destination, List<GameObject> created)
+        {
+            var all = new List<NodeSpec>();
+            foreach (NodeSpec root in roots)
+            {
+                Flatten(root, all);
+            }
+            var byPath = new Dictionary<string, NodeSpec>(StringComparer.Ordinal);
+            var ambiguous = new HashSet<string>(StringComparer.Ordinal);
+            foreach (NodeSpec node in all)
+            {
+                if (!byPath.TryAdd(node.RelativePath, node))
+                {
+                    ambiguous.Add(node.RelativePath);
+                }
+            }
+            foreach (NodeSpec root in roots)
+            {
+                Build(root, parent, destination, created);
+            }
+            foreach (NodeSpec node in all)
+            {
+                AddComponents(node);
+            }
+            foreach (NodeSpec node in all)
+            {
+                ApplyProperties(node, byPath, ambiguous);
+            }
+            return all;
         }
 
         private static void Flatten(NodeSpec node, List<NodeSpec> into)

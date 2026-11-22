@@ -65,6 +65,8 @@ namespace Revolution.Editor
             string path = string.IsNullOrEmpty(p.path) ? Path.GetFullPath(Path.Combine("Builds", "RevAutomation", request.id, "Player" + extension)) : Path.GetFullPath(p.path);
             ValidateOutput(path, extension);
             bool timingBefore = PlayerSettings.enableFrameTimingStats;
+            bool androidAutomation = target == BuildTarget.Android && (p.automation || p.development);
+            bool internetBefore = androidAutomation && PlayerSettings.Android.forceInternetPermission;
             var compilerBefore = PlayerSettings.GetIl2CppCompilerConfiguration(group);
             // Unity WebGL 自带 Python 在 Windows 中文环境可能按 GBK 读取 LLVM 的 UTF-8 输出。
             // 改动只作用于此 Editor 的构建子进程，进程退出或构建结束后都不会残留到系统环境。
@@ -78,6 +80,11 @@ namespace Revolution.Editor
                 }
                 PlayerSettings.SetScriptingBackend(group, backend);
                 PlayerSettings.enableFrameTimingStats = p.frameTiming;
+                if (androidAutomation)
+                {
+                    // 只给本次安卓测试包确保回环 HTTP 所需的网络权限。
+                    PlayerSettings.Android.forceInternetPermission = true;
+                }
                 if (backend == ScriptingImplementation.IL2CPP)
                 {
                     PlayerSettings.SetIl2CppCompilerConfiguration(group, Il2CppCompilerConfiguration.Release);
@@ -120,6 +127,10 @@ namespace Revolution.Editor
                 }
                 PlayerSettings.SetScriptingBackend(group, before);
                 PlayerSettings.enableFrameTimingStats = timingBefore;
+                if (androidAutomation)
+                {
+                    PlayerSettings.Android.forceInternetPermission = internetBefore;
+                }
                 PlayerSettings.SetIl2CppCompilerConfiguration(group, compilerBefore);
                 // BuildPipeline会保存临时设置；只恢复内存值还不够，必须把还原后的设置落盘。
                 AssetDatabase.SaveAssets();
