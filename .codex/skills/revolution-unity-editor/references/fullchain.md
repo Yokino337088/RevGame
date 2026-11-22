@@ -141,8 +141,10 @@ clip.create → clip.curve → animator.create → animator.parameter → animat
 
 ## 一键打整包
 
+只连接用户当前打开的 Unity 工程。先核对 `editor status`，Android 出包前按 [Android 构建与验包](android-build-and-verification.md) 隔离其他平台 AB。
+
 ```text
-ship --target StandaloneWindows64 --excel full --player <空目录>/Game.exe --backend il2cpp
+rev.py --project <当前工程绝对路径> --mode live ship --target StandaloneWindows64 --excel full --player <空目录>/Game.exe --backend il2cpp
 ```
 
 | 参数 | 说明 |
