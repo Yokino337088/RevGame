@@ -16,7 +16,7 @@ Unity 控制台默认显示“活动日志”：操作的中文解释、用途�
 
 `rev_call` 示例：`{"target":"game","action":"demo.state","arguments":{}}`。target 分为 editor/game/gm/cli。GM 的 action 是实际完整命令名；显式注册的外部工具名对应 cli。动态工具统一接收 `arguments` 对象和可选 `confirm`。
 
-Editor 模式复用 Automation 文件桥，不必启动 HTTP。HTTP 模式先在 Play 调用 Editor 的 `runtime.start`，然后配置 `--runtime-endpoint <Unity工程>/Library/RevolutionAutomation/runtime.json`。Player 的凭据位于 `Application.persistentDataPath/RevolutionAutomation/runtime.json`，启动时显式开启。本次实测平台是 Windows 开发版；手机需先验证其运行时支持，再配置端口转发与本机凭据副本，不能假设已经可用。WebGL 无 HttpListener，不能宣称此链路已支持。
+Editor 模式可使用既有的 Automation 桥。HTTP 模式先在 Play 调用 Editor 的 `runtime.start`，然后配置 `--runtime-endpoint <Unity工程>/Library/RevolutionAutomation/runtime.json`。桌面 Player 的凭据位于 `Application.persistentDataPath/RevolutionAutomation/runtime.json`，启动时显式开启。手机按实际支持配置端口转发与本机凭据副本。普通 WebGL Player 用 [浏览器页内开发桥](../../revolution-framework/references/webgl-delivery.md#浏览器页内开发桥) 在当前测试页面调用相同注册表，沿用动作参数、确认、业务断言和清理。
 
 凭据文件包含 token，不提交、不粘进报告；每次服务启动 session 更新。401 检查 token，409 重新读本次 endpoint，404 工单确认实例，Busy 等当前任务结束。timeout/cancel 不保证回滚或中断同步 handler，先检查实际结果再决定重试。
 

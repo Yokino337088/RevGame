@@ -15,6 +15,7 @@
 
 ## 首次特效与 81 棋长帧
 
+- 普通 WebGL 自动化测试在测试页启动前给目标画布设置 `data-rev-automation="enabled"`，并给 RevGame 测试实例传入 `-revTestSession`。加载后先用 `canvas.revAutomation.request("runtime.capabilities")` 发现当前接口，再确认 `game.performance.state` 的隔离状态。两分钟采样可用 `canvas.revAutomation.frames.start()` 和 `frames.stop()`，异常时取消窗口并照常退出战斗。 [框架页内桥](../../revolution-framework/references/webgl-delivery.md#浏览器页内开发桥)
 - `Flow/Loading/SceneResourceWarmup.cs` 在读条里从实际池对象和已准备好的棋盘取材质，按常用弹道、近战、飘字、飞星、炸弹与帮手效果分批准备。动态字形准备在 `BattleEffectView.WarmBrowserTextGlyphsAsync`。分别测读条、真实首次技能和稳态持续交火，核对预热失败或取消时的归还。
 - `BoardView.Feedback` 负责普通浏览器飘字的合并、队头年龄与升档，`BattleEffectView.ReservationForDamageBatch` 只在相机和已有文字保持稳定的同一同步批次内复用避让范围。用实际配置核对软时间预算，分别量最老启动、实际提交和帧间隔，同时核对该轮攻击、反馈覆盖与清理。
 - `Automation/Diagnostics/GamePlayerPerformanceSession.cs` 提供隔离会话的 `game.performance.prepare/state/cleanup`。第 4 章满盘可用 `chapter=4, pieces=81`，等 `ready=true` 且已进战斗再采样，按实际 1600 × 899 与 120 秒条件比较。绘制回调内外分段计时，复测后核对 `cleaned`、逻辑数量和 `PieceFrames` 引用。

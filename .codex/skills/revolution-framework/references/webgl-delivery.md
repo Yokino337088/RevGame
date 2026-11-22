@@ -18,14 +18,28 @@
 - 用同一目标构建 Player 和 AB，核对 `StreamingAssets/WebGL/WebGL` 主包、ResMap、依赖及构建清单。Unity 会复制 StreamingAssets 的全部内容，发布目录需要明确保留该产品用到的平台目录与共享文件。
 - 浏览器和小游戏使用异步 AB 加载。整个加载器 `ReleaseAll` 后，旧请求停止重试并在下一次帧检查时中止。已完成的旧包由原请求归还，单个消费者取消由其作用域清理。下载时限使用实时时钟，错误记录包名、传输结果和 HTTP 状态码。
 - 可选 `RevHotUpdate` 沿相同的 WebGL 平台名与小游戏宏。网页清单、映射表和候选 AB 以真实帧等待，有取消、实时时限和 `Abort`，候选验证失败时保留生效版本。CDN 另核对 HTTPS、CORS、版本化 URL 与缓存策略。
-- 使用 `UNITY_EDITOR` 区分运行宿主与活动构建目标。WebGL 与已接入小游戏的 Player 跳过后台文件日志与本机 `HttpListener`，在线桌面 Editor 仍可用 RevCLI。浏览器上的自动化需要项目支持的网页侧传输。异步用 RevTask，线程、Socket 和文件 I/O 按平台实际能力分支。见 [Unity 2022.3 WebGL 技术限制](https://docs.unity3d.com/2022.3/Documentation/Manual/webgl-technical-overview.html)。
+- 使用 `UNITY_EDITOR` 区分运行宿主与活动构建目标。WebGL 与已接入小游戏的 Player 跳过后台文件日志与本机 `HttpListener`，在线桌面 Editor 仍可用 RevCLI。普通浏览器开发测试用下节页内桥。异步用 RevTask，线程、Socket 和文件 I/O 按平台实际能力分支。 [Unity 2022.3 WebGL 技术限制](https://docs.unity3d.com/2022.3/Documentation/Manual/webgl-technical-overview.html)
+
+## 浏览器页内开发桥
+
+对普通 WebGL Player，`DEVELOPMENT_BUILD` 或 `REV_AUTOMATION` 编译进页内桥。只对本地或获准的测试页面，在 `createUnityInstance` 前把目标 canvas 的 `data-rev-automation` 设为 `enabled`。正式包与小游戏沿各自的配置和入口。项目如需隔离存档，仍按它自己的启动配置设置，并用业务状态验证。 [Unity 与浏览器交互接口](https://docs.unity3d.com/2022.3/Documentation/Manual/webgl-interactingwithbrowserscripting.html)
+
+```javascript
+canvas.setAttribute("data-rev-automation", "enabled");
+// 等 Unity 完成启动、canvas.revAutomation 出现，再发现本次的真实能力。
+const receipt = await canvas.revAutomation.request("runtime.capabilities");
+```
+
+调用形式为 `await canvas.revAutomation.request(action, args, confirm)`。一次处理一个请求，参数契约、GM 完整名和确认均沿用 `RevRuntimeAutomation`。先查 `receipt.success`，再使用 `receipt.data`、实际业务状态和清理回执判定通过。跨帧操作可用 `canvas.revAutomation.cancel()` 取消当前等待。网页关闭时归还运行时操作与采样钩子。浏览器自动化通过本页上下文调用，桌面独立包继续用它自己的运行时凭据。
+
+归因用 `canvas.revAutomation.frames.start(capacity, countTextures)`，稳定窗口结束后用 `frames.stop()`，中止走 `frames.cancel()`。当前采样依赖普通浏览器中实际使用浏览器动画帧的 Unity 主循环与目标画布的 WebGL 上下文。页面被隐藏、画布尺寸变化、上下文丢失或容量溢出时保留诊断字段，`valid` 为假。 [WebGL 帧时测量](../../revolution-performance/references/webgl-performance.md#计算帧间隔与回调耗时)
 
 ## 浏览器 AB 的冷开与依赖调度
 
 - 把首开拆成下载依赖、解包/取出资产、实例装配、可见动画。用固定网络和新的浏览器配置，比对实际请求起止与面板可见的区间。带哈希的 Unity 缓存与 HTTP 缓存分开核对，同源版本化 URL 可以由浏览器复用。
 - 普通 WebGL Player 的 AB 依赖按清单小批发出。每个资源一批最多 3 个，加载器实际 HTTP 合计最多 4 个，含清单和重试。取目标资产前仍等依赖齐全。小游戏与文件宿主沿用各自的调度。
 - 验证跨资源同名包仅发出一次。在唤醒等候者前登记全部引用，某个调用方先取消也要给其余请求留住包。批内失败先等已发的请求收尾，再回滚全部实领引用。退代时核对旧请求中止及新代同名包的独立所有权。
-- 场景首屏已有交接屏障时，候选预热放在页面可交互后。业务按域声明少量高频入口，使用同一个逻辑路径和具名租约，串行准备并按域释放。前台沿既有异步开页，保持图集可画门禁。评估命中、省时、额外传输、驻留与离场。RevGame 的无尽入口结果和成本见 [Web 性能复盘](https://github.com/Yokino337088/RevGame/wiki/攻坚-Web端性能优化实践)。
+- 场景首屏已有交接屏障时，候选预热放在页面可交互后。业务按域声明少量高频入口，使用同一个逻辑路径和具名租约，串行准备并按域释放。前台沿既有异步开页，保持图集可画门禁。评估命中、省时、额外传输、驻留与离场。RevGame 的无尽入口结果和成本见 [Web 性能复盘](https://github.com/Yokino337088/RevGame/wiki/%E8%AE%A9%E7%BD%91%E9%A1%B5%E7%89%88%E7%82%B9%E5%BE%97%E5%BF%AB%E3%80%81%E6%89%93%E5%BE%97%E9%A1%BA)。
 
 ## 网页战斗的绘制预算
 

@@ -20,6 +20,7 @@
 
 ### 计算帧间隔与回调耗时
 
+- 开发测试包可用 [页内帧采样](../../revolution-framework/references/webgl-delivery.md#浏览器页内开发桥)。`frames.start` 和 `frames.stop` 成对调用，失败用 `frames.cancel`。先确认返回的 `valid` 和真实绘制次数，再读取帧间隔、回调内工作、回调间等待与首笔绘制前用时。只更新未绘制的回调留作计数，其耗时算入两张实绘画面之间的工作。慢帧的下一次申请标记以其直接前一回调为准。纹理调用数仅在详细模式启用。
 - 用 `performance.now()` 等单调时钟记录**实际绘制回调进入时刻**。相邻两次的实际间隔可以拆成上一回调自进入到结束、其结束到下一次进入。分别记录第一条真实绘制调用、请求下一帧的时刻和可能存在的只更新未绘制的回调。用帧号或共同事件对齐 Unity 中的逻辑、反馈队列、浏览器调用和纹理更新。按采样口径标明记录的是回调还是实际绘制，独立记跳过绘制的更新。浏览器传入的 `requestAnimationFrame` 时间戳用于动画时基，实际代码进入、退出要实测。这里的浏览器间隔也与显示器实际呈现时刻各有口径。 [浏览器动画帧规范](https://html.spec.whatwg.org/multipage/imagebitmap-and-animations.html#animation-frames) · [Unity 单调实时时钟](https://docs.unity3d.com/2022.3/Documentation/ScriptReference/Time-realtimeSinceStartupAsDouble.html)
 - 回调内部贵就继续拆规则、UI、字形、纹理上传调用、绘制提交和原生调用等待。上一回调结束前已申请下一帧、且确认中间无遗漏工作时，可以定位间隔主要落在回调之间。浏览器、系统、后台负载、驱动或 GPU 的具体份额，需要对应时间线或有效计时才能确定。纹理更新次数、其 JS 调用时间、GPU 用时和整帧间隔各自记录。 [浏览器性能时间线](https://developer.chrome.com/docs/devtools/performance/reference/)
 - GPU 计时先检查目标浏览器支持，如果使用 `EXT_disjoint_timer_query_webgl2`，异步轮询结果可用性，并剔除 disjoint（计时失效）的样本。记录样本数和计时覆盖范围，例如整帧、某一笔背景绘制或新增深度 Pass（一次绘制操作）。缺计时填未测。 [Khronos WebGL GPU 计时扩展](https://registry.khronos.org/webgl/extensions/EXT_disjoint_timer_query_webgl2/)
