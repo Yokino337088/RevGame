@@ -39,6 +39,13 @@ namespace RevGame.View
         private const int MaxPendingProjectiles = 70;
         /// <summary>每个渲染帧可发出的新弹道上限。痛点是浏览器同帧提交，规则攻击按原时序结算。</summary>
         private const int ProjectileSpawnsPerFrame = UseBrowserFeedbackBudget ? 3 : 6;
+#if UNITY_WEBGL && !UNITY_EDITOR && !UNITY_WEIXINMINIGAME && !UNITY_BYTEDANCE_MINIGAME && !UNITY_BYTEDANCEMINIGAME
+        /// <summary>浏览器一帧最多启动三条新伤害字，活动字数与已结算伤害的规则仍由原来的上限控制。</summary>
+        private const int BrowserDamageStartsPerFrame = 3;
+
+        /// <summary>同帧新文字申请的时间预算，单位秒；单次 Unity 字形或对象调用完成后才检查。</summary>
+        private const double BrowserDamageStartBudget = .0015;
+#endif
         /// <summary>两次显示申请的最短间隔，以游戏秒为单位。受每帧和同屏预算共同限制。</summary>
         private const float ProjectileSpawnInterval = 0.005f;
         // 这两个集合只追踪当前正在播放的池对象，动画结束或阶段切换时立即移除。
@@ -251,7 +258,7 @@ namespace RevGame.View
 
                 FlushPiecePatterns();
                 FlushProjectiles();
-                // 每帧最多8条，覆盖常见齐射；满额时优先回收口号，其次替换最旧数字，避免等上一秒动画结束。
+                // 本帧准备上限只管新字启动。已有文字继续做动画；满额回收顺序沿用口号优先。
                 FlushDamageTexts();
                 FlushAttackText();
                 // 最多二十条文字。把昂贵的Renderer.bounds/WorldToScreenPoint从两重循环里提出来：
@@ -281,11 +288,21 @@ namespace RevGame.View
                 System.Array.Clear(_textSnapshot, 0, count);
             }
         }
-        /// <summary>本帧直接显示已结算数字；超预算只替换表现，不更改战斗数值。</summary>
-        // 目标是选本帧最老的至多八条，保持原同时间戳遍历顺序。
-        // 先一次扫描过滤过期项并稳定插入八槽，后续显示失败就停，不提前删除未显示记录。
+        /// <summary>每帧从已结算的队列取最老字条。浏览器给启动留出数量和时间预算，余项在下帧重新挑选。</summary>
+        // 一次扫描过滤过期项并稳定排序。同一时刻的记录保留原遍历顺序，未显示的仍能合并后续命中。
         private void FlushDamageTexts()
         {
+            if (_pendingDamage.Count == 0)
+            {
+                return;
+            }
+
+            int limit = _damageBatch.Length;
+#if UNITY_WEBGL && !UNITY_EDITOR && !UNITY_WEIXINMINIGAME && !UNITY_BYTEDANCE_MINIGAME && !UNITY_BYTEDANCEMINIGAME
+            // 预算从扫描前开始计，包含挑选、替换和同步显示。第一条始终尝试，避免持续忙时没有任何反馈。
+            double deadline = Time.realtimeSinceStartupAsDouble + BrowserDamageStartBudget;
+            limit = BrowserDamageStartsPerFrame;
+#endif
             int count = 0;
             float now = Time.time;
             _expiredDamageIds.Clear();
@@ -296,27 +313,25 @@ namespace RevGame.View
                     _expiredDamageIds.Add(item.Key);
                     continue;
                 }
-                // 最多八项的插入排序；不分配列表，也不在一帧内反复扫描整个字典八遍。
-                // 从当前最晚位置向前找插入点。使用严格小于：创建时间相等时排在已有项之后，保留原先顺序。
-                // 最多八次比较，不需要排序整张81项列表或分配排序临时数组。
+                // 只为本帧能启动的候选排序，不分配列表，不反复扫描整张字典。
+                // 严格小于才向前移动。同一时间登记的记录保留原先顺序。
                 int index = count;
                 while (index > 0 && item.CreatedAt < _damageBatch[index - 1].CreatedAt)
                 {
                     index--;
                 }
-                if (index >= _damageBatch.Length)
+                if (index >= limit)
                 {
                     continue;
                 }
-                // 只把入选槽往右挪，多出来的第九名舍弃；它仍在_pendingDamage里，下帧可以再次竞争。
-                // 这是显示调度，不会舍弃该条伤害的模型结算。
-                int end = System.Math.Min(count, _damageBatch.Length - 1);
+                // 超出入选范围的记录保留在字典，继续合并同类命中，留给后续帧显示。
+                int end = System.Math.Min(count, limit - 1);
                 for (int i = end; i > index; i--)
                 {
                     _damageBatch[i] = _damageBatch[i - 1];
                 }
                 _damageBatch[index] = item;
-                count = System.Math.Min(count + 1, _damageBatch.Length);
+                count = System.Math.Min(count + 1, limit);
             }
             foreach (long id in _expiredDamageIds)
             {
@@ -326,9 +341,15 @@ namespace RevGame.View
             {
                 if (!FlushOneDamageText(_damageBatch[i]))
                 {
-                    // 未能预约时保持余下记录，下帧重新按实时队列选择，不能提前删掉未显示的数字。
+                    // 未能预约时保留余项，下帧按实时队列重选。
                     break;
                 }
+#if UNITY_WEBGL && !UNITY_EDITOR && !UNITY_WEIXINMINIGAME && !UNITY_BYTEDANCE_MINIGAME && !UNITY_BYTEDANCEMINIGAME
+                if (Time.realtimeSinceStartupAsDouble >= deadline)
+                {
+                    break;
+                }
+#endif
             }
         }
         /// <summary>显示已经选中的一条数字；返回false代表本帧预约已满，记录继续留在待播队列。</summary>

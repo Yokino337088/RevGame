@@ -167,6 +167,8 @@ namespace RevGame.Flow
                         await WarmBrowserVariantAsync(feedback.BrowserRangedMaterial);
                         await WarmBrowserVariantAsync(feedback.BrowserMeleeMaterial);
                         await WarmBrowserVariantAsync(feedback.BrowserDamageTextMaterial);
+                        // 使用正在借用的同一字体。分字号和少量字符准备，读条取消时随原有租约收尾。
+                        await feedback.WarmBrowserTextGlyphsAsync(() => _disposed);
                     }
                     if (i == feedbackEnd && instance is ScoreSparkView spark)
                     {

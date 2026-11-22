@@ -80,6 +80,83 @@ namespace RevGame.View
 
         /// <summary>伤害字随池创建时绑定的材质，读条中准备首次漂字所用程序。</summary>
         internal Material BrowserDamageTextMaterial => _textRenderer == null ? null : _textRenderer.sharedMaterial;
+
+        /// <summary>读条期间按实际字体和配置字号少量补齐常见战斗字形，取消时停止后续申请。</summary>
+        internal async RevTask WarmBrowserTextGlyphsAsync(System.Func<bool> cancelled)
+        {
+            // 只有场内真正使用的动态字体才会在这里扩展；原字形、字号和文字排版仍由原组件绘制。
+            Font font = damageText == null ? null : damageText.font;
+            if (font == null || !font.dynamic)
+            {
+                return;
+            }
+
+            var groups = new System.Collections.Generic.SortedDictionary<int, System.Collections.Generic.SortedSet<char>>();
+            AddBrowserGlyphs(groups, GameTextConfig.Damage(BattleDamageKind.Normal, GameSide.Player));
+            AddBrowserGlyphs(groups, GameTextConfig.Damage(BattleDamageKind.Normal, GameSide.Enemy));
+            AddBrowserGlyphs(groups, GameTextConfig.Damage(BattleDamageKind.Critical, GameSide.Enemy));
+            AddBrowserGlyphs(groups, GameTextConfig.Damage(BattleDamageKind.RegionPulse, GameSide.Enemy));
+            AddBrowserGlyphs(groups, GameTextConfig.Damage(BattleDamageKind.EnergyBomb, GameSide.Enemy));
+            AddBrowserGlyphs(groups, GameTextConfig.Damage(BattleDamageKind.Helper, GameSide.Enemy));
+            AddBrowserGlyphs(groups, GameTextConfig.Damage(BattleDamageKind.HelperBeam, GameSide.Enemy));
+            foreach (PieceKind kind in System.Enum.GetValues(typeof(PieceKind)))
+            {
+                AddBrowserGlyphs(groups, GameTextConfig.Require("Attack_" + kind));
+            }
+
+            // 一批最多十六个字符。一个原生字体调用无法拆开，因此在每次同步申请前让出读条的一帧。
+            const int glyphsPerSlice = 16;
+            var chunk = new System.Text.StringBuilder(glyphsPerSlice);
+            FontStyle style = damageText.fontStyle;
+            foreach (var group in groups)
+            {
+                foreach (char glyph in group.Value)
+                {
+                    chunk.Append(glyph);
+                    if (chunk.Length == glyphsPerSlice)
+                    {
+                        await RequestBrowserGlyphSliceAsync(font, style, group.Key, chunk.ToString(), cancelled);
+                        chunk.Clear();
+                    }
+                }
+                if (chunk.Length != 0)
+                {
+                    await RequestBrowserGlyphSliceAsync(font, style, group.Key, chunk.ToString(), cancelled);
+                    chunk.Clear();
+                }
+            }
+        }
+
+        /// <summary>只收这一行会真实显示的字。数值占位展开为十个数字，同字号重复字符只请求一次。</summary>
+        private static void AddBrowserGlyphs(System.Collections.Generic.SortedDictionary<int, System.Collections.Generic.SortedSet<char>> groups, BattleText row)
+        {
+            if (!groups.TryGetValue(row.FontSize, out var glyphs))
+            {
+                glyphs = new System.Collections.Generic.SortedSet<char>();
+                groups.Add(row.FontSize, glyphs);
+            }
+
+            string text = row.Text.Replace("{damage}", "0123456789");
+            foreach (char glyph in text)
+            {
+                if (!char.IsControl(glyph))
+                {
+                    glyphs.Add(glyph);
+                }
+            }
+        }
+
+        /// <summary>在下一帧开始一批字体准备。场景失效后不再访问借用的字体对象。</summary>
+        private async RevTask RequestBrowserGlyphSliceAsync(Font font, FontStyle style, int size, string glyphs, System.Func<bool> cancelled)
+        {
+            await RevTaskScheduler.NextFrame();
+            if (this == null || font == null || cancelled())
+            {
+                throw new System.OperationCanceledException("文字预热已取消");
+            }
+
+            font.RequestCharactersInTexture(glyphs, size, style);
+        }
 #endif
         private bool _magicAura;
         [Tooltip("最长飞行秒数，仅表现；命中伤害已由服务结算。")]
