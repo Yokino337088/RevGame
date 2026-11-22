@@ -19,6 +19,7 @@ description: RevGame 玩法、UI、资源和验收的项目入口。按改动范
 | WebGL 打包、网页打开、默认开放与浏览器排错 | [RevGame 网页版交付](references/webgl-delivery.md) · [框架 WebGL 参考](../revolution-framework/references/webgl-delivery.md) |
 | 点 Play 后等待域重载、同一编辑器重复测试 | [编辑器快速 Play](references/validation-and-delivery.md#编辑器快速-play)。检查项目模式、首屏耗时和跨 Play 的资源及测试状态。 |
 | 战斗、逐帧更新、密集 UI/特效、资源热路径或性能诊断 | [性能 Skill](../revolution-performance/SKILL.md) 的命中专题。从设计起核对 CPU、GPU、内存与缓存，再按 [RevGame 新手指南](../../../RevGame_Client/文档/战斗性能优化规则/RevGame性能优化实践_新手指南.html) 选同类案例。 |
+| 攻坚、高技术含量任务的复盘、Wiki 目录与发布 | 使用 Revolution 或 RevGame 插件中的 [Revolution Wiki Skill](https://github.com/Yokino337088/Revolution/blob/main/Skills/revolution-wiki/SKILL.md)。按通用或目标平台归档，零基础释词，保留实测条件和原始出处。 |
 
 导入或打包资源前先查已有资产、逻辑路径和包归属，只导入缺少的内容。各模块复用同一份正式资产和已有 AB。按 [Unity 与资源迭代](references/unity-and-assets.md) 核对 Sprite Atlas V2 归属和目标平台的实际产物。
 

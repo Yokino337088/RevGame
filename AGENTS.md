@@ -8,6 +8,7 @@ RevGame 用真实业务验证 Revolution 框架。Unity 工程为 `RevGame_Clien
 - 类、方法、属性和 `if` / `else if` / `else` 的大括号各占一行，方法参数与左括号同一行。移动 Unity 资产保留原 `.meta` 和 GUID。
 - 修改 Shader、材质、纹理和渲染特效时读 [Revolution-TA](.codex/skills/revolution-ta/SKILL.md)。Shader 位于 `Assets/GameShader`，材质位于 `Assets/GameRes/Material/<模块>`。按实际管线、纹理用途与目标 AB 验证画面和资源归属。
 - 编写、修改或审查战斗、逐帧更新、密集 UI/特效及其它性能敏感代码时，核对 CPU 逻辑与提交、GPU、内存与 GC、缓存失效与所有权。按相同负载验证受影响的规则、画面与收益。 [性能 Skill](.codex/skills/revolution-performance/SKILL.md) · [RevGame 新手指南](RevGame_Client/文档/战斗性能优化规则/RevGame性能优化实践_新手指南.html)
+- 攻坚和高技术含量任务交付时，新建或实质更新 [RevGame Wiki](https://github.com/Yokino337088/RevGame/wiki) 的对应案例。使用 [Revolution Wiki Skill](https://github.com/Yokino337088/Revolution/blob/main/Skills/revolution-wiki/SKILL.md)，写清问题、定位过程、取舍、实测和边界，按任务已有授权发布。
 - 导入前先在 AssetDatabase 核对已有资产、逻辑路径和包归属，只补项目缺少的资源。相同内容复用一份正式资产，打包时同一目标平台只归一个 AB，在用 Sprite 只归一个 Sprite Atlas V2。跨包通过依赖复用，发布前核对实际依赖、清单和包体。见 [Unity 与资源迭代](.codex/skills/revgame-development/references/unity-and-assets.md)。
 - 最后一次影响 Unity 编译的改动后，在目标在线编辑器确认编辑态，依次刷新导入、`editor.recompile`、`editor wait`、`editor.compilation`。确认 `requestId` 对应、`finished=true`、无 Error 后再进 Play 或交付。用户对局先交接，验收后改脚本须重跑。
 - 改代码或资产运行 `python tools/RevPolicy/check.py`，提交前用 `--staged`。业务验收按需求走正常入口，核对实际状态、错误和清理。资产变更走项目资源验证及真实 AB 冷启动。
