@@ -45,6 +45,15 @@ namespace RevGame.View
 
         /// <summary>同帧新文字申请的时间预算，单位秒；单次 Unity 字形或对象调用完成后才检查。</summary>
         private const double BrowserDamageStartBudget = .0015;
+
+        /// <summary>同一战斗步集中登记多条伤害时，提前处理这批记录，避免等到队头变旧才加速。</summary>
+        private const int BrowserDamageBurstDepth = 8;
+
+        /// <summary>队头超过此游戏时间时，稀疏队列也允许本帧处理更多已结算的记录。</summary>
+        private const float BrowserDamageBurstAge = .08f;
+
+        /// <summary>积压时本帧补处理的软预算，单位秒。每条同步显示操作结束后再检查。</summary>
+        private const double BrowserDamageBurstBudget = .00325;
 #endif
         /// <summary>两次显示申请的最短间隔，以游戏秒为单位。受每帧和同屏预算共同限制。</summary>
         private const float ProjectileSpawnInterval = 0.005f;
@@ -138,7 +147,7 @@ namespace RevGame.View
             public int TargetId, Damage;
             public GameSide Side;
             public Vector3 Position;
-            // CreatedAt控制过期；同帧合并后立即允许显示，不再人为等待0.22秒。
+            /// <summary>第一笔命中的游戏时间。后续合并保留这个时间，供过期、排序和补处理判断。</summary>
             public float CreatedAt;
         }
         /// <summary>口号最多七条，与数字共用二十条总预算；间隔缩短，但同一棋子不能连续刷屏。</summary>
@@ -298,10 +307,11 @@ namespace RevGame.View
             }
 
             int limit = _damageBatch.Length;
+            int replaceThroughOrder = int.MaxValue;
 #if UNITY_WEBGL && !UNITY_EDITOR && !UNITY_WEIXINMINIGAME && !UNITY_BYTEDANCE_MINIGAME && !UNITY_BYTEDANCEMINIGAME
-            // 预算从扫描前开始计，包含挑选、替换和同步显示。第一条始终尝试，避免持续忙时没有任何反馈。
-            double deadline = Time.realtimeSinceStartupAsDouble + BrowserDamageStartBudget;
-            limit = BrowserDamageStartsPerFrame;
+            // 预选同一批最老记录。需要补处理时使用现有八个槽，不重复扫描或扩大活动字池。
+            double frameStart = Time.realtimeSinceStartupAsDouble;
+            replaceThroughOrder = _textOrder;
 #endif
             int count = 0;
             float now = Time.time;
@@ -337,9 +347,18 @@ namespace RevGame.View
             {
                 _pendingDamage.Remove(id);
             }
+#if UNITY_WEBGL && !UNITY_EDITOR && !UNITY_WEIXINMINIGAME && !UNITY_BYTEDANCE_MINIGAME && !UNITY_BYTEDANCEMINIGAME
+            // 集中命中按队列深度升档，稀疏队列按队头年龄升档。其余帧保留较小的启动预算。
+            bool burst = count >= BrowserDamageBurstDepth || (count > 0 && now - _damageBatch[0].CreatedAt >= BrowserDamageBurstAge);
+            double deadline = frameStart + (burst ? BrowserDamageBurstBudget : BrowserDamageStartBudget);
+            if (!burst)
+            {
+                count = System.Math.Min(count, BrowserDamageStartsPerFrame);
+            }
+#endif
             for (int i = 0; i < count; i++)
             {
-                if (!FlushOneDamageText(_damageBatch[i]))
+                if (!FlushOneDamageText(_damageBatch[i], replaceThroughOrder))
                 {
                     // 未能预约时保留余项，下帧按实时队列重选。
                     break;
@@ -352,14 +371,20 @@ namespace RevGame.View
 #endif
             }
         }
-        /// <summary>显示已经选中的一条数字；返回false代表本帧预约已满，记录继续留在待播队列。</summary>
-        private bool FlushOneDamageText(PendingDamageText oldest)
+        /// <summary>尝试显示已入选的数字。网页只替换本批开始前已有的数字，无法预约时保留队列记录。</summary>
+        private bool FlushOneDamageText(PendingDamageText oldest, int replaceThroughOrder)
         {
             if (_textEffects.Count + _pendingTextLoads >= MaxFloatingTexts)
             {
                 BattleEffectView retire = null;
                 foreach (BattleEffectView text in _textEffects)
                 {
+                    // 本批新字先保留一次显示机会，避免同一帧从池里取出又立即归还。
+                    if (text.TextOrder > replaceThroughOrder)
+                    {
+                        continue;
+                    }
+
                     if (retire == null || (text.IsAttackText && !retire.IsAttackText) ||
                         (text.IsAttackText == retire.IsAttackText && text.TextOrder < retire.TextOrder))
                     {
@@ -466,17 +491,36 @@ namespace RevGame.View
                     candidate.position += delta;
                     // 重叠面积的权重远大于移动距离；先争取不挡字，再尽量贴近受击棋子。
                     float cost = delta.sqrMagnitude * 0.001f;
+#if UNITY_WEBGL && !UNITY_EDITOR && !UNITY_WEIXINMINIGAME && !UNITY_BYTEDANCE_MINIGAME && !UNITY_BYTEDANCEMINIGAME
+                    // 重叠面积只会增加代价。追不上当前最优点时就停止比较，保留原有的同分顺序。
+                    if (cost >= bestCost)
+                    {
+                        continue;
+                    }
+#endif
                     for (int j = 0; j < occupiedCount; j++)
                     {
                         Rect occupied = _reservationRects[j];
                         float width = Mathf.Max(0f, Mathf.Min(candidate.xMax, occupied.xMax) - Mathf.Max(candidate.xMin, occupied.xMin));
                         float height = Mathf.Max(0f, Mathf.Min(candidate.yMax, occupied.yMax) - Mathf.Max(candidate.yMin, occupied.yMin));
                         cost += width * height * 100f;
+#if UNITY_WEBGL && !UNITY_EDITOR && !UNITY_WEIXINMINIGAME && !UNITY_BYTEDANCE_MINIGAME && !UNITY_BYTEDANCEMINIGAME
+                        if (cost >= bestCost)
+                        {
+                            break;
+                        }
+#endif
                     }
                     if (cost < bestCost)
                     {
                         bestCost = cost;
                         best = delta;
+#if UNITY_WEBGL && !UNITY_EDITOR && !UNITY_WEIXINMINIGAME && !UNITY_BYTEDANCE_MINIGAME && !UNITY_BYTEDANCEMINIGAME
+                        if (bestCost == 0f)
+                        {
+                            break;
+                        }
+#endif
                     }
                 }
                 Vector3 pixel = camera.WorldToScreenPoint(anchor);
