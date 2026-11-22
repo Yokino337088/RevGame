@@ -81,6 +81,13 @@ namespace RevGame.View
         private readonly Rect[] _textRects = new Rect[MaxFloatingTexts];
         // 一次选点中其它文字的预计放大/上浮范围（像素），25个候选位置共用这一份快照。
         private readonly Rect[] _reservationRects = new Rect[MaxFloatingTexts];
+#if UNITY_WEBGL && !UNITY_EDITOR && !UNITY_WEIXINMINIGAME && !UNITY_BYTEDANCE_MINIGAME && !UNITY_BYTEDANCEMINIGAME
+        /// <summary>每个同步伤害字处理批次取一个独立序号，即使切换棋盘也不复用旧标记。</summary>
+        private static int _damageReservationSequence;
+
+        /// <summary>只有这一批正在同步处理时才允许共享占用范围，零表示回到普通实时查询。</summary>
+        private int _damageReservationBatch;
+#endif
         // 已申请但还没加载好的名额也算占用；否则异步加载完成的同一帧会突然挤出大量飘字。
         private int _pendingTextLoads, _pendingProjectileLoads;
         // 下次允许显示的游戏时间；只限制表现生成速度，不影响模型中的攻击冷却或伤害结算。
@@ -356,20 +363,33 @@ namespace RevGame.View
                 count = System.Math.Min(count, BrowserDamageStartsPerFrame);
             }
 #endif
-            for (int i = 0; i < count; i++)
-            {
-                if (!FlushOneDamageText(_damageBatch[i], replaceThroughOrder))
-                {
-                    // 未能预约时保留余项，下帧按实时队列重选。
-                    break;
-                }
 #if UNITY_WEBGL && !UNITY_EDITOR && !UNITY_WEIXINMINIGAME && !UNITY_BYTEDANCE_MINIGAME && !UNITY_BYTEDANCEMINIGAME
-                if (Time.realtimeSinceStartupAsDouble >= deadline)
-                {
-                    break;
-                }
+            // 这批同步安排新字时，已在屏幕上的其它字没有推进动画。只在这个调用范围内共享范围。
+            _damageReservationBatch = unchecked(++_damageReservationSequence);
+            try
 #endif
+            {
+                for (int i = 0; i < count; i++)
+                {
+                    if (!FlushOneDamageText(_damageBatch[i], replaceThroughOrder))
+                    {
+                        // 未能预约时保留余项，下帧按实时队列重选。
+                        break;
+                    }
+#if UNITY_WEBGL && !UNITY_EDITOR && !UNITY_WEIXINMINIGAME && !UNITY_BYTEDANCE_MINIGAME && !UNITY_BYTEDANCEMINIGAME
+                    if (Time.realtimeSinceStartupAsDouble >= deadline)
+                    {
+                        break;
+                    }
+#endif
+                }
             }
+#if UNITY_WEBGL && !UNITY_EDITOR && !UNITY_WEIXINMINIGAME && !UNITY_BYTEDANCE_MINIGAME && !UNITY_BYTEDANCEMINIGAME
+            finally
+            {
+                _damageReservationBatch = 0;
+            }
+#endif
         }
         /// <summary>尝试显示已入选的数字。网页只替换本批开始前已有的数字，无法预约时保留队列记录。</summary>
         private bool FlushOneDamageText(PendingDamageText oldest, int replaceThroughOrder)
@@ -469,11 +489,20 @@ namespace RevGame.View
                 Vector2 best = Vector2.zero;
                 // 同一次选点过程中其它文字不移动，预留矩形只需采样一次，不必在25个候选点里重复计算。
                 int occupiedCount = 0;
+#if UNITY_WEBGL && !UNITY_EDITOR && !UNITY_WEIXINMINIGAME && !UNITY_BYTEDANCE_MINIGAME && !UNITY_BYTEDANCEMINIGAME
+                bool shareReservations = _damageReservationBatch != 0 && camera == _feedbackProjection.Camera;
+#endif
                 foreach (BattleEffectView other in _textEffects)
                 {
                     if (other != text)
                     {
+#if UNITY_WEBGL && !UNITY_EDITOR && !UNITY_WEIXINMINIGAME && !UNITY_BYTEDANCE_MINIGAME && !UNITY_BYTEDANCEMINIGAME
+                        _reservationRects[occupiedCount++] = shareReservations
+                            ? other.ReservationForDamageBatch(_damageReservationBatch)
+                            : other.TextReservationRect;
+#else
                         _reservationRects[occupiedCount++] = other.TextReservationRect;
+#endif
                     }
                 }
                 for (int i = 0; i < 25; i++)

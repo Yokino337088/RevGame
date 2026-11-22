@@ -242,6 +242,16 @@ namespace RevGame.View
         private int _configuredFontSize = -1;
         // 本地字形范围是否有效；新文案/新字号/Font.textureRebuilt会置false，不能拿旧宽度避让新字。
         private bool _localTextBoundsValid;
+#if UNITY_WEBGL && !UNITY_EDITOR && !UNITY_WEIXINMINIGAME && !UNITY_BYTEDANCE_MINIGAME && !UNITY_BYTEDANCEMINIGAME
+        /// <summary>最近一次为棋盘同步飘字批次算好的占用矩形，以屏幕像素表示。</summary>
+        private Rect _damageBatchReservation;
+
+        /// <summary>占用矩形归属的临时批次。零表示已失效，应重新按位置和字形计算。</summary>
+        private int _reservationBatch;
+
+        /// <summary>本对象字体范围重建的次数，用来识别查询矩形过程中发生的重建回调。</summary>
+        private int _reservationFontGeneration;
+#endif
         // 上次相机视图/投影矩阵；镜头移动、Boss特写或投影变化都会使世界→屏幕换算结果不同。
         private Matrix4x4 _rectCameraView, _rectCameraProjection;
         // 上次相机像素视口；窗口改变时即使相机世界位置相同，也不能复用旧像素矩形。
@@ -338,6 +348,27 @@ namespace RevGame.View
                 return rect;
             }
         }
+#if UNITY_WEBGL && !UNITY_EDITOR && !UNITY_WEIXINMINIGAME && !UNITY_BYTEDANCE_MINIGAME && !UNITY_BYTEDANCEMINIGAME
+        /// <summary>只给同一棋盘同步安排的一批新字复用占用范围。调用方保证其它字没有推进动画。</summary>
+        internal Rect ReservationForDamageBatch(int batch)
+        {
+            if (_reservationBatch == batch)
+            {
+                return _damageBatchReservation;
+            }
+
+            int revision = _reservationFontGeneration;
+            Rect measured = TextReservationRect;
+            // 原生字形查询可能触发字体重建，此时下一次仍重新采样。
+            if (revision == _reservationFontGeneration)
+            {
+                _damageBatchReservation = measured;
+                _reservationBatch = batch;
+            }
+
+            return measured;
+        }
+#endif
         /// <summary>数字越大越靠前，文字与自己的描边一起排序，不能让旧描边挡住新字。</summary>
         public void SetTextOrder(int order)
         {
@@ -742,6 +773,10 @@ namespace RevGame.View
             _fadeAlpha = _occlusionAlpha = 1f;
             IsFloatingText = IsAttackText = false;
             TextOrder = 0;
+#if UNITY_WEBGL && !UNITY_EDITOR && !UNITY_WEIXINMINIGAME && !UNITY_BYTEDANCE_MINIGAME && !UNITY_BYTEDANCEMINIGAME
+            // 同一批里同步回收再借出的对象已换了文字和位置。
+            _reservationBatch = 0;
+#endif
             transform.position = position;
             transform.localScale = Vector3.one;
             transform.rotation = Quaternion.identity;
@@ -845,6 +880,10 @@ namespace RevGame.View
             }
             _localTextBoundsValid = false;
             _rectFrame = -1;
+#if UNITY_WEBGL && !UNITY_EDITOR && !UNITY_WEIXINMINIGAME && !UNITY_BYTEDANCE_MINIGAME && !UNITY_BYTEDANCEMINIGAME
+            _reservationBatch = 0;
+            _reservationFontGeneration = unchecked(_reservationFontGeneration + 1);
+#endif
         }
         // Font.textureRebuilt是静态事件，销毁必须退订同一个实例方法，避免字体事件一直引用已销毁池对象。
         private void OnDestroy()
