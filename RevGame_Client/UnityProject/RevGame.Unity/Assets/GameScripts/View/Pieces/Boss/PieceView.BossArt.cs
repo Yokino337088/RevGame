@@ -22,6 +22,7 @@ namespace RevGame.View
             {
                 return;
             }
+            InvalidateBossShaderSubmission();
             RestoreBossArt();
 
             if (art == null)

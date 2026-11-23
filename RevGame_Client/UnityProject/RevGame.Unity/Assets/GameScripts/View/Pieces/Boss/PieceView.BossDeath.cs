@@ -185,6 +185,7 @@ namespace RevGame.View
             {
                 bodyRenderer.sharedMaterial = _bossRestMaterial;
                 bodyRenderer.SetPropertyBlock(null);
+                InvalidateBossShaderSubmission();
                 // 清掉Boss参数块后无条件重新绑定同帧，让Unity重建Atlas采样；取消/出生末帧也不能白闪。
                 Sprite frame = bodyRenderer.sprite;
                 bodyRenderer.sprite = null;

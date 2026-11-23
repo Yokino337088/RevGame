@@ -34,6 +34,14 @@ namespace RevGame.View
         [Tooltip("区域波动专用底图，独立于落点勾号；由项目图集统一管理。")]
         [SerializeField] private Sprite hazardSprite;
         [SerializeField] private Material hazardMaterial;
+#if UNITY_EDITOR
+        /// <summary>区域波动播放中累计提交过多少次局部时间，编辑器采样取窗口差值。</summary>
+        private static long _regionAgeWrites;
+        /// <summary>提交播放进度的累计 Stopwatch 计数，含设置属性和交给渲染器两个调用。</summary>
+        private static long _regionAgeTicks;
+        /// <summary>同一主线程上的累计实测收据，单位分别为次和 Stopwatch 计数。</summary>
+        public static (long writes, long ticks) RegionAgeWork => (_regionAgeWrites, _regionAgeTicks);
+#endif
 #if UNITY_WEBGL && !UNITY_EDITOR && !UNITY_WEIXINMINIGAME && !UNITY_BYTEDANCE_MINIGAME && !UNITY_BYTEDANCEMINIGAME
         /// <summary>返回本格真实区域技能材质，预热时不用创建覆盖节点。</summary>
         internal Material BrowserHazardMaterial => hazardMaterial;
@@ -249,8 +257,16 @@ namespace RevGame.View
             sequence.Insert(0, DOTween.To(() => age, value =>
             {
                 age = value;
+#if UNITY_EDITOR
+                long began = System.Diagnostics.Stopwatch.GetTimestamp();
+#endif
                 _hazardProperties.SetFloat("_Age", value);
                 _hazardRenderer.SetPropertyBlock(_hazardProperties);
+#if UNITY_EDITOR
+                // 只量已经播放的格子交局部时钟的成本，装配 Tween 和其它画面工作留给各自的计时。
+                _regionAgeTicks += System.Diagnostics.Stopwatch.GetTimestamp() - began;
+                _regionAgeWrites++;
+#endif
             }, duration, duration).SetEase(Ease.Linear));
             sequence.Insert(delay, overlay.DOLocalMoveY(Consts.CellSize * .28f, .12f).SetEase(Ease.OutQuad));
             sequence.Insert(delay + .12f, overlay.DOLocalMoveY(0, .22f).SetEase(Ease.OutBounce));

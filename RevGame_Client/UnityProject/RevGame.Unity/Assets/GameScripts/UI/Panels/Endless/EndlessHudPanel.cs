@@ -94,6 +94,8 @@ namespace RevGame.Endless
         /// <summary>暂停等模态状态的落屏输入。状态相同直接返回，避免反复拼装祝福和选项说明。</summary>
         private (EndlessPhase phase, int first, int second, int third, int eventKind, int circuit, int rerolls,
             int level, long score, int kills, int bosses) _modalStamp;
+        /// <summary>顶栏文字上次使用的波次、向上取整的棋心血量、整秒与击杀数，默认空值需要刷新。</summary>
+        private (int wave, int heart, int seconds, int kills)? _statusStamp;
         private float _shownHeart = -1;
         private string _shownTip = "";
         /// <summary>三条进度条各自的缓动；新目标到来先停旧的，不叠加。</summary>
@@ -237,7 +239,7 @@ namespace RevGame.Endless
             RefreshBanner();
             RefreshModal(run);
         }
-        /// <summary>顶部：棋心血条 + 时间 + 击杀。棋心掉血时顶栏抖一下，击杀每满 25 只顶栏弹一下（割草的节奏感）。</summary>
+        /// <summary>同步棋心血条与顶栏文字，数字变了才格式化，掉血和每 25 个击杀仍各自触发动画。</summary>
         private void RefreshTop(EndlessRun run)
         {
             float heartRatio = Mathf.Clamp01(run.heart / EndlessConfig.Value("HeartHp"));
@@ -245,7 +247,13 @@ namespace RevGame.Endless
             // 血条图本身是金色：健康时不染色，危险时才染红，提示更醒目。
             _heartImage.color = heartRatio < 0.3f ? new Color(1, .3f, .22f) : Color.white;
             int kills = run.kills + run.invaderKills;
-            Set(_status, "第" + Service.WaveNumber + "波   棋心 " + Mathf.CeilToInt(run.heart) + "   " + ((int)run.seconds / 60).ToString("00") + ":" + ((int)run.seconds % 60).ToString("00") + "   击杀 " + kills);
+            var stamp = (wave: Service.WaveNumber, heart: Mathf.CeilToInt(run.heart), seconds: (int)run.seconds, kills);
+            if (_statusStamp != stamp)
+            {
+                Set(_status, "第" + stamp.wave + "波   棋心 " + stamp.heart + "   " + (stamp.seconds / 60).ToString("00")
+                    + ":" + (stamp.seconds % 60).ToString("00") + "   击杀 " + stamp.kills);
+                _statusStamp = stamp;
+            }
             if (_shownHeart >= 0 && run.heart < _shownHeart)
             {
                 Shake(_top, new Vector2(16, 6));
@@ -738,6 +746,7 @@ namespace RevGame.Endless
             _modalStamp = default;
             _shownLevel = _shownKills = 0;
             _shownCards = _shownSelected = -1;
+            _statusStamp = null;
             _shownHeart = -1;
             _shownTip = "";
             _heartTween?.Kill(false);

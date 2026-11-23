@@ -18,34 +18,63 @@ namespace RevGame.View
         // 两种显示层不能互相覆盖请求；固定81格数组没有逐帧扩容，也不持有模型棋子。
         private readonly SkillTileRequest[] _skillTiles = new SkillTileRequest[Consts.BoardSize * Consts.BoardSize * 2];
         private int _skillTileCursor;
+        /// <summary>两个显示层里仍待播放的槽数，覆盖同一槽只替换内容，清空时归零。</summary>
+        private int _pendingSkillTiles;
+#if UNITY_EDITOR
+        /// <summary>最近一次调度实际访问的槽数，为 0 表示空队列入口直接返回。</summary>
+        public int LastSkillTileVisits { get; private set; }
+#endif
         /// <summary>供开发态回归核对分帧上限，统计本帧实际创建的格面动画，不是伤害数量。</summary>
         public int LastSkillTileStarts
         {
             get; private set;
         }
 
+        /// <summary>登记 Boss 格面请求，重复影响同一格时使用该层最新的视觉请求。</summary>
         private void QueueSkillTile(BoardCellView cell, Color tint, float duration, float delay)
         {
             int index = cell.Position.Y * Consts.BoardSize + cell.Position.X;
-            _skillTiles[index] = new SkillTileRequest { Cell = cell, Tint = tint, Started = Time.time, Delay = delay, Duration = duration, Pending = true };
+            SetPendingSkillTile(index, new SkillTileRequest { Cell = cell, Tint = tint, Started = Time.time, Delay = delay, Duration = duration, Pending = true });
         }
 
+        /// <summary>登记区域波动格面请求，与 Boss 格面分别拥有各自的槽。</summary>
         private void QueueHazardTile(BoardCellView cell, float delay, float duration, Vector4 edges)
         {
             int index = Consts.BoardSize * Consts.BoardSize + cell.Position.Y * Consts.BoardSize + cell.Position.X;
-            _skillTiles[index] = new SkillTileRequest { Cell = cell, Edges = edges, Started = Time.time, Delay = delay, Duration = duration, Pending = true };
+            SetPendingSkillTile(index, new SkillTileRequest { Cell = cell, Edges = edges, Started = Time.time, Delay = delay, Duration = duration, Pending = true });
+        }
+
+        /// <summary>只为原本没有待播请求的槽增加计数，覆盖不会误判为两个效果。</summary>
+        private void SetPendingSkillTile(int index, SkillTileRequest request)
+        {
+            if (!_skillTiles[index].Pending)
+            {
+                _pendingSkillTiles++;
+            }
+            _skillTiles[index] = request;
         }
 
         /// <summary>
         /// 每帧最多12格，累计装配约2ms便让出本帧；一个Unity调用不可抢占，预算不是硬实时保证。
-        /// 游标跨帧轮转，Boss与区域波动共享预算；原事件时间保存在请求中，稍后启动会快进到正确相位。
+        /// 空队列跳过扫描。有请求时按原游标轮转，后启动的动画推进至对应的播放相位。
         /// </summary>
         private void FlushSkillTileQueue()
         {
             LastSkillTileStarts = 0;
+#if UNITY_EDITOR
+            LastSkillTileVisits = 0;
+#endif
+            if (_pendingSkillTiles == 0)
+            {
+                return;
+            }
+
             double started = Time.realtimeSinceStartupAsDouble;
             for (int visited = 0; visited < _skillTiles.Length; visited++)
             {
+#if UNITY_EDITOR
+                LastSkillTileVisits++;
+#endif
                 int index = _skillTileCursor;
                 _skillTileCursor = (_skillTileCursor + 1) % _skillTiles.Length;
                 SkillTileRequest request = _skillTiles[index];
@@ -53,7 +82,9 @@ namespace RevGame.View
                 {
                     continue;
                 }
+                // 失效或过期的槽也已出队，先更新槽数再决定是否播放。
                 _skillTiles[index] = default;
+                _pendingSkillTiles--;
                 if (request.Cell == null)
                 {
                     continue;
@@ -86,7 +117,11 @@ namespace RevGame.View
         {
             System.Array.Clear(_skillTiles, 0, _skillTiles.Length);
             _skillTileCursor = 0;
+            _pendingSkillTiles = 0;
             LastSkillTileStarts = 0;
+#if UNITY_EDITOR
+            LastSkillTileVisits = 0;
+#endif
         }
     }
 }

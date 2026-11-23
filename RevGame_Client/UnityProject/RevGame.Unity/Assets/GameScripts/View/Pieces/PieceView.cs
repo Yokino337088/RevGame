@@ -244,6 +244,8 @@ namespace RevGame.View
         /// </summary>
         private void SetVisualUv(Sprite sprite)
         {
+            // 出生火焰、驻眼和换帧也会通过这里改写共用的属性块。
+            InvalidateBossShaderSubmission();
             // Sprite Atlas V2 打包位置不是 0~1；先得到当前帧的 UV 矩形，三种效果都按棋子局部坐标演算。
             Vector4 outer = UnityEngine.Sprites.DataUtility.GetOuterUV(sprite);
             // ★ 白块根因：SpriteRenderer 一旦被设置了自定义 MaterialPropertyBlock，shader 的 _MainTex 会退回默认白图，
@@ -435,11 +437,13 @@ namespace RevGame.View
             // ★ 不仅清 Renderer，也清复用的草稿。下一次换帧只更新纹理和UV，不能带回旧死亡进度。
             _cardHighlight = 0;
             _visualProperties?.Clear();
+            InvalidateBossShaderSubmission();
             ApplyBossShader();
 
             if (bodyRenderer != null)
             {
                 bodyRenderer.SetPropertyBlock(null);
+                InvalidateBossShaderSubmission();
 
                 if (bodyRenderer.sprite != null)
                 {
@@ -590,6 +594,7 @@ namespace RevGame.View
             {
                 return;
             }
+            InvalidateBossShaderSubmission();
             RestoreBossArt();
             StopAttackPulse();
             PieceId = pieceId;
@@ -664,7 +669,6 @@ namespace RevGame.View
             hpFillRenderer.transform.localPosition = pos;
             hpFillRenderer.enabled = _hpRatio > 0.001f;
         }
-        /// <summary>身体放大与占格数据一致；王冠只标主将，玩家能清楚知道要击败谁。</summary>
         /// <summary>
         /// 身体贴图当前在世界里的宽度（格）。无尽外围杂兵用批量网格画、尺寸和棋子视图不同，
         /// 借视图播出生/溶解时用它算缩放，让视图和网格方块一样大，切换时不跳变。没有贴图时返回 0。
@@ -680,21 +684,28 @@ namespace RevGame.View
                 return bodyRenderer.sprite.bounds.size.x * Mathf.Abs(bodyRenderer.transform.lossyScale.x);
             }
         }
+        /// <summary>按真实占格同步尺寸及装饰，只在实际显示值有差异时写入。</summary>
         public void SetBodySize(int size, bool boss, bool king)
         {
             IsKingVisual = boss && king;
-            transform.localScale = Vector3.one * (0.72f * size * Consts.CellSize);
-
-            // Boss关键帧在BindBossArt中绑定；尺寸刷新绝不覆盖当前Sprite或重置帧索引。
-
-            if (crownRenderer != null)
+            Vector3 scale = Vector3.one * (0.72f * size * Consts.CellSize);
+            // 下沉或其它表现可能改过当前缩放，所以核对当前 Transform，不能只记上次占格尺寸。
+            if (!transform.localScale.Equals(scale))
             {
-                crownRenderer.enabled = king && (_bossArt == null || !_bossArt.BuiltInDecorations);
+                transform.localScale = scale;
             }
-            if (haloRenderer != null)
+
+            bool showCrown = king && (_bossArt == null || !_bossArt.BuiltInDecorations);
+            if (crownRenderer != null && crownRenderer.enabled != showCrown)
             {
-                // 章节Boss只显示专属演出，禁用通用圆形底座；普通大棋保留原标记。
-                haloRenderer.enabled = !boss && size > 1;
+                crownRenderer.enabled = showCrown;
+            }
+
+            // 章节 Boss 使用专属底座，普通大棋继续用通用圆形底座。
+            bool showHalo = !boss && size > 1;
+            if (haloRenderer != null && haloRenderer.enabled != showHalo)
+            {
+                haloRenderer.enabled = showHalo;
             }
         }
 
@@ -726,6 +737,7 @@ namespace RevGame.View
         /// <summary>回池/回收时调用：清掉绑定，避免复用成"上一颗棋子"。</summary>
         public void Clear()
         {
+            InvalidateBossShaderSubmission();
             ClearBossDeath();
             RestoreBossArt();
             SetEyeGarrison(false);
@@ -798,6 +810,8 @@ namespace RevGame.View
 
             if (bodyRenderer != null)
             {
+                // 换帧会改变渲染器的贴图绑定，后续同步需要重新核对提交。
+                InvalidateBossShaderSubmission();
                 bodyRenderer.sprite = _frames[_frameIndex];
 
                 if (_birthProgress > 0f || _stormProgress > 0f || _eyeGarrison > 0f || _bossCharge > 0f || _bossIce > 0f)

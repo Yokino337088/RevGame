@@ -124,6 +124,8 @@ namespace RevGame.Editor
                 VerifyHud(battle);
                 await RevTask.Delay(100);
                 BoardView board = UnityEngine.Object.FindObjectOfType<BoardView>();
+                await VerifyPieceShaderRefresh(board);
+                VerifySkillTileQueue(board);
                 Pieces.Piece player = battle.PlayerPieces[0];
                 BoardPos old = player.Pos;
                 board.OnCellClicked(old);
@@ -395,6 +397,102 @@ namespace RevGame.Editor
                 System.IO.File.WriteAllText("Temp/ReadabilityVerification/Result.txt", LastResult);
             }
         }
+        /// <summary>从当前战斗借真实棋子预制体，验证相同输入、升星、冰冻、下沉及同实例复用的提交边界。</summary>
+        private static async RevTask VerifyPieceShaderRefresh(BoardView board)
+        {
+            PieceView view = await BorrowTestPiece(board);
+            Require(view != null, "借到真实棋子预制体");
+            try
+            {
+                // 只借表现对象，在棋盘外核对实际渲染器和缓动，当前战斗的棋子与规则不参与这段操作。
+                view.MoveTo(new Vector3(0f, -20f, 0f));
+                view.Bind(9001, PieceKind.Shield, StarTier.One, GameSide.Player);
+                view.SetBodySize(1, false, false);
+                Vector3 scale = view.transform.localScale;
+                SpriteRenderer body = GetField<SpriteRenderer>(view, "bodyRenderer");
+                var block = new MaterialPropertyBlock();
+                view.SetBossStatus(false, true, true);
+                body.GetPropertyBlock(block);
+                Require(body.sprite != null && block.GetFloat("_BossIce") == 1f
+                    && block.GetTexture("_MainTex") == body.sprite.texture, "首次冰封提交使用当前图集页");
+                int writes = view.BossShaderWrites;
+                for (int i = 0; i < 32; i++)
+                {
+                    view.SetBodySize(1, false, false);
+                    view.SetBossStatus(false, true, true);
+                }
+                Require(view.BossShaderWrites == writes && view.transform.localScale.Equals(scale), "32 次相同刷新不重交属性块或改变真实尺寸");
+
+                view.Bind(9001, PieceKind.Shield, StarTier.Two, GameSide.Player);
+                view.PlayUpgradeStorm();
+                writes = view.BossShaderWrites;
+                view.SetBossStatus(true, true, true);
+                GetField<Tween>(view, "_bossSinkTween").Complete();
+                body.GetPropertyBlock(block);
+                Require(view.BossShaderWrites == writes + 1 && view.BossHiddenVisual && view.transform.localScale == Vector3.zero
+                    && block.GetFloat("_BossIce") == 1f && block.GetTexture("_MainTex") == body.sprite.texture,
+                    "同 ID 升星换图后仍重交冰壳参数，隐身缓动到达零缩放");
+
+                view.SetBossStatus(false, false, false);
+                GetField<Tween>(view, "_bossSinkTween").Complete();
+                body.GetPropertyBlock(block);
+                Require(!view.BossHiddenVisual && view.transform.localScale.Equals(scale) && block.GetFloat("_BossIce") == 0f,
+                    "返场恢复原尺寸并清除冰壳");
+
+                PieceView returned = view;
+                RevPool.Return(view, 0);
+                view = null;
+                view = await BorrowTestPiece(board);
+                Require(ReferenceEquals(returned, view), "从真实池再次借到刚归还的棋子");
+                view.MoveTo(new Vector3(0f, -20f, 0f));
+                view.Bind(9002, PieceKind.Shield, StarTier.Two, GameSide.Player);
+                writes = view.BossShaderWrites;
+                view.SetBossStatus(false, false, false);
+                body.GetPropertyBlock(block);
+                Require(view.BossShaderWrites == writes + 1 && block.GetFloat("_BossIce") == 0f
+                    && block.GetTexture("_MainTex") == body.sprite.texture, "回池重借后首次同步绑定当前图集与无冰壳状态");
+            }
+            finally
+            {
+                if (view != null)
+                {
+                    RevPool.Return(view, 0);
+                }
+            }
+        }
+
+        /// <summary>从当前棋盘所属场景借棋子视图，调用方负责归还。</summary>
+        private static RevTask<PieceView> BorrowTestPiece(BoardView board)
+        {
+            var ready = new RevTaskCompletionSource<PieceView>();
+            GamePoolRequests.GetAsync<PieceView>(ready.SetResult, board.transform);
+            return ready.Task;
+        }
+
+        /// <summary>通过实际棋格队列验证同槽覆盖、清空和空队列跳过，技能伤害另由满盘实战验收。</summary>
+        private static void VerifySkillTileQueue(BoardView board)
+        {
+            const BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic;
+            BoardCellView cell = UnityEngine.Object.FindObjectOfType<BoardCellView>();
+            Require(cell != null, "存在可登记波动的真实棋格");
+            var queue = typeof(BoardView).GetMethod("QueueHazardTile", flags);
+            var clear = typeof(BoardView).GetMethod("ClearSkillTileQueue", flags);
+            var flush = typeof(BoardView).GetMethod("FlushSkillTileQueue", flags);
+            try
+            {
+                Require(GetField<int>(board, "_pendingSkillTiles") == 0, "专项开始时没有其他格面请求");
+                queue.Invoke(board, new object[] { cell, 1f, 3f, Vector4.one });
+                queue.Invoke(board, new object[] { cell, .5f, 3f, Vector4.one });
+                Require(GetField<int>(board, "_pendingSkillTiles") == 1, "同一格二次登记只占一个待播槽");
+            }
+            finally
+            {
+                clear.Invoke(board, null);
+            }
+            flush.Invoke(board, null);
+            Require(board.LastSkillTileVisits == 0 && board.LastSkillTileStarts == 0, "清空后处理空队列不访问槽且不播放旧效果");
+        }
+
         /// <summary>借真实池预制体，验证同一个实例在透明度相同时重播也能换阵营色，末段继续淡出。</summary>
         private static async RevTask VerifyProjectileColorReplacement(BoardView board)
         {

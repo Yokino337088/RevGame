@@ -28,6 +28,20 @@ namespace RevGame.UI
         // 仅本次重画使用翻牌；普通血量/选择刷新不能反复重启动画。
         private bool _refreshAnimation;
         private CardItem[] _cards;
+        /// <summary>开始战斗按钮的文字，绑定时从现有预制体取一次。</summary>
+        private Text _readyLabel;
+        /// <summary>刷新手牌按钮的文字，绑定时从现有预制体取一次。</summary>
+        private Text _refreshLabel;
+        /// <summary>眼位石按钮的文字，节点可能隐藏，绑定时一并取到。</summary>
+        private Text _eyeLabel;
+        /// <summary>上次提示的剩余次数、操作文案和错误。默认值要求首次刷新。</summary>
+        private (int remaining, string prompt, string error) _hintStamp;
+        /// <summary>上次的准备提示状态。-1 是教学门禁，0 可开战，正数为剩余秒数。</summary>
+        private int _shownReadySeconds = int.MinValue;
+        /// <summary>上次展示的手牌数，未绘制时是 int.MinValue。</summary>
+        private int _shownHandCount = int.MinValue;
+        /// <summary>上次显示的眼位石数量，未绘制时是 int.MinValue。</summary>
+        private int _shownEyeStones = int.MinValue;
         private bool AnyCardFlipping
         {
             get
@@ -42,14 +56,21 @@ namespace RevGame.UI
                 return false;
             }
         }
+        /// <summary>绑定设计框、卡槽和按钮文字，后续刷新复用同一组节点。</summary>
         protected override void OnBindView()
         {
             GameMobileLayout.EnableBoardFrame(transform);
             _cards = GetComponentsInChildren<CardItem>(true);
+            _readyLabel = _btnReady.GetComponentInChildren<Text>(true);
+            _refreshLabel = _btnRefresh.GetComponentInChildren<Text>(true);
+            _eyeLabel = _btnEye.GetComponentInChildren<Text>(true);
             // 六槽按钮随预制体一同装配，由方法特性接线；点击时读取当前 CardId。
         }
+        /// <summary>每次打开从真实准备状态重新绘制文字，计时和事件仍跟随当前面板。</summary>
         protected override void OnOpen()
         {
+            _hintStamp = default;
+            _shownReadySeconds = _shownHandCount = _shownEyeStones = int.MinValue;
             ResetRoundCards();
             RevTimer.Every(0.25f, RefreshView, owner: this);
             // ★ Close 会自动摘掉 owner 事件，复用时 OnBindView 不重跑，因此每次打开重新订阅。
@@ -78,15 +99,11 @@ namespace RevGame.UI
             RevTimer.CancelAllOf(this);
             ResetRoundCards();
         }
+        /// <summary>根据实际手牌和准备状态更新显示，相同文字输入直接沿用上次的结果。</summary>
         protected override void OnRefreshView()
         {
             IBattleService battle = RevServices.GetRequired<IBattleService>();
-            _hintText.text = "剩余落子 " + battle.CardsRemaining + " 次  ·  " + (battle.SelectedPieceId != 0 ? "点空格调整位置（免费）" : battle.SelectedCardId == 0 ? "选手牌落子，或点己方棋子换位" : "全盘空格均可落子");
-
-            if (!string.IsNullOrEmpty(battle.LastError))
-            {
-                _hintText.text += "\n" + battle.LastError;
-            }
+            RefreshHint(battle);
             for (int i = 0; i < _cards.Length; i++)
             {
                 var card = i < battle.Hand.Count ? battle.Hand[i] : null;
@@ -102,24 +119,56 @@ namespace RevGame.UI
             }
             var lesson = RevLogic.Get<TutorialLogic>();
             bool guided = lesson != null && lesson.Active;
-            _btnReady.interactable = (!guided || lesson.Step == TutorialStep.Ready) && battle.Phase == GamePhase.Prepare && battle.PreparationGranted && !AnyCardFlipping;
-            _btnReady.GetComponentInChildren<Text>().text = battle.PreparationGranted ? "开始战斗" : "增益抵达 " + System.Math.Max(1, (int)System.Math.Ceiling(3f - battle.PreparationElapsed)) + "秒";
-
-            if (guided && lesson.Step != TutorialStep.Ready)
+            bool canGuideReady = !guided || lesson.Step == TutorialStep.Ready;
+            bool flipping = AnyCardFlipping;
+            _btnReady.interactable = canGuideReady && battle.Phase == GamePhase.Prepare && battle.PreparationGranted && !flipping;
+            int readySeconds = !canGuideReady ? -1 : battle.PreparationGranted ? 0
+                : System.Math.Max(1, (int)System.Math.Ceiling(3f - battle.PreparationElapsed));
+            if (_shownReadySeconds != readySeconds)
             {
-                _btnReady.GetComponentInChildren<Text>().text = "完成引导后开战";
+                _readyLabel.text = readySeconds < 0 ? "完成引导后开战" : readySeconds == 0 ? "开始战斗" : "增益抵达 " + readySeconds + "秒";
+                _shownReadySeconds = readySeconds;
             }
-            _btnRefresh.interactable = !guided && battle.Hand.Count > 0 && !AnyCardFlipping;
-            _btnRefresh.GetComponentInChildren<Text>().text = "刷新手牌（" + battle.Hand.Count + "张）";
+
+            int handCount = battle.Hand.Count;
+            _btnRefresh.interactable = !guided && handCount > 0 && !flipping;
+            if (_shownHandCount != handCount)
+            {
+                _refreshLabel.text = "刷新手牌（" + handCount + "张）";
+                _shownHandCount = handCount;
+            }
+
             _btnSkip.gameObject.SetActive(battle.Round == Balance.NormalRoundsPerChapter);
-            _btnSkip.interactable = !guided && !AnyCardFlipping;
-            _btnEye.gameObject.SetActive(battle.EyeStones > 0);
-            _btnEye.GetComponentInChildren<Text>(true).text = "眼位石 ×" + battle.EyeStones;
-
-            if (battle.EyeStoneSelected)
+            _btnSkip.interactable = !guided && !flipping;
+            int eyeStones = battle.EyeStones;
+            _btnEye.gameObject.SetActive(eyeStones > 0);
+            if (_shownEyeStones != eyeStones)
             {
-                _hintText.text = "点击金色亮格补眼；没有亮格时可保留眼位石";
+                _eyeLabel.text = "眼位石 ×" + eyeStones;
+                _shownEyeStones = eyeStones;
             }
+        }
+
+        /// <summary>按业务输入构造准备提示，眼位石模式直接显示自己的操作说明。</summary>
+        private void RefreshHint(IBattleService battle)
+        {
+            bool eye = battle.EyeStoneSelected;
+            string prompt = eye ? "点击金色亮格补眼；没有亮格时可保留眼位石"
+                : battle.SelectedPieceId != 0 ? "点空格调整位置（免费）"
+                : battle.SelectedCardId == 0 ? "选手牌落子，或点己方棋子换位" : "全盘空格均可落子";
+            var stamp = (remaining: eye ? 0 : battle.CardsRemaining, prompt, error: eye ? "" : battle.LastError ?? "");
+            if (_hintStamp == stamp)
+            {
+                return;
+            }
+
+            string text = eye ? prompt : "剩余落子 " + stamp.remaining + " 次  ·  " + prompt;
+            if (stamp.error.Length > 0)
+            {
+                text += "\n" + stamp.error;
+            }
+            _hintText.text = text;
+            _hintStamp = stamp;
         }
 
         private void OnHandRerolled()

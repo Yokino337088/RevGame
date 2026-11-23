@@ -29,6 +29,16 @@ namespace RevGame.Editor
             // Tick同步调用的独立Stopwatch摘要；毫秒/次与毫秒/整段分开，不能当成整帧或GPU耗时。
             public int modelTicks;
             public int maxSkillTileStarts;
+            /// <summary>此窗口里技能队列未访问任何槽的采样数，表示空队列直接返回。</summary>
+            public int emptySkillTileSamples;
+            /// <summary>此窗口内区域波动局部时间交给渲染器的次数。</summary>
+            public long regionAgeWrites;
+            /// <summary>包含区域波动时间提交的采样区间数，仅这些区间参与局部耗时统计。</summary>
+            public int regionAgeSamples;
+            /// <summary>区域波动时间提交在活跃采样区间内的 P95 毫秒，无样本为 -1。</summary>
+            public double regionAgeP95Ms = -1;
+            /// <summary>区域波动时间提交单个活跃采样区间的最大毫秒，无样本为 -1。</summary>
+            public double regionAgeMaxMs = -1;
             public double modelStepSeconds, tickTotalMs, tickMeanMs, tickMaxMs;
             // 真实事件后的两秒窗口包含落地、动画、GPU与后续帧；仅是相关窗口，不将GPU延迟计时冒充同帧因果。
             public int bombImpacts, regionWarnings, bombDamageEvents, regionDamageEvents;
@@ -104,6 +114,12 @@ namespace RevGame.Editor
             public long editor, player;
             public bool bombWindow, regionWindow;
             public int skillTileStarts;
+            /// <summary>本次采样时最新一次技能队列扫描的槽数。</summary>
+            public int skillTileVisits;
+            /// <summary>与上次采样之间实际进行的区域波动时间提交次数。</summary>
+            public long regionAgeWrites;
+            /// <summary>与上次采样之间实际用于提交区域波动时间的 Stopwatch 计数。</summary>
+            public long regionAgeTicks;
             // 本帧绘制统计与存活数，只取必要计数，不逐帧创建完整场景对象快照。
             public int batches, setPass, pieces;
             public int views, floating, projectiles, melee;
@@ -451,6 +467,7 @@ namespace RevGame.Editor
             var editor = ProfilerRecorder.StartNew(ProfilerCategory.Internal, "EditorLoop", 1);
             var player = ProfilerRecorder.StartNew(ProfilerCategory.Internal, "PlayerLoop", 1);
             double start = Time.realtimeSinceStartupAsDouble, previous = start, heal = start;
+            var previousRegionAge = BoardCellView.RegionAgeWork;
             BattleLogic.ResetTickMeasurements();
             ulong stamp = 0;
             // 保存测量前计数，结束取差值。把预热命中也算进窗口会虚高命中率。
@@ -470,12 +487,16 @@ namespace RevGame.Editor
                     {
                         throw new InvalidOperationException("预分配采样容量不足，拒绝截断");
                     }
+                    var regionAge = BoardCellView.RegionAgeWork;
                     var s = new Sample
                     {
                         frame = (now - previous) * 1000,
                         bombWindow = now - bombAt <= 2,
                         regionWindow = now - regionAt <= 4,
                         skillTileStarts = board.LastSkillTileStarts,
+                        skillTileVisits = board.LastSkillTileVisits,
+                        regionAgeWrites = regionAge.writes - previousRegionAge.writes,
+                        regionAgeTicks = regionAge.ticks - previousRegionAge.ticks,
                         gpu = -1,
                         main = -1,
                         render = -1,
@@ -496,6 +517,7 @@ namespace RevGame.Editor
                         player = player.Valid ? player.LastValue : -1
                     };
                     previous = now;
+                    previousRegionAge = regionAge;
                     foreach (var p in b.PlayerPieces)
                     {
                         if (p.IsAlive)
@@ -590,6 +612,7 @@ namespace RevGame.Editor
             var gpuTimes = new List<double>(count);
             var mainTimes = new List<double>(count);
             var renderTimes = new List<double>(count);
+            var regionAgeTimes = new List<double>(count);
             long gcSum = 0, hudSum = 0, feedbackSum = 0, arrangeSum = 0;
             bool gcValid = false, hudValid = false, feedbackValid = false, arrangeValid = false;
             long editorSum = 0, playerSum = 0;
@@ -599,6 +622,15 @@ namespace RevGame.Editor
                 var s = buffer[i];
                 times[i] = s.frame;
                 row.maxSkillTileStarts = Math.Max(row.maxSkillTileStarts, s.skillTileStarts);
+                if (s.skillTileVisits == 0)
+                {
+                    row.emptySkillTileSamples++;
+                }
+                if (s.regionAgeWrites > 0)
+                {
+                    row.regionAgeWrites += s.regionAgeWrites;
+                    regionAgeTimes.Add(s.regionAgeTicks * 1000d / System.Diagnostics.Stopwatch.Frequency);
+                }
                 if (s.skillTileStarts > 12)
                 {
                     throw new InvalidOperationException("技能格面装配超过每帧12格预算");
@@ -707,6 +739,13 @@ namespace RevGame.Editor
             gpuTimes.Sort();
             mainTimes.Sort();
             renderTimes.Sort();
+            regionAgeTimes.Sort();
+            row.regionAgeSamples = regionAgeTimes.Count;
+            if (row.regionAgeSamples > 0)
+            {
+                row.regionAgeP95Ms = P(regionAgeTimes, .95);
+                row.regionAgeMaxMs = regionAgeTimes[row.regionAgeSamples - 1];
+            }
             row.fps = count / row.seconds;
             row.p50Ms = P(times, .5);
             row.p95Ms = P(times, .95);
