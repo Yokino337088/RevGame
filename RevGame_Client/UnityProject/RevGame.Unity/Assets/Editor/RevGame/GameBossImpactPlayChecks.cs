@@ -252,6 +252,10 @@ namespace RevGame.Editor
             {
                 AlignCross(battle);
             }
+            if (kind == BossSkillKind.AbsoluteZero)
+            {
+                AlignAbsoluteZero(battle);
+            }
             Check(RevLogic.Get<BattleLogic>().BeginBattle(), "正式Logic开战入口");
             battle.HoldBossImpactFixture();
             var presentation = UnityEngine.Object.FindObjectOfType<GamePresentation>();
@@ -301,7 +305,8 @@ namespace RevGame.Editor
             try
             {
                 int beforeErrors = _result.audioErrors;
-                Check(RevGM.Execute("RevGame/Boss技能 " + (int)kind).Success, "实际GM进入指定技能状态");
+                var cast = RevGM.Execute("RevGame/Boss技能 " + (int)kind);
+                Check(cast.Success, cast.Success ? "实际GM进入指定技能状态" : "实际GM拒绝指定技能：" + cast.Message);
                 float begin = Time.realtimeSinceStartup;
                 float simulateUntil = battle.BattleElapsed + def.Windup + Mathf.Max(0, current.expectedCasts - 1) * def.Interval
                     + Mathf.Max(1.4f, def.Duration) + Balance.BossRecoverSeconds;
@@ -375,6 +380,7 @@ namespace RevGame.Editor
             }
             finally { RevEvent.RemoveAllByOwner(ObserverOwner); }
         }
+        /// <summary>为十字激光把现有靶子移上合法攻击线，保持真实占格规则。</summary>
         private static void AlignCross(BattleService battle)
         {
             Piece boss = null, player = null;
@@ -408,6 +414,47 @@ namespace RevGame.Editor
             }
             throw new InvalidOperationException("十字线无可放置空格");
         }
+
+        /// <summary>准备增益发放后检查绝对零域的实际边框。靶场没有目标时才经正式点击入口调整一颗棋。</summary>
+        private static void AlignAbsoluteZero(BattleService battle)
+        {
+            const BossSkillKind kind = BossSkillKind.AbsoluteZero;
+            Piece boss = battle.EnemyPieces[0];
+            if (BossExpandedGeometry.TryPlan(battle.Board, boss, kind, out BossSkillPlan plan))
+            {
+                return;
+            }
+
+            // 升星可能改变技能选中的中心。保留该棋，只从其他活靶里选一颗单格棋移至实际第零段边框。
+            Piece mover = null;
+            foreach (Piece piece in battle.PlayerPieces)
+            {
+                if (piece.IsAlive && piece.Size == 1 && piece.Pos != plan.A)
+                {
+                    mover = piece;
+                    break;
+                }
+            }
+            Check(mover != null, "绝对零域夹具需要中心以外的单格靶子");
+            int radius = BossSkillCatalog.Get(kind).Radius;
+            for (int y = 0; y < battle.Board.Size; y++)
+            {
+                for (int x = 0; x < battle.Board.Size; x++)
+                {
+                    var cell = new BoardPos(x, y);
+                    if (!BossExpandedGeometry.Contains(kind, plan.A, plan.B, plan.C, radius, 0, cell)
+                        || !battle.Board.CanFit(cell, mover.Size, mover.Side, mover))
+                    {
+                        continue;
+                    }
+                    Check(battle.HandleBoardClick(mover.Pos) && battle.HandleBoardClick(cell), "通过玩家共用点击入口把靶子移至绝对零域边框");
+                    Check(BossExpandedGeometry.TryPlan(battle.Board, boss, kind, out _), "调整后的绝对零域由正式几何选中合法目标");
+                    return;
+                }
+            }
+            throw new InvalidOperationException("绝对零域边框没有合法靶位");
+        }
+
         private static bool Heard(string clipName, List<string> observed)
         {
             foreach (AudioSource source in UnityEngine.Object.FindObjectsOfType<AudioSource>())
