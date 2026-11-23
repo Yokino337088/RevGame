@@ -39,7 +39,7 @@ namespace RevGame.UI
             }
             RefreshPieceManagement();
         }
-        /// <summary>准备期根据选中棋子和界面门禁更新按钮，战斗期直接清除可见和点击状态。</summary>
+        /// <summary>准备期根据当前选中棋子和界面门禁更新右侧按钮的显隐与目标 Id。</summary>
         private void RefreshPieceManagement()
         {
             if (removePieceButton == null)
@@ -60,19 +60,6 @@ namespace RevGame.UI
                 removePieceButton.gameObject.SetActive(visible);
             }
             _removePieceId = visible ? piece.Id : 0;
-
-            if (!visible || Camera.main == null)
-            {
-                return;
-            }
-            RectTransform parent = (RectTransform)transform;
-            Vector3 world = piece.Pos.ToWorldPosition(Consts.CellSize, Consts.BoardOriginOffset)
-                + Vector3.one * ((piece.Size - 1) * Consts.CellSize * .5f);
-            RectTransformUtility.ScreenPointToLocalPointInRectangle(parent, Camera.main.WorldToScreenPoint(world), null, out Vector2 local);
-            var rect = (RectTransform)removePieceButton.transform;
-            // 位于棋子上方，尺寸只占一小块棋盘；窗口变化时夹在画布内，不遮右侧准备按钮。
-            rect.anchoredPosition = new Vector2(Mathf.Clamp(local.x, parent.rect.xMin + 95, parent.rect.xMax - 95),
-                Mathf.Clamp(local.y + 58, parent.rect.yMin + 40, parent.rect.yMax - 40));
         }
         /// <summary>规则事实复用既有木纹弹幕底板、对象池与安全区通道，闪烁只改变透明度，不拦棋盘输入。</summary>
         private void OnBoardRuleNotice(string message)

@@ -294,7 +294,8 @@ namespace RevGame.Bootstrap
                 {
                     continue;
                 }
-                foreach (string name in new[] { "cards", "infoPlate", "scoreFrame", "btnHome", "btnSettings", "btnReady", "btnRefresh", "btnEye", "btnSkip" })
+                // 选中棋子后把可见的移除按钮也纳入棋盘遮挡和安全区检查。
+                foreach (string name in new[] { "cards", "infoPlate", "scoreFrame", "btnHome", "btnSettings", "btnReady", "btnRefresh", "btnEye", "btnSkip", "btnRemovePiece" })
                 {
                     if (!(panel.Find(name) is RectTransform control) || !control.gameObject.activeInHierarchy)
                     {

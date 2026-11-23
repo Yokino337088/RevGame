@@ -126,8 +126,18 @@ namespace RevGame.UI
             }
             else if (layout.panelName == "BattleHudPanel")
             {
+                // 让当前和较早的 AB 使用同一份按钮布局。记录基准坐标后，按钮与右栏一起适配安全区。
+                if (panel.Find("btnRemovePiece") is RectTransform removePiece)
+                {
+                    Rect right = GameBattleLayout.Calculate(GameBattleLayout.DesignResolution, new Rect(0f, 0f, 1f, 1f)).Right;
+                    removePiece.anchorMin = removePiece.anchorMax = Vector2.zero;
+                    removePiece.pivot = Vector2.one * .5f;
+                    // 右栏 56% 高度留在信息牌与准备操作之间，移除动作和开战、换牌各有自己的点击空间。
+                    removePiece.anchoredPosition = new Vector2(right.center.x, right.yMin + right.height * .56f);
+                    removePiece.sizeDelta = new Vector2(224f, 72f);
+                }
                 layout._leftSidebar = ReadSidebar(panel, "scoreFrame", "assistPlate", "assistText");
-                layout._rightSidebar = ReadSidebar(panel, "infoPlate", "btnHome", "btnSettings");
+                layout._rightSidebar = ReadSidebar(panel, "infoPlate", "btnHome", "btnSettings", "btnRemovePiece");
             }
             layout.ApplyLayout();
         }
