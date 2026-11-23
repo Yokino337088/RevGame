@@ -9,7 +9,7 @@ description: 编写、修改、审查 Revolution Unity 项目的战斗、AI、�
 
 将需求落实为**定位瓶颈 → 减少重复工作 → 保持规则与画面 → 同输入复测 → 明确收益与剩余问题**。目标是当前项目与设备约束下可验证的最优实现；技能不提供未经测量的“极致”、零GC、固定加速倍数或帧率保证。
 
-以 [RevGame 实践与来源](references/revgame-practice.md) 为例，包含 2026-11-19 的无尽敌潮插值、网格提交与六章测量。实际步长、容量、入口和通过标准读取目标项目。
+以 [RevGame 实践与来源](references/revgame-practice.md) 为例，从性能 Wiki 的通用、设备和平台索引找到可复用做法，读取对应实测条件。实际步长、容量、入口和通过标准读取目标项目。
 
 固定负载可以通过 [RevMCP 性能批次](../revolution-framework/references/automatic-delivery.md#自动验收与性能对比) 预热、重复并比较回执。指标从每轮真实结果提取，按路径、工作量与设备口径核对。
 
@@ -44,10 +44,11 @@ description: 编写、修改、审查 Revolution Unity 项目的战斗、AI、�
 | Windows Editor 与独立包、核显与独显、主线程或送屏等待 | [Windows 性能优化](references/windows-performance.md)。固定同步、显示和图形条件，分开解释 Editor 与目标包 |
 | 安卓冷启动、热态帧节奏、画质档或重复进出内存 | [安卓性能优化](references/android-performance.md)。分开核对验包、预览和目标真机证据 |
 | WebGL 面板冷开、画布、首次特效、浏览器回调或战斗反馈 | [WebGL 定制性能优化](references/webgl-performance.md)。选首开、首次效果或持续战斗的窗口，按实际症状读取对应小节 |
-| 射界/路径/棋群/AI试算、缓存与数据布局、ECS选型 | [CPU与缓存](references/cpu-cache.md) |
-| 固定步、位移跳格、快照插值、顶点更新频率 | [逻辑帧与表现帧](references/frame-presentation.md) |
+| 射界/路径/棋群/AI试算、成员顺序、数据布局与并行交叉点 | [CPU与缓存](references/cpu-cache.md) |
+| Boss 控制期限、锁定区域和批量格面预警 | [持续技能规则](references/cpu-cache.md#boss-持续技能用到期时间和静态覆盖分开减负) · [共享格面参数](references/gpu-rendering.md#同一次格面提示共用动画参数) |
+| 固定步、位移跳格、快照插值、CPU 与 GPU 显示路径 | [逻辑帧与表现帧](references/frame-presentation.md) |
 | HUD/Layout/TextMesh、飘字/弹道队列、Tween/闭包/回池 | [UI与反馈](references/ui-feedback.md) |
-| GPU/透明过绘/合批、局部Shader、静态数据场 | [GPU与绘制](references/gpu-rendering.md) |
+| GPU/透明过绘/合批、动态网格有效范围与提交、局部 Shader | [GPU与绘制](references/gpu-rendering.md) |
 | 制作或修改 Shader、材质、纹理与视觉表现 | [Revolution-TA](../revolution-ta/SKILL.md) |
 | 图集V2/AB/音频/状态按需、首屏白图/加载/内存增长 | [资源与生命周期](references/resources-lifecycle.md) |
 | 回归/报告/百分比/失败/取消/安装与交付 | [验证](references/verification.md) |

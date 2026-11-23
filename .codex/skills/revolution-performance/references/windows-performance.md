@@ -19,6 +19,11 @@ Windows 上先确认目标是玩家运行的游戏包还是 Unity Editor 的 Gam
 
 Windows 的 CPU 主线程、渲染线程、驱动和 GPU 可能重叠工作。用文档定义解释各计数，按新时间戳对齐有效 GPU 记录。平均 FPS、帧间隔 P95/P99、最大值与超线帧分别报。Editor 诊断和 Player 采样各有结论，性能面板、截图和深度分析放到正式窗口之外。 [Unity FrameTimingManager](https://docs.unity3d.com/2022.3/Documentation/Manual/frame-timing-manager.html) · [Microsoft Windows 显示提交](https://learn.microsoft.com/en-us/windows/win32/direct3ddxgi/dxgi-flip-model) · [编辑器案例](https://github.com/Yokino337088/RevGame/wiki/Windows%E7%BC%96%E8%BE%91%E5%99%A8%E9%87%8C%E6%80%8E%E4%B9%88%E6%9F%A5%E5%8D%A1%E9%A1%BF)
 
+## 核对实际显卡并选择可回退的显示路径
+
+- 从游戏取得当前图形设备标识，再与系统适配器清单做唯一匹配，读取系统报告的集成或独立类型。混合显卡、同型号多卡或信息缺失时使用通用绘制路径。所列设备的能力与当前进程生效设备分开记录。
+- 可把高成本的重复位置插值交给实际绘图设备，组合 API、正式 AB 变体和活动数量启用。保持玩家规则与通用视觉路径，验阈值两侧、滞回区、旧包及跨局复位。固定同一张卡按 A→B→B→A 比，独显 Editor 对照和独立核显玩家包结果分别记录。 [顶点插值契约](frame-presentation.md#将重复显示插值交给顶点着色器) · [RevGame 核显与独显方案](https://github.com/Yokino337088/RevGame/wiki/%E8%AE%BE%E5%A4%8701-Windows%E6%80%8E%E6%A0%B7%E5%8C%BA%E5%88%86%E6%A0%B8%E6%98%BE%E5%92%8C%E7%8B%AC%E6%98%BE)
+
 ## RevGame 独立包实测
 
 2026-10-31 的 IL2CPP 非开发包使用 Unity 2022.3.15f1c1，开启自动化和帧计时。设备为 i7-12700H / Intel Iris Xe，D3D11、1920 × 1080 窗口、VSync=1、`targetFrameRate=-1`。六章每段先热 5 秒，采样至少 30 秒，已隐藏性能面板。有效的 81 棋组为玩家 36、敌方 45 颗满盘重弩，夹具启用围困免疫和补血。 [IL2CPP 六章原报告](https://github.com/Yokino337088/RevGame/blob/262dcf11944c4519328f706db4a13e211081554a/RevGame_Client/%E6%96%87%E6%A1%A3/%E6%88%98%E6%96%97%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%E8%A7%84%E5%88%99/%E7%9C%9F%E6%9C%BA%E5%AE%9E%E6%B5%8B/IL2CPP%E5%85%AD%E7%AB%A0%E6%88%98%E6%96%97%E6%80%A7%E8%83%BD%E5%8E%8B%E6%B5%8B%E6%8A%A5%E5%91%8A_2026-10-31.html)

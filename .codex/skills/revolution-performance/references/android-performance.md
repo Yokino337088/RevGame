@@ -9,6 +9,8 @@
 
 ## 怎样量从冷到热
 
+USB 设备接入、RevMCP 计划与 Unity 独立结果沿用已安装的 `revolution-android-testing`（[官方技能源码](https://github.com/Yokino337088/Revolution/blob/30a02e0f3e7faac6a3a3534759ab4b1e05d7d56d/Skills/revolution-android-testing/SKILL.md)）。核对实际运行的构建身份，再在同一部手机采样。
+
 1. 同一设备记录型号、系统、CPU/GPU、图形 API、分辨率与实际绘制尺寸、刷新率和帧率上限。固定画质、亮度、充电和前后台状态，记温度或系统热状态。当目标机支持 Thermal API 或性能分析时，将热状态变化和慢帧对齐，标明缺测项。 [Android Thermal API](https://developer.android.com/games/optimize/adpf/thermal)
 2. 用同一关卡、种子、棋子和攻击负载，分开记冷启动就绪、首个技能与长时间战斗。比较相同热状态或明确的冷段和后段。保留实际时长、FPS、帧间隔 P95/P99、最大值、超线次数、输入与反馈等待。可用时保持 GPU 和 CPU 计数与实际帧时对齐。没有设备且只完成编辑器预览时，标明证据层级。
 3. 先重复原样确认波动，再只切一项画质、有效像素、图形 API 或帧率目标。比较同机同条件的多轮结果，必要时等设备回到相近的起始热状态。打开性能分析器的归因组与轻量验收组分别记录。 [安卓帧率与发热](https://github.com/Yokino337088/RevGame/wiki/%E5%AE%89%E5%8D%93%E5%B8%A7%E7%8E%87%E4%B8%8E%E5%8F%91%E7%83%AD)
@@ -23,6 +25,12 @@
 | CPU 规则、界面或装配越忙越慢 | 局部标记确认重复计算、脏更新或一次装配太多。复用通用缓存和分帧方法，保留规则顺序与反馈等待预算。 |
 
 有证据后再决定 Vulkan 或 OpenGL ES、帧率或画质档位，按设备自己的差异验收。Android 应用中的帧率设定与桌面 VSync 是两条配置路径。 [Unity 目标帧率设置](https://docs.unity3d.com/2022.3/Documentation/ScriptReference/Application-targetFrameRate.html) · [Unity 安卓优化帧节奏](https://docs.unity3d.com/2022.3/Documentation/ScriptReference/PlayerSettings.Android-optimizedFramePacing.html) · [Android 帧节奏说明](https://developer.android.com/games/sdk/frame-pacing)
+
+## 按设备刷新和实战热状态选择档位
+
+- 读取实际刷新率，按档位上限选可均匀呈现的整数分频。例如 90 Hz 设备的 60 FPS 上限可用 45 FPS，每两次刷新更新一张。记录刷新率切换、设定值和实测分布。进入前记录原设置，退出和失败恢复原值。
+- 用连续实际交火窗口和升降滞回。剔除进入、换阶段、暂停、失焦和恢复时跨阶段的一次间隔。热状态信号在前台独立检查，严重时即时限档，回来第一帧先复查。升档要求持续健康、温度余量和最短驻留期。规则固定步、伤害、预警、操作与关键命中反馈保持原契约。普通装饰负载的档位变化单独验证。
+- 人工驱动热状态与刷新率的序列适合验决策和退出恢复。测实际温度、耗电和持续流畅时，按设备、APK 与 AB、显示条件及负载另跑从冷到热的真机对照。 [RevGame 安卓调档](https://github.com/Yokino337088/RevGame/wiki/%E8%AE%BE%E5%A4%8702-%E5%AE%89%E5%8D%93%E6%80%8E%E6%A0%B7%E5%85%BC%E9%A1%BE%E5%B8%A7%E7%8E%87%E5%92%8C%E5%8F%91%E7%83%AD) · [跨阶段采样规则](https://github.com/Yokino337088/RevGame/wiki/%E8%AE%BE%E5%A4%8704-%E8%AE%BE%E5%A4%87%E6%A1%A3%E4%BD%8D%E6%80%8E%E6%A0%B7%E8%B7%9F%E7%9D%80%E6%88%98%E5%86%B5%E5%8F%98%E5%8C%96)
 
 ## 退场与系统内存
 
