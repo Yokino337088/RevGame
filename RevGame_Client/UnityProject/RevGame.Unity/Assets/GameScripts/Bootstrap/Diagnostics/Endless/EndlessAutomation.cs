@@ -104,6 +104,16 @@ namespace RevGame.Endless
 #if UNITY_EDITOR
             RevRuntimeAutomation.Register("endless.horde-presentation-check", "隔离验证敌潮插值、生命周期及顶点外观流复用", Empty, _ => EndlessHordePresentationChecks.Run(), owner: Owner);
             RevRuntimeAutomation.Register("endless.effect-batches-check", "用临时网格验证局部特效的顶点通道、局部更新和退场复用", Empty, _ => EndlessEffectBatchChecks.Run(), owner: Owner);
+            RevRuntimeAutomation.Register("endless.guard-view-check", "对照实时棋盘全量筛选与盾牌护盾的实际绘制名单及索引", Empty, _ =>
+                UnityEngine.Object.FindObjectOfType<EndlessArena>()?.CheckGuardSelection(Service), readOnly: true, owner: Owner);
+            RevRuntimeAutomation.Register("endless.guard-selection-bench", "Editor 隔离局对同一演员名单交替量重建与缓存命中", Empty, _ =>
+            {
+                if (!Service.Isolated || Service.Run == null)
+                {
+                    throw new System.InvalidOperationException("仅在已进入的隔离无尽局执行");
+                }
+                return UnityEngine.Object.FindObjectOfType<EndlessArena>()?.BenchmarkGuardSelection(Service);
+            }, owner: Owner);
             const string hordeModeSchema = "{\"type\":\"object\",\"properties\":{\"mode\":{\"type\":\"string\",\"enum\":[\"auto\",\"cpu\",\"gpu\"]}},\"required\":[\"mode\"],\"additionalProperties\":false}";
             RevRuntimeAutomation.Register("endless.horde-vertex-mode", "Editor 隔离局 A/B。auto 恢复策略，cpu 与 gpu 比较同一份显示样本", hordeModeSchema, SetHordeVertexMode, owner: Owner);
 #endif

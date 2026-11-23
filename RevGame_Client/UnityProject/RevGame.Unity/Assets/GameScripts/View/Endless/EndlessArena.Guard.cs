@@ -63,6 +63,26 @@ namespace RevGame.Endless
         private readonly float[] _zoneMask = new float[81];
         private MaterialPropertyBlock _zoneProperties;
         private int _zoneVersion = -1, _blockRead;
+        /// <summary>当前棋盘的盾牌候选，保持演员列表顺序，绘制阶段核对实时生死。</summary>
+        private readonly List<Piece> _shieldOrbitPieces = new List<Piece>(GuardCapacity);
+        /// <summary>占格覆盖防御区的棋子候选，持有到相关版本改变或竞技场归池。</summary>
+        private readonly List<Piece> _shieldBubblePieces = new List<Piece>(GuardCapacity);
+        /// <summary>名单对应的对局、演员列表、棋盘占格及防御区形状，新局比较对局身份。</summary>
+        private (EndlessRun run, uint actors, int topology, int zone) _guardSelectionStamp;
+#if UNITY_EDITOR
+        /// <summary>战斗采样窗口内实际重建两份名单的次数。</summary>
+        private int _guardSelectionRebuilds;
+        /// <summary>战斗采样窗口中，重建时实际访问的演员总数。</summary>
+        private long _guardSelectionVisits;
+        /// <summary>在相同采样帧、演员数量不超过批次上限时，按旧两遍循环折算的演员访问总数。</summary>
+        private long _guardTwoPassVisits;
+        /// <summary>旧循环能完整遍历演员名单的采样帧数，用来校验对照口径。</summary>
+        private int _guardTwoPassComparableFrames;
+        /// <summary>采样窗口中检查版本与重建名单合计的 Stopwatch 计数。</summary>
+        private long _guardSelectionTicks;
+        /// <summary>版本检查及筛选单帧的最大 Stopwatch 计数。</summary>
+        private long _guardSelectionPeakTicks;
+#endif
         /// <summary>每枚棋子最近一次格挡的时间（unscaled 秒），用于护盾波动。</summary>
         private readonly Dictionary<int, float> _blockAt = new Dictionary<int, float>(16);
         private int _thrustsShown, _blocksShown;
@@ -87,6 +107,11 @@ namespace RevGame.Endless
             _thrustBatch ??= BindEffectBatch(thrustRenderer, MaxThrusts, "无尽刺客突刺网格");
             _zoneProperties ??= new MaterialPropertyBlock();
             _zoneVersion = -1;
+            ResetGuardSelection();
+#if UNITY_EDITOR
+            _guardSelectionRebuilds = _guardTwoPassComparableFrames = 0;
+            _guardSelectionVisits = _guardTwoPassVisits = _guardSelectionTicks = _guardSelectionPeakTicks = 0;
+#endif
             _blockRead = service.BlockSerial;
             _blockAt.Clear();
             System.Array.Clear(_thrusts, 0, _thrusts.Length);
@@ -105,15 +130,215 @@ namespace RevGame.Endless
             return batch;
         }
 
-        /// <summary>每帧入口：读格挡回执，刷新四种画面。</summary>
-        private void UpdateGuard(EndlessService service)
+        /// <summary>读格挡回执并准备四种表现。采样窗口单独计量名单检查与筛选。</summary>
+        private void UpdateGuard(EndlessService service, bool sampling)
         {
             ReadBlocks(service);
             UpdateShieldZone(service);
-            UpdateShieldOrbits(service);
-            UpdateBubbles(service);
+#if UNITY_EDITOR
+            if (sampling)
+            {
+                SampleGuardSelection(service);
+            }
+            else
+#endif
+            {
+                RefreshGuardSelection(service);
+            }
+            UpdateShieldOrbits();
+            UpdateBubbles();
             UpdateThrusts();
         }
+
+        /// <summary>演员、占格或防御区变化时重建候选。原位升星重新占格，同编号换绑也随棋盘版本识别。</summary>
+        private bool RefreshGuardSelection(EndlessService service)
+        {
+            EndlessActorComponents units = service.Units;
+            var stamp = (service.Run, units.RosterVersion, service.Board.TopologyVersion, service.ShieldZoneVersion);
+            if (_guardSelectionStamp == stamp)
+            {
+                return false;
+            }
+
+            RebuildGuardSelection(service, units);
+            _guardSelectionStamp = stamp;
+            return true;
+        }
+
+        /// <summary>按演员原来的顺序重建两份候选，实时生死由后续的绘制循环核对。</summary>
+        private void RebuildGuardSelection(EndlessService service, EndlessActorComponents units)
+        {
+            _shieldOrbitPieces.Clear();
+            _shieldBubblePieces.Clear();
+            for (int i = 0; i < units.Count; i++)
+            {
+                EndlessUnit unit = units[i];
+                Piece piece = unit.Piece;
+                if (unit.Stone || piece.Side != GameSide.Player)
+                {
+                    continue;
+                }
+                if (piece.Def.Kind == PieceKind.Shield)
+                {
+                    _shieldOrbitPieces.Add(piece);
+                }
+                if (service.InShieldZone(piece))
+                {
+                    _shieldBubblePieces.Add(piece);
+                }
+            }
+        }
+
+        /// <summary>进出竞技场清除候选和对局引用，容量留给下一局复用。</summary>
+        private void ResetGuardSelection()
+        {
+            _guardSelectionStamp = default;
+            _shieldOrbitPieces.Clear();
+            _shieldBubblePieces.Clear();
+        }
+
+#if UNITY_EDITOR
+        /// <summary>只计时版本检查与全量筛选，动画姿态、回执和网格提交由各自路径处理。</summary>
+        private void SampleGuardSelection(EndlessService service)
+        {
+            long began = System.Diagnostics.Stopwatch.GetTimestamp();
+            bool rebuilt = RefreshGuardSelection(service);
+            long ticks = System.Diagnostics.Stopwatch.GetTimestamp() - began;
+            _guardSelectionTicks += ticks;
+            _guardSelectionPeakTicks = System.Math.Max(_guardSelectionPeakTicks, ticks);
+            int actors = service.Units.Count;
+            if (rebuilt)
+            {
+                _guardSelectionRebuilds++;
+                _guardSelectionVisits += actors;
+            }
+            // 演员数不大于网格容量时，旧两个循环最多在最后一个演员处满额，都会访问完整名单。
+            if (actors <= GuardCapacity)
+            {
+                _guardTwoPassComparableFrames++;
+                _guardTwoPassVisits += 2L * actors;
+            }
+        }
+
+        /// <summary>返回和整帧窗口对齐的筛选计数及 CPU 时间。旧两遍访问量按同一帧的真实演员数折算。</summary>
+        private object GuardSelectionMetrics()
+        {
+            double millisecondsPerTick = 1000d / System.Diagnostics.Stopwatch.Frequency;
+            return new Dictionary<string, object>
+            {
+                ["frames"] = _frameCount,
+                ["rebuilds"] = _guardSelectionRebuilds,
+                ["actorVisits"] = _guardSelectionVisits,
+                ["twoPassComparableFrames"] = _guardTwoPassComparableFrames,
+                ["twoPassVisitsAtSameFrames"] = _guardTwoPassVisits,
+                ["meanMs"] = _frameCount == 0 ? 0 : _guardSelectionTicks * millisecondsPerTick / _frameCount,
+                ["peakMs"] = _guardSelectionPeakTicks * millisecondsPerTick
+            };
+        }
+
+        /// <summary>从真实演员名单复算旧顺序，逐项查当前候选送去绘制的实例及网格范围。</summary>
+        internal object CheckGuardSelection(EndlessService service)
+        {
+            var orbits = new List<Piece>(GuardCapacity);
+            var bubbles = new List<Piece>(GuardCapacity);
+            var shieldCells = new List<object>();
+            foreach (EndlessUnit unit in service.Units)
+            {
+                Piece piece = unit.Piece;
+                if (unit.Stone || !piece.IsAlive)
+                {
+                    continue;
+                }
+                if (orbits.Count < GuardCapacity && piece.Side == GameSide.Player && piece.Def.Kind == PieceKind.Shield)
+                {
+                    orbits.Add(piece);
+                    shieldCells.Add(new Dictionary<string, object> { ["id"] = piece.Id, ["x"] = piece.Pos.X, ["y"] = piece.Pos.Y });
+                }
+                if (bubbles.Count < GuardCapacity && service.InShieldZone(piece))
+                {
+                    bubbles.Add(piece);
+                }
+            }
+            bool matches = MatchesGuardPieces(orbits, _shieldOrbitPieces) && MatchesGuardPieces(bubbles, _shieldBubblePieces)
+                && ShieldOrbitCount == orbits.Count && BubbleCount == bubbles.Count
+                && _orbitBatch?.Mesh.GetIndexCount(0) == orbits.Count * 6
+                && _bubbleBatch?.Mesh.GetIndexCount(0) == bubbles.Count * 6;
+            return new Dictionary<string, object>
+            {
+                ["matches"] = matches,
+                ["shieldCells"] = shieldCells,
+                ["bubbleIds"] = bubbles.ConvertAll(piece => piece.Id),
+                ["orbits"] = ShieldOrbitCount,
+                ["bubbles"] = BubbleCount,
+                ["blocks"] = _blocksShown,
+                ["orbitIndices"] = _orbitBatch?.Mesh.GetIndexCount(0) ?? 0,
+                ["bubbleIndices"] = _bubbleBatch?.Mesh.GetIndexCount(0) ?? 0,
+                ["actors"] = service.Units.RosterVersion,
+                ["topology"] = service.Board.TopologyVersion,
+                ["zone"] = service.ShieldZoneVersion
+            };
+        }
+
+        /// <summary>在同一主线程用相同演员比较重建名单和重用名单，作为整帧数据之外的局部对照。</summary>
+        internal object BenchmarkGuardSelection(EndlessService service)
+        {
+            const int repetitions = 12000;
+            EndlessActorComponents units = service.Units;
+            RefreshGuardSelection(service);
+            System.Action rebuild = () => RebuildGuardSelection(service, units);
+            System.Action reuse = () => RefreshGuardSelection(service);
+
+            // 先跑热两条路径。计时区间不切波次、不推进动画，按照重建、复用、复用、重建交换顺序。
+            for (int i = 0; i < 256; i++)
+            {
+                rebuild();
+                reuse();
+            }
+            double rebuildFirst = MeasureGuardWork(rebuild, repetitions);
+            double reuseFirst = MeasureGuardWork(reuse, repetitions);
+            double reuseSecond = MeasureGuardWork(reuse, repetitions);
+            double rebuildSecond = MeasureGuardWork(rebuild, repetitions);
+            return new Dictionary<string, object>
+            {
+                ["actors"] = units.Count,
+                ["repetitions"] = repetitions,
+                ["rebuildNanoseconds"] = new[] { rebuildFirst, rebuildSecond },
+                ["reuseNanoseconds"] = new[] { reuseFirst, reuseSecond }
+            };
+        }
+
+        /// <summary>用同样的循环与时钟量局部操作，结果单位为单次纳秒。</summary>
+        private static double MeasureGuardWork(System.Action action, int repetitions)
+        {
+            long start = System.Diagnostics.Stopwatch.GetTimestamp();
+            for (int i = 0; i < repetitions; i++)
+            {
+                action();
+            }
+            return (System.Diagnostics.Stopwatch.GetTimestamp() - start) * 1e9
+                / System.Diagnostics.Stopwatch.Frequency / repetitions;
+        }
+
+        /// <summary>对照实际可绘制对象的引用及顺序，发现同编号升星后仍持有旧棋子的情况。</summary>
+        private static bool MatchesGuardPieces(List<Piece> expected, List<Piece> candidates)
+        {
+            int drawn = 0;
+            for (int i = 0; i < candidates.Count && drawn < GuardCapacity; i++)
+            {
+                Piece piece = candidates[i];
+                if (!piece.IsAlive)
+                {
+                    continue;
+                }
+                if (drawn == expected.Count || !ReferenceEquals(expected[drawn], piece))
+                {
+                    return false;
+                }
+                drawn++;
+            }
+            return drawn == expected.Count;
+        }
+#endif
 
         private void ReadBlocks(EndlessService service)
         {
@@ -160,14 +385,13 @@ namespace RevGame.Endless
         }
 
         /// <summary>每枚己方盾战写一个活动方块，保留星级和编号相位，原地旋转由 Shader 继续绘制。</summary>
-        private void UpdateShieldOrbits(EndlessService service)
+        private void UpdateShieldOrbits()
         {
             int count = 0;
-            for (int i = 0; i < service.Units.Count && count < GuardCapacity; i++)
+            for (int i = 0; i < _shieldOrbitPieces.Count && count < GuardCapacity; i++)
             {
-                EndlessUnit unit = service.Units[i];
-                Piece p = unit.Piece;
-                if (unit.Stone || p.Side != GameSide.Player || !p.IsAlive || p.Def.Kind != PieceKind.Shield)
+                Piece p = _shieldOrbitPieces[i];
+                if (!p.IsAlive)
                 {
                     continue;
                 }
@@ -180,15 +404,14 @@ namespace RevGame.Endless
         }
 
         /// <summary>为防御区内的非石子棋子画泡泡。位置随缓动，最近一次格挡的闪光按原节奏衰减。</summary>
-        private void UpdateBubbles(EndlessService service)
+        private void UpdateBubbles()
         {
             float now = Time.unscaledTime;
             int count = 0;
-            for (int i = 0; i < service.Units.Count && count < GuardCapacity; i++)
+            for (int i = 0; i < _shieldBubblePieces.Count && count < GuardCapacity; i++)
             {
-                EndlessUnit unit = service.Units[i];
-                Piece p = unit.Piece;
-                if (unit.Stone || !p.IsAlive || !service.InShieldZone(p))
+                Piece p = _shieldBubblePieces[i];
+                if (!p.IsAlive)
                 {
                     continue;
                 }
@@ -271,9 +494,10 @@ namespace RevGame.Endless
             };
         }
 
-        /// <summary>回池立即撤掉本局三个绘制范围与预警，保留网格容量给下一局。</summary>
+        /// <summary>回池撤掉盾牌、护盾与突刺，归还棋子名单引用，保留可复用的网格容量。</summary>
         private void ReleaseGuard()
         {
+            ResetGuardSelection();
             _blockAt.Clear();
             System.Array.Clear(_thrusts, 0, _thrusts.Length);
             _orbitBatch?.Submit(0);

@@ -378,7 +378,7 @@ namespace RevGame.Endless
             UpdateCombatFx(service, hordeChanged, hordeBlend);
             UpdateHorde(horde, run, atlasReady, hordeChanged, hordeBlend, sampling);
             UpdateAuras(service);
-            UpdateGuard(service);
+            UpdateGuard(service, sampling);
 #if UNITY_EDITOR
             if (sampling)
             {
@@ -704,15 +704,22 @@ namespace RevGame.Endless
             Array.Copy(_frameSamples, sorted, _frameCount);
             Array.Sort(sorted);
             float seconds = 0;
+            int over33Ms = 0;
             for (int i = 0; i < sorted.Length; i++)
             {
                 seconds += sorted[i] / 1000;
+                if (sorted[i] > 1000f / 30f)
+                {
+                    over33Ms++;
+                }
             }
             return new Dictionary<string, object>
             {
                 ["samples"] = _frameCount, ["seconds"] = seconds,
                 ["p95Ms"] = sorted.Length == 0 ? 0 : sorted[Math.Min(sorted.Length - 1, (int)(sorted.Length * .95f))],
                 ["p99Ms"] = sorted.Length == 0 ? 0 : sorted[Math.Min(sorted.Length - 1, (int)(sorted.Length * .99f))],
+                ["maxMs"] = sorted.Length == 0 ? 0 : sorted[sorted.Length - 1],
+                ["over33Ms"] = over33Ms,
                 ["gcCounterObservedPositive"] = _gcObserved, ["gcBytesPerSecond"] = seconds > 0 ? _gcBytes / seconds : 0,
                 ["scope"] = "Unity Editor整帧，含UI与工具；非目标手机验收",
 #if UNITY_EDITOR
@@ -723,6 +730,7 @@ namespace RevGame.Endless
                     ["captures"] = _hordeCaptures, ["interpolatedFrames"] = _hordeInterpolatedFrames,
                     ["gpuFrames"] = _hordeGpuFrames, ["gpuInterpolation"] = _hordeInterpolatesOnGpu
                 },
+                ["guardSelection"] = GuardSelectionMetrics(),
                 ["localEffects"] = new Dictionary<string, object>
                 {
                     ["dynamicBytes"] = _effectUploadBytes,
