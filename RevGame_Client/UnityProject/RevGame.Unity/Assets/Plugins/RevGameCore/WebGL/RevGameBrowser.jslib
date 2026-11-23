@@ -11,6 +11,12 @@ mergeInto(LibraryManager.library, {
         }, 0);
     },
 
+    // 将积分、规则和帧率无关的像素预算交给拥有画布的模板。下一轮浏览器帧再改绘制缓冲。
+    RevGame_SetBattlePixelBudget: function (pixels) {
+        var canvas = Module.canvas;
+        canvas.dispatchEvent(new CustomEvent("revgame:pixel-budget", { detail: pixels }));
+    },
+
     RevGame_SetAgentKey__deps: ["$RevGameAgentKey"],
     // 使用真实密码控件，Ctrl+V、右键粘贴和退格交给浏览器。
     RevGame_SetAgentKey: function (value) {

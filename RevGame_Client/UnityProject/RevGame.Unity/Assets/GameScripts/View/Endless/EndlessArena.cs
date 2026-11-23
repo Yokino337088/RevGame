@@ -5,6 +5,7 @@ using RevGame.View;
 using Revolution;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.Rendering;
 using Unity.Profiling;
 namespace RevGame.Endless
 {
@@ -35,7 +36,27 @@ namespace RevGame.Endless
         private int _hordeQuadCount;
         /// <summary>出生视图接管或归还槽位时置位，通知身体和血条同时重建紧凑绘制顺序。</summary>
         private bool _hordeLayoutDirty;
+        /// <summary>身体与血条着色器的局部关键字。运行时只开在竞技场自有材质，正式资源保持 CPU 变体。</summary>
+        private const string HordeGpuKeyword = "REVGAME_HORDE_GPU_INTERPOLATION";
+        /// <summary>身体和血条共同使用的 0～1 插值比例。属性存在也用于识别实际装入的新版 Shader。</summary>
+        private static readonly int HordeBlendId = Shader.PropertyToID("_HordeBlend");
+        /// <summary>两份 CPU 材质来自预制体和资源包。切回原路径时恢复，资源所有权仍归预制体。</summary>
+        private Material _hordeCpuMaterial;
+        /// <summary>该竞技场的血条原材质。身体换路径时血条一起恢复，保证两者同一坐标约定。</summary>
+        private Material _barCpuMaterial;
+        /// <summary>竞技场自建的 GPU 身体变体，回池保留以供复用，真正销毁时释放。</summary>
+        private Material _hordeGpuMaterial;
+        /// <summary>竞技场自建的 GPU 血条变体，寿命和 GPU 身体材质一致。</summary>
+        private Material _barGpuMaterial;
+        /// <summary>GPU 血条的插值属性块。血条没有图集参数，与身体独立写回各自渲染器。</summary>
+        private MaterialPropertyBlock _barGpuProperties;
+        /// <summary>上一批次正在使用哪种顶点约定。开始或回池时均恢复 CPU 材质。</summary>
+        private bool _hordeInterpolatesOnGpu;
 #if UNITY_EDITOR
+        /// <summary>Editor 低层回归可以强制选择有能力的 GPU 或 CPU，不修改正式设备策略。回池归零。</summary>
+        private bool? _forceHordeGpuInterpolation;
+        /// <summary>实测窗口中确实选到 GPU 端点方案的呈现帧数。</summary>
+        private int _hordeGpuFrames;
         /// <summary>采样窗口中实际提交的位置字节数。</summary>
         private long _hordePositionBytes;
         /// <summary>采样窗口中实际提交的颜色及 UV 字节数。</summary>
@@ -53,7 +74,7 @@ namespace RevGame.Endless
         private static readonly int HordeTextureId = Shader.PropertyToID("_MainTex");
         private Sprite[] _frames;
         private Vector4[] _frameUvs;
-        /// <summary>外围网格的共享材质参数。只记录实际绑定的图集页，回池清空。</summary>
+        /// <summary>身体网格的本场材质参数，保留已绑定图集页及 GPU 插值比例，回池清空。</summary>
         private MaterialPropertyBlock _hordeProperties;
         /// <summary>棋盘上的局内时钟、棋心生命和门口预警，每帧从当前无尽局更新。</summary>
         private MaterialPropertyBlock _gridProperties;
@@ -88,7 +109,7 @@ namespace RevGame.Endless
             new Color(0.2f, 1, 1), new Color(1, 0.22f, 0.03f), new Color(1, 0.85f, 0.25f),
             new Color(0.75f, 0.3f, 1), new Color(0.3f, 0.7f, 1), new Color(0.2f, 1, 0.45f), new Color(1, 0.08f, 0.15f)
         };
-        /// <summary>出池初始化本局采样和资源。网格与显示样本容量沿用，首帧重建可见内容。</summary>
+        /// <summary>出池决定能否准备 GPU 端点流。保留竞技场网格容量，首帧按实际样本重建可见内容。</summary>
         public void OnPoolGet()
         {
             _generation++;
@@ -112,6 +133,7 @@ namespace RevGame.Endless
             _hordeWholeVertexBytes = 0;
             _hordeInterpolatedFrames = 0;
             _hordeCaptures = 0;
+            _hordeGpuFrames = 0;
 #endif
             _gcRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "GC Allocated In Frame");
             RevSound.StopBgm(.6f);
@@ -121,7 +143,7 @@ namespace RevGame.Endless
             if (_hordeBatch == null)
             {
                 int count = EndlessConfig.Count("HordeLimit");
-                _hordeBatch = new EndlessQuadBatch(count, "无尽外围敌人批量网格");
+                _hordeBatch = CreateHordeDrawBatch(count, "无尽外围敌人批量网格", TryPrepareHordeGpuMaterials());
                 _hordePresentation = new EndlessHordePresentation(count, EndlessConfig.Value("SimulationStep"));
                 hordeRenderer.GetComponent<MeshFilter>().sharedMesh = _hordeBatch.Mesh;
                 _hordeProperties = new MaterialPropertyBlock();
@@ -134,6 +156,146 @@ namespace RevGame.Endless
             if (service?.Run != null)
             {
                 BeginCombatFx(service);
+            }
+        }
+
+        /// <summary>仅对能力和 Shader 都足够的 Windows/安卓准备端点流。安卓可在后续升档，预留其能力与真正启用分开。</summary>
+        private bool TryPrepareHordeGpuMaterials()
+        {
+#if UNITY_WEBGL
+            return false;
+#else
+            bool android = Application.platform == RuntimePlatform.Android;
+            bool native = Application.platform == RuntimePlatform.WindowsEditor
+                || Application.platform == RuntimePlatform.WindowsPlayer || android;
+            int shaderLevel = SystemInfo.graphicsShaderLevel;
+            // 安卓开局档位保守，热状态与稳定帧窗口确认后才可升级。预留不会在开局提前切换渲染路径。
+            bool prepare = Application.isEditor || GameBattleDevicePolicy.Current.AllowGpuInterpolation
+                || (android && shaderLevel >= 45);
+            if (!native || !prepare || shaderLevel < 30)
+            {
+                return false;
+            }
+            GraphicsDeviceType api = SystemInfo.graphicsDeviceType;
+            if (api != GraphicsDeviceType.Direct3D11 && api != GraphicsDeviceType.Direct3D12
+                && api != GraphicsDeviceType.Vulkan && api != GraphicsDeviceType.OpenGLES3)
+            {
+                return false;
+            }
+            Material body = hordeRenderer.sharedMaterial;
+            Material bars = hpBarRenderer.sharedMaterial;
+            if (!HasHordeGpuVariant(body) || !HasHordeGpuVariant(bars))
+            {
+                return false;
+            }
+            try
+            {
+                _hordeCpuMaterial = body;
+                _barCpuMaterial = bars;
+                _hordeGpuMaterial = new Material(body) { name = "无尽敌潮 GPU 插值" };
+                _hordeGpuMaterial.EnableKeyword(HordeGpuKeyword);
+                _barGpuMaterial = new Material(bars) { name = "无尽血条 GPU 插值" };
+                _barGpuMaterial.EnableKeyword(HordeGpuKeyword);
+                _barGpuProperties = new MaterialPropertyBlock();
+                return true;
+            }
+            catch (Exception error)
+            {
+                ReleaseHordeGpuMaterials();
+                RevLog.Warn("无尽显卡材质装配失败，回退到原顶点路径：" + error.Message, "Endless");
+                return false;
+            }
+#endif
+        }
+
+        /// <summary>核对真实资产声明的参数和局部变体，旧 AB 只要缺一项就走原顶点路径。</summary>
+        private static bool HasHordeGpuVariant(Material material)
+        {
+            return material != null && material.HasProperty(HordeBlendId) && material.shader.isSupported
+                && material.shader.keywordSpace.FindKeyword(HordeGpuKeyword).isValid;
+        }
+
+        /// <summary>端点流为可选能力。原生缓冲装配失败时用双流重试，原双流自身的错误仍交给场景入口。</summary>
+        private EndlessQuadBatch CreateHordeDrawBatch(int count, string name, bool gpuCapable)
+        {
+            try
+            {
+                return new EndlessQuadBatch(count, name, gpuCapable);
+            }
+            catch (Exception error) when (gpuCapable)
+            {
+                ReleaseHordeGpuMaterials();
+                RevLog.Warn("无尽显卡端点缓冲装配失败，回退到原顶点路径：" + error.Message, "Endless");
+                return new EndlessQuadBatch(count, name);
+            }
+        }
+
+        /// <summary>只有在未绑定 GPU 变体时调用。装配失败与竞技场真正销毁共用这份清理。</summary>
+        private void ReleaseHordeGpuMaterials()
+        {
+            Destroy(_hordeGpuMaterial);
+            Destroy(_barGpuMaterial);
+            _hordeGpuMaterial = null;
+            _barGpuMaterial = null;
+            _barGpuProperties = null;
+        }
+
+        /// <summary>只有身体和血条都装好对应布局才可用 GPU。按实际入批可见身体数决定，少量实体保留原路径。</summary>
+        private bool ShouldInterpolateHordeOnGpu()
+        {
+            if (!_hordeBatch.CanInterpolateOnGpu || !_barBatch.CanInterpolateOnGpu || _hordeGpuMaterial == null)
+            {
+                return false;
+            }
+#if UNITY_EDITOR
+            if (_forceHordeGpuInterpolation.HasValue)
+            {
+                return _forceHordeGpuInterpolation.Value;
+            }
+#endif
+            var policy = GameBattleDevicePolicy.Current;
+            // 边界附近连续出生或死亡不用来回切换材质和上传布局。
+            int threshold = _hordeInterpolatesOnGpu ? Math.Max(1, policy.GpuMinimumSprites * 3 / 4) : policy.GpuMinimumSprites;
+            return policy.AllowGpuInterpolation && _hordeQuadCount >= threshold;
+        }
+
+#if UNITY_EDITOR
+        /// <summary>隔离 A/B 用的 Editor 覆盖。true 仍要求现用 Shader 和设备能力，null 恢复正式设备策略。</summary>
+        internal bool OverrideHordeGpuForChecks(bool? enabled)
+        {
+            if (!_active || (enabled == true && (_hordeGpuMaterial == null || _barGpuMaterial == null)))
+            {
+                return false;
+            }
+            _forceHordeGpuInterpolation = enabled;
+            return true;
+        }
+#endif
+
+        /// <summary>布局写好后再更换两份渲染材质。退出时先清索引范围，再把预制体原材质还给两个渲染器。</summary>
+        private void SetHordeGpuMaterial(bool onGpu)
+        {
+            if (onGpu == _hordeInterpolatesOnGpu)
+            {
+                return;
+            }
+            hordeRenderer.sharedMaterial = onGpu ? _hordeGpuMaterial : _hordeCpuMaterial;
+            hpBarRenderer.sharedMaterial = onGpu ? _barGpuMaterial : _barCpuMaterial;
+            _hordeInterpolatesOnGpu = onGpu;
+        }
+
+        /// <summary>显卡路径通常只在表现帧提交一个归一化比例。图集仍绑定在原身体属性块里，避免切姿势丢图。</summary>
+        private void SetHordeGpuBlend(float blend, bool atlasReady)
+        {
+            if (atlasReady && _hordeQuadCount > 0)
+            {
+                _hordeProperties.SetFloat(HordeBlendId, blend);
+                hordeRenderer.SetPropertyBlock(_hordeProperties);
+            }
+            if (HordeBarCount > 0)
+            {
+                _barGpuProperties.SetFloat(HordeBlendId, blend);
+                hpBarRenderer.SetPropertyBlock(_barGpuProperties);
             }
         }
         /// <summary>手牌上显示的棋子头像。用棋子待机第一帧，它所在的图集进局时已经加载好。</summary>
@@ -366,7 +528,7 @@ namespace RevGame.Endless
             }
             , transform);
         }
-        /// <summary>更新敌潮的身体与血条。普通补间帧只写位置，新样本或绘制归属变化时一起刷新外观。</summary>
+        /// <summary>身体和血条共用插值。显卡路径只在样本或路径变化时上传端点，原路径保留每帧位置上传。</summary>
         private void UpdateHorde(EndlessHordeComponents horde, EndlessRun run, bool atlasReady, bool sampleChanged, float blend, bool sampling)
         {
             int atlas = atlasReady ? _bindingVersion : -1;
@@ -377,15 +539,22 @@ namespace RevGame.Endless
                 _hordeDrawAtlas = atlas;
                 _hordeLayoutDirty = false;
             }
-            bool submit = appearanceChanged || _hordeDrawBlend != blend;
+            // 等图集时身体会沿用上一份完整网格。保持其旧顶点约定，直到新图和新几何能一起提交。
+            bool onGpu = atlasReady ? ShouldInterpolateHordeOnGpu() : _hordeInterpolatesOnGpu;
+            bool submit = appearanceChanged || _hordeDrawBlend != blend || onGpu != _hordeInterpolatesOnGpu;
             if (submit)
             {
                 if (atlasReady)
                 {
                     // 图集页异步绑定期间沿用上一张完整网格。新页可画后，位置和外观一起切换。
-                    _hordeBatch.Submit(_hordeQuadCount, blend, appearanceChanged);
+                    _hordeBatch.Submit(_hordeQuadCount, blend, appearanceChanged, onGpu);
                 }
-                _barBatch.Submit(HordeBarCount, blend, appearanceChanged);
+                _barBatch.Submit(HordeBarCount, blend, appearanceChanged, onGpu);
+                SetHordeGpuMaterial(onGpu);
+                if (onGpu)
+                {
+                    SetHordeGpuBlend(blend, atlasReady);
+                }
                 _hordeDrawBlend = blend;
             }
 #if UNITY_EDITOR
@@ -395,12 +564,10 @@ namespace RevGame.Endless
                 _hordeWholeVertexBytes += quads * (EndlessQuadBatch.PositionBytesPerQuad + EndlessQuadBatch.AppearanceBytesPerQuad);
                 if (submit)
                 {
-                    _hordePositionBytes += quads * EndlessQuadBatch.PositionBytesPerQuad;
+                    _hordePositionBytes += (atlasReady ? _hordeBatch.LastPositionBytes : 0) + _barBatch.LastPositionBytes;
+                    _hordeAppearanceBytes += (atlasReady ? _hordeBatch.LastAppearanceBytes : 0) + _barBatch.LastAppearanceBytes;
                 }
-                if (appearanceChanged)
-                {
-                    _hordeAppearanceBytes += quads * EndlessQuadBatch.AppearanceBytesPerQuad;
-                }
+                _hordeGpuFrames += onGpu && quads > 0 ? 1 : 0;
                 _hordeCaptures += sampleChanged ? 1 : 0;
                 _hordeInterpolatedFrames += blend > 0f && blend < 1f && quads > 0 ? 1 : 0;
             }
@@ -467,7 +634,7 @@ namespace RevGame.Endless
             _hordeProperties.SetTexture(HordeTextureId, texture);
             hordeRenderer.SetPropertyBlock(_hordeProperties);
         }
-        /// <summary>停止表现并清除本局的显示样本，收起批次后归还棋子和音效。</summary>
+        /// <summary>停止表现，清两批索引与属性，恢复 CPU 材质。保留可复用网格和竞技场持有的 GPU 材质。</summary>
         public void OnPoolReturn()
         {
             if (!_active)
@@ -477,11 +644,21 @@ namespace RevGame.Endless
             _active = false;
             _hordePresentation?.Reset();
             _hordeBatch?.Submit(0);
+            _barBatch?.Submit(0);
+            SetHordeGpuMaterial(false);
+#if UNITY_EDITOR
+            _forceHordeGpuInterpolation = null;
+#endif
             _hordeProperties?.Clear();
+            _barGpuProperties?.Clear();
             _hordeTexture = null;
             if (hordeRenderer != null)
             {
                 hordeRenderer.SetPropertyBlock(null);
+            }
+            if (hpBarRenderer != null)
+            {
+                hpBarRenderer.SetPropertyBlock(null);
             }
             if (_gcRecorder.Valid)
             {
@@ -502,7 +679,7 @@ namespace RevGame.Endless
             _pending.Clear();
             Ready = false;
         }
-        /// <summary>竞技场真正销毁时释放自建 Mesh。正常回池只清可绘制范围以复用容量。</summary>
+        /// <summary>竞技场真正销毁时释放 GPU 专用材质与自建 Mesh。低能力设备没有这些专用材质。</summary>
         private void OnDestroy()
         {
             OnPoolReturn();
@@ -510,11 +687,12 @@ namespace RevGame.Endless
             {
                 Destroy(_hordeBatch.Mesh);
             }
+            ReleaseHordeGpuMaterials();
             DestroyFeelMeshes();
             DestroyGuardMeshes();
             DestroyCardUpgradeMesh();
         }
-        /// <summary>读取本局整帧观测及 Editor 的外围顶点上传量，查询时才对样本排序。</summary>
+        /// <summary>读取本局整帧观测及 Editor 的实际几何上传量、GPU 选择帧数，查询时才对样本排序。</summary>
         public object Metrics()
         {
             float[] sorted = new float[_frameCount];
@@ -537,7 +715,8 @@ namespace RevGame.Endless
                 {
                     ["positionBytes"] = _hordePositionBytes, ["appearanceBytes"] = _hordeAppearanceBytes,
                     ["wholeVertexBytesAtSameQuadCounts"] = _hordeWholeVertexBytes,
-                    ["captures"] = _hordeCaptures, ["interpolatedFrames"] = _hordeInterpolatedFrames
+                    ["captures"] = _hordeCaptures, ["interpolatedFrames"] = _hordeInterpolatedFrames,
+                    ["gpuFrames"] = _hordeGpuFrames, ["gpuInterpolation"] = _hordeInterpolatesOnGpu
                 }
 #endif
             };

@@ -71,7 +71,7 @@ namespace RevGame.Endless
         private readonly Dictionary<int, BattleText> _comboTexts = new Dictionary<int, BattleText>(8);
         private int _comboShouts, _auraFlashes;
 
-        /// <summary>进入无尽：建两张网格（只建一次）、登记音效。</summary>
+        /// <summary>进入无尽时创建剑气与血条网格。血条沿用敌潮可选的 GPU 端点布局，随后登记本模式音效。</summary>
         private void BeginFeel()
         {
             if (_auraMesh == null)
@@ -93,7 +93,8 @@ namespace RevGame.Endless
             // 两张网格各自判断就绪。若血条网格初始化中断，再进入时仍可单独重试。
             if (_barBatch == null)
             {
-                _barBatch = new EndlessQuadBatch(EndlessConfig.Count("HordeLimit"), "无尽外围血条批量网格");
+                _barBatch = CreateHordeDrawBatch(EndlessConfig.Count("HordeLimit"), "无尽外围血条批量网格",
+                    _hordeBatch.CanInterpolateOnGpu);
                 hpBarRenderer.GetComponent<MeshFilter>().sharedMesh = _barBatch.Mesh;
             }
             for (int i = 0; i < FeelSounds.Length; i++)
@@ -258,7 +259,7 @@ namespace RevGame.Endless
             private set;
         }
 
-        /// <summary>退出无尽时卸载本模式音效，清掉闪光记录和血条提交范围；网格缓冲随竞技场复用。</summary>
+        /// <summary>退出无尽时卸载本模式音效并清掉闪光记录。提交范围已由竞技场在还原材质前清空。</summary>
         private void ReleaseFeel()
         {
             for (int i = 0; i < FeelSounds.Length; i++)
@@ -267,8 +268,6 @@ namespace RevGame.Endless
             }
             _auraFlash.Clear();
             _auraLastCount = AuraCapacity;
-            // 回池保留已分配的容量，立刻把本局血条的索引范围清零。
-            _barBatch?.Submit(0);
             AuraCount = HordeBarCount = 0;
         }
 

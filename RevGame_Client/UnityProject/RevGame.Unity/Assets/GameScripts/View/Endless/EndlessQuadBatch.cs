@@ -5,7 +5,7 @@ using UnityEngine.Rendering;
 
 namespace RevGame.Endless
 {
-    /// <summary>无尽竞技场的单材质四边形批次。位置与颜色/UV 分流提交，回池清可见范围，销毁时释放 Mesh。</summary>
+    /// <summary>无尽外围身体和血条共用的批次。使用 CPU 位置或 GPU 端点，回池清绘制范围，竞技场销毁 Mesh。</summary>
     internal sealed class EndlessQuadBatch
     {
         /// <summary>按绘制顺序存的一枚方块。只在新样本或绘制归属变化时更新。</summary>
@@ -41,6 +41,15 @@ namespace RevGame.Endless
             new VertexAttributeDescriptor(VertexAttribute.TexCoord0, VertexAttributeFormat.Float32, 2, stream: 1)
         };
 
+        /// <summary>显卡插值额外读取流 2。前两流保持原布局，让小批次仍能只提交 CPU 位置。</summary>
+        private static readonly VertexAttributeDescriptor[] GpuAttributes =
+        {
+            new VertexAttributeDescriptor(VertexAttribute.Position, VertexAttributeFormat.Float32, 3),
+            new VertexAttributeDescriptor(VertexAttribute.Color, VertexAttributeFormat.Float32, 4, stream: 1),
+            new VertexAttributeDescriptor(VertexAttribute.TexCoord0, VertexAttributeFormat.Float32, 2, stream: 1),
+            new VertexAttributeDescriptor(VertexAttribute.TexCoord1, VertexAttributeFormat.Float32, 4, stream: 2)
+        };
+
         /// <summary>延续外围网格原有的保守包围盒，包含出生路线、盘外移动、棋盘及血条高度。</summary>
         private static readonly Bounds ArenaBounds = new Bounds(new Vector3(4, 4, 0), new Vector3(40, 40, 10));
 
@@ -51,6 +60,15 @@ namespace RevGame.Endless
         /// <summary>同样容量的外观缓冲。稳定的相对顺序允许连续表现帧复用它。</summary>
         private readonly Appearance[] _appearance;
 
+        /// <summary>可选流 2，每顶点保存目标中心 XY 和相对中心的四角偏移 ZW，单位格。低能力设备不分配。</summary>
+        private readonly Vector4[] _gpuEndpoints;
+
+        /// <summary>上一批的位置含义是否为 GPU 起点。路径切换时强制重写，避免把中心按四角绘制。</summary>
+        private bool _submittedOnGpu;
+
+        /// <summary>是否拥有 GPU 所需的流 2。竞技场只有在身体和血条都支持时才允许选择 GPU。</summary>
+        internal bool CanInterpolateOnGpu => _gpuEndpoints != null;
+
         /// <summary>已设置到子网格的方块数。初始化为 -1，保证第一次写入得到空索引范围。</summary>
         private int _submitted = -1;
 #if UNITY_EDITOR
@@ -58,6 +76,20 @@ namespace RevGame.Endless
         internal const int PositionBytesPerQuad = 4 * 3 * sizeof(float);
         /// <summary>同一布局下每个方块每次提交的颜色与 UV 字节数。</summary>
         internal const int AppearanceBytesPerQuad = 4 * 6 * sizeof(float);
+        /// <summary>GPU 路径每个四边形新增的端点流字节数，供 Editor 量化实际提交。</summary>
+        private const int EndpointsBytesPerQuad = 4 * 4 * sizeof(float);
+        /// <summary>本次提交的几何字节数，包含按需写入的 GPU 端点。仅更新插值参数时为零。</summary>
+        internal int LastPositionBytes
+        {
+            get;
+            private set;
+        }
+        /// <summary>本次提交的颜色和 UV 字节数。沿用原有外观变化门禁。</summary>
+        internal int LastAppearanceBytes
+        {
+            get;
+            private set;
+        }
         /// <summary>上次提交的活动方块数，仅用于 Editor 验证实际上传范围。</summary>
         internal int SubmittedCount => _submitted;
 #endif
@@ -68,8 +100,8 @@ namespace RevGame.Endless
             get;
         }
 
-        /// <summary>初始化固定容量的双流顶点和索引缓冲。外围容量沿用原设备的 16 位索引范围。</summary>
-        internal EndlessQuadBatch(int capacity, string name)
+        /// <summary>初始化固定容量缓冲。只有设备和实际材质都允许时预留端点流，索引始终使用 16 位原有布局。</summary>
+        internal EndlessQuadBatch(int capacity, string name, bool gpuCapable = false)
         {
             if (capacity <= 0 || capacity > ushort.MaxValue / 4)
             {
@@ -78,6 +110,10 @@ namespace RevGame.Endless
             _positions = new Vector3[capacity * 4];
             _motion = new QuadMotion[capacity];
             _appearance = new Appearance[capacity * 4];
+            if (gpuCapable)
+            {
+                _gpuEndpoints = new Vector4[capacity * 4];
+            }
             var indices = new ushort[capacity * 6];
             for (int quad = 0; quad < capacity; quad++)
             {
@@ -95,7 +131,7 @@ namespace RevGame.Endless
             try
             {
                 Mesh.MarkDynamic();
-                Mesh.SetVertexBufferParams(_positions.Length, Attributes);
+                Mesh.SetVertexBufferParams(_positions.Length, gpuCapable ? GpuAttributes : Attributes);
                 Mesh.SetIndexBufferParams(indices.Length, IndexFormat.UInt16);
                 Mesh.SetIndexBufferData(indices, 0, 0, indices.Length);
                 Mesh.subMeshCount = 1;
@@ -131,26 +167,45 @@ namespace RevGame.Endless
             _positions[start + 3] = new Vector3(x - halfWidth, y + halfHeight, z);
         }
 
-        /// <summary>按 0～1 的比例提交活动位置。新布局同时提交外观，再更新索引范围。</summary>
-        internal void Submit(int count, float blend = 1f, bool appearanceChanged = false)
+        /// <summary>CPU 每帧写四角。GPU 仅在样本、范围或路径改变时写端点，渲染器另行更新 0～1 的插值参数。</summary>
+        internal void Submit(int count, float blend = 1f, bool appearanceChanged = false, bool onGpu = false)
         {
-            if (count > 0)
+            onGpu = onGpu && CanInterpolateOnGpu;
+            bool rangeChanged = _submitted != count;
+#if UNITY_EDITOR
+            LastPositionBytes = 0;
+            LastAppearanceBytes = 0;
+#endif
+            if (count > 0 && (!onGpu || appearanceChanged || rangeChanged || !_submittedOnGpu))
             {
-                // 每个槽只插值一次中心坐标，再展开四角。槽位筛选与 UV 生成留在样本更新时。
-                for (int quad = 0; quad < count; quad++)
+                if (onGpu)
                 {
-                    ref readonly QuadMotion motion = ref _motion[quad];
-                    Vector2 position = blend < 1f ? motion.From + motion.Delta * blend : motion.To;
-                    WritePosition(quad, position.x, position.y, motion.Extent.x, motion.Extent.y, motion.Z);
+                    UploadGpuEndpoints(count);
                 }
-                // 两股数据先写到对应流，再扩大索引范围。零个方块时只收起旧索引。
+                else
+                {
+                    // 每个槽只插值一次中心，再沿原绕序展开。端点帧直接使用原目标值。
+                    for (int quad = 0; quad < count; quad++)
+                    {
+                        ref readonly QuadMotion motion = ref _motion[quad];
+                        Vector2 position = blend < 1f ? motion.From + motion.Delta * blend : motion.To;
+                        WritePosition(quad, position.x, position.y, motion.Extent.x, motion.Extent.y, motion.Z);
+                    }
+                }
                 Mesh.SetVertexBufferData(_positions, 0, 0, count * 4, stream: 0, flags: MeshUpdateFlags.DontRecalculateBounds);
-                if (appearanceChanged || _submitted != count)
-                {
-                    Mesh.SetVertexBufferData(_appearance, 0, 0, count * 4, stream: 1, flags: MeshUpdateFlags.DontRecalculateBounds);
-                }
+#if UNITY_EDITOR
+                LastPositionBytes = count * (PositionBytesPerQuad + (onGpu ? EndpointsBytesPerQuad : 0));
+#endif
             }
-            if (_submitted == count)
+            if (count > 0 && (appearanceChanged || rangeChanged))
+            {
+                Mesh.SetVertexBufferData(_appearance, 0, 0, count * 4, stream: 1, flags: MeshUpdateFlags.DontRecalculateBounds);
+#if UNITY_EDITOR
+                LastAppearanceBytes = count * AppearanceBytesPerQuad;
+#endif
+            }
+            _submittedOnGpu = onGpu && count > 0;
+            if (!rangeChanged)
             {
                 return;
             }
@@ -162,6 +217,25 @@ namespace RevGame.Endless
             };
             Mesh.SetSubMesh(0, range, MeshUpdateFlags.DontRecalculateBounds);
             _submitted = count;
+        }
+
+        /// <summary>按原四角顺序保存位置起点与端点。显卡先插值中心再加局部偏移，深度、颜色和 UV 与 CPU 路径相同。</summary>
+        private void UploadGpuEndpoints(int count)
+        {
+            for (int quad = 0; quad < count; quad++)
+            {
+                ref readonly QuadMotion motion = ref _motion[quad];
+                int start = quad * 4;
+                var center = new Vector3(motion.From.x, motion.From.y, motion.Z);
+                _positions[start] = _positions[start + 1] = _positions[start + 2] = _positions[start + 3] = center;
+                float x = motion.To.x, y = motion.To.y;
+                float w = motion.Extent.x, h = motion.Extent.y;
+                _gpuEndpoints[start] = new Vector4(x, y, -w, -h);
+                _gpuEndpoints[start + 1] = new Vector4(x, y, w, -h);
+                _gpuEndpoints[start + 2] = new Vector4(x, y, w, h);
+                _gpuEndpoints[start + 3] = new Vector4(x, y, -w, h);
+            }
+            Mesh.SetVertexBufferData(_gpuEndpoints, 0, 0, count * 4, stream: 2, flags: MeshUpdateFlags.DontRecalculateBounds);
         }
     }
 }

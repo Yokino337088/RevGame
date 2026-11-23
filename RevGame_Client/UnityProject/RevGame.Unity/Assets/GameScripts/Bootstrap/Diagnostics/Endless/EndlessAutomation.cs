@@ -19,7 +19,7 @@ namespace RevGame.Endless
                 return RevServices.GetRequired<EndlessService>();
             }
         }
-        /// <summary>启动时登记正式无尽入口及隔离规则检查，注销时统一按所有者移除。</summary>
+        /// <summary>启动时登记正式无尽入口及隔离规则检查。Editor 另开放视觉路径 A/B，退出时统一注销。</summary>
         public static void Register()
         {
             RevGM.Register("无尽/进入测试局", "从大厅经正式流程进入固定种子隔离无尽局", args =>
@@ -103,6 +103,8 @@ namespace RevGame.Endless
             RevRuntimeAutomation.Register("endless.ecs-rules", "隔离验证80格部署、一格升星、盘外Boss总预算与存档", Empty, _ => EndlessService.CheckEcsRules(), owner: Owner);
 #if UNITY_EDITOR
             RevRuntimeAutomation.Register("endless.horde-presentation-check", "隔离验证敌潮插值、生命周期及顶点外观流复用", Empty, _ => EndlessHordePresentationChecks.Run(), owner: Owner);
+            const string hordeModeSchema = "{\"type\":\"object\",\"properties\":{\"mode\":{\"type\":\"string\",\"enum\":[\"auto\",\"cpu\",\"gpu\"]}},\"required\":[\"mode\"],\"additionalProperties\":false}";
+            RevRuntimeAutomation.Register("endless.horde-vertex-mode", "Editor 隔离局 A/B。auto 恢复策略，cpu 与 gpu 比较同一份显示样本", hordeModeSchema, SetHordeVertexMode, owner: Owner);
 #endif
             RevRuntimeAutomation.Register("endless.save-recovery-check", "使用临时目录验证无尽棋局和战绩的备份恢复", Empty, _ => EndlessService.CheckSaveRecovery(), owner: Owner);
             RevRuntimeAutomation.Register("endless.ecs-benchmark", "固定240/1024实体全扫描与空间桶查询CPU对照", Empty, _ => EndlessService.BenchmarkEcs(), owner: Owner);
@@ -130,6 +132,32 @@ namespace RevGame.Endless
             RevRuntimeAutomation.Register("endless.snowball-rules", "隔离实例验证波次血攻成长、一步连刷与上限、10波领主来袭横幅、领主奖励随机累加与彩色横幅、增益接入伤害攻速范围生命", Empty, _ => EndlessService.CheckSnowballRules(), owner: Owner);
             RevRuntimeAutomation.Register("endless.feedback", "只读：六章同款战斗反馈的在播/累计次数、绿色落子提示格数、外围敌人出生口分布", Empty, _ => Feedback(), readOnly: true, owner: Owner);
         }
+#if UNITY_EDITOR
+        /// <summary>只允许在隔离局切换显示路径。着色器或设备不支持时明确拒绝，保持当前画面。</summary>
+        private static object SetHordeVertexMode(string json)
+        {
+            var arena = UnityEngine.Object.FindObjectOfType<EndlessArena>();
+            string mode = JsonUtility.FromJson<HordeVertexModeArgs>(json)?.mode;
+            bool? enabled;
+            switch (mode)
+            {
+                case "auto": enabled = null; break;
+                case "cpu": enabled = false; break;
+                case "gpu": enabled = true; break;
+                default: return new { accepted = false, reason = "仅支持 auto、cpu、gpu" };
+            }
+            bool accepted = Service.Isolated && arena != null && arena.OverrideHordeGpuForChecks(enabled);
+            return new { accepted, reason = accepted ? "" : "需要已就绪的隔离无尽和对应设备与 Shader 能力", mode };
+        }
+
+        /// <summary>Editor 隔离 A/B 请求的白名单参数，不接受任意材质或资源目标。</summary>
+        [Serializable]
+        private sealed class HordeVertexModeArgs
+        {
+            /// <summary>auto 恢复策略，cpu 或 gpu 固定表现路径。退出本局自动清除。</summary>
+            public string mode;
+        }
+#endif
         /// <summary>
         /// 表现验收用的只读快照。arena 部分来自 EndlessArena.FeedbackSnapshot；
         /// lanes 部分直接数服务里的外围敌人：左右各占几只、各铺了几行、有没有不在横线上或从上下门来的。

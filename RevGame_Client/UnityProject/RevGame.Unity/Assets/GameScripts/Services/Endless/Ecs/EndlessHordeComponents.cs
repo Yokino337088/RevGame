@@ -26,6 +26,12 @@ namespace RevGame.Endless
         private int _activeCount;
         /// <summary>出生/死亡标记变化时置位，移动/HP变化不导致无效名单重建。</summary>
         private bool _activeDirty = true;
+        /// <summary>按出生编号排序的槽号，只由当前世界使用，排队算法借用时不改变内容。</summary>
+        private readonly int[] _birthSlots;
+        /// <summary>排序时使用的出生编号，按世界容量预留，重建时覆盖实际范围。</summary>
+        private readonly int[] _birthIds;
+        /// <summary>出生、退场或活跃槽换了身份时置位，移动和扣血保留原出生顺序。</summary>
+        private bool _birthOrderDirty = true;
         /// <summary>所有会改变空间候选的写入版本；直接测试造局也通过同一提交点失效索引。</summary>
         public int SpatialVersion
         {
@@ -63,6 +69,8 @@ namespace RevGame.Endless
             _generation = new int[capacity];
             _positionCuts = new int[capacity];
             _active = new int[capacity];
+            _birthSlots = new int[capacity];
+            _birthIds = new int[capacity];
         }
         /// <summary>读回值快照，写回一次拆到组件并使显示样本失效。真实状态仍由本组件持有。</summary>
         public EndlessHorde this[int slot]
@@ -85,10 +93,12 @@ namespace RevGame.Endless
                 if (_state[slot].active != value.active)
                 {
                     _activeDirty = true;
+                    _birthOrderDirty = true;
                 }
                 if (value.active && _state[slot].id != value.id)
                 {
                     _generation[slot]++;
+                    _birthOrderDirty = true;
                 }
                 Positions[slot] = new Vector2(value.x, value.y);
                 _health[slot] = new Vector2(value.hp, value.maxHp);
@@ -104,6 +114,29 @@ namespace RevGame.Endless
         public int ActiveSlot(int cursor)
         {
             return _active[cursor];
+        }
+        /// <summary>排队前取本世界按出生编号排序的活跃槽数量。只有成员或身份变化才重排。</summary>
+        internal int RefreshBirthOrder()
+        {
+            if (_birthOrderDirty)
+            {
+                RefreshActive();
+                // 仍从按槽号递增的名单装入编号和槽号，保持旧实现的排序输入与遍历顺序。
+                for (int i = 0; i < _activeCount; i++)
+                {
+                    int slot = _active[i];
+                    _birthSlots[i] = slot;
+                    _birthIds[i] = _state[slot].id;
+                }
+                Array.Sort(_birthIds, _birthSlots, 0, _activeCount);
+                _birthOrderDirty = false;
+            }
+            return _activeCount;
+        }
+        /// <summary>在刷新出生顺序后读取该名次对应的槽号。本轮借用期间不能修改世界结构。</summary>
+        internal int BirthSlot(int order)
+        {
+            return _birthSlots[order];
         }
         /// <summary>保持旧出生顺序：选择编号最小的空槽，随机源与后续并列目标不因ECS迁移改变。</summary>
         public int FirstFree()
@@ -163,6 +196,7 @@ namespace RevGame.Endless
             }
             _activeCount = 0;
             _activeDirty = true;
+            _birthOrderDirty = true;
             SpatialVersion++;
             PresentationVersion++;
         }

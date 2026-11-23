@@ -23,6 +23,7 @@ namespace RevGame.Bootstrap
         //作者原话：这个状态变量代表是否已经被释放掉了
         private bool _released;
 
+        /// <summary>装配一次项目服务。设备预算在流程可用后订阅屏幕，到销毁时与其它常驻服务一起释放。</summary>
         private void Awake()
         {
             if (_instance != null && _instance != this)
@@ -108,8 +109,13 @@ namespace RevGame.Bootstrap
                 .AddService<RevGame.Endless.EndlessService, RevGame.Endless.EndlessService>(this, eager: false)
                 .AddService<GameFlow, GameFlow>(this, false, nameof(IBattleService), nameof(RevGame.Endless.EndlessService));
             services.RunAsync().GetAwaiter().GetResult();
+            RevServices.Register<GameBattleDeviceSettings, GameBattleDeviceSettings>(owner: this);
+            RevServices.GetRequired<GameBattleDeviceSettings>();
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+            RevRuntimeAutomation.Register("game.device-optimization.state", "只读当前适配器、战斗画质预算和热状态",
+                "{\"type\":\"object\",\"properties\":{},\"additionalProperties\":false}",
+                _ => RevServices.GetRequired<GameBattleDeviceSettings>().Snapshot(), readOnly: true, owner: this);
             // 自动化服务与启动宿主同寿命，才能从大厅跨场景跑到章节奖励；正式包完全不注册。
             // 执行器只模拟输入和观察结果，游戏规则仍由原来的GameFlow/BattleService决定。
             RevServices.Register<RevGame.Automation.GameAutomationRunner, RevGame.Automation.GameAutomationRunner>(owner: this);
@@ -154,6 +160,7 @@ namespace RevGame.Bootstrap
                 RevLog.Exception(error, "游戏启动失败：请检查过场面板与资源配置", "RevGame");
             }
         }
+        /// <summary>停开发入口、退出游戏流和释放常驻服务，设备服务同时还原自己借用的显示设置。</summary>
         private void OnDestroy()
         {
             // 重复启动器没有注册过服务，绝不能在销毁时注销真正的全局宿主。
@@ -165,6 +172,7 @@ namespace RevGame.Bootstrap
             _instance = null;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
             // 必须先停测试再退出游戏域：测试可能还按着按钮，不能对已销毁的旧面板补发松手/点击。
+            RevRuntimeAutomation.Unregister("game.device-optimization.state");
             RevServices.Unregister<RevGame.Automation.GamePlayerPerformanceSession>();
             RevServices.Unregister<RevGame.Automation.GamePerformanceMonitor>();
             GameGmCommands.UnregisterAll();

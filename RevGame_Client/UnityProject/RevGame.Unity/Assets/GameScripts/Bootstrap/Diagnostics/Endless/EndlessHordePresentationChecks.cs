@@ -8,7 +8,7 @@ namespace RevGame.Endless
     /// <summary>编辑器 Play 验收入口，使用独立组件和临时 Mesh，专测显示快照和顶点流。</summary>
     internal static class EndlessHordePresentationChecks
     {
-        /// <summary>从空局跑完位移、打断、换槽与回收断言。失败返回第一处偏差，始终销毁测试网格。</summary>
+        /// <summary>从空局核对位移、打断、换槽和回收，再检查 CPU 与 GPU 输入布局及中间帧上传。始终销毁测试网格。</summary>
         internal static object Run()
         {
             int passed = 0;
@@ -66,7 +66,7 @@ namespace RevGame.Endless
             display.Capture(world, run, .6);
             Check(!display.Read(0).active, "清盘后没有旧身份");
 
-            var batch = new EndlessQuadBatch(1, "测试外围敌人顶点流");
+            var batch = new EndlessQuadBatch(1, "测试外围敌人顶点流", gpuCapable: true);
             try
             {
                 batch.Write(0, Vector2.zero, new Vector2(4, 6), .5f, .5f, 0, new Vector4(.25f, 0, .75f, 1), new Color(0, 1, 0, .5f));
@@ -74,6 +74,21 @@ namespace RevGame.Endless
                 batch.Submit(1, blend: .5f);
                 Check(batch.Mesh.vertices[0] == new Vector3(1.5f, 2.5f, 0) &&
                     batch.Mesh.uv[0] == new Vector2(.25f, 0) && batch.Mesh.colors[0].a == .5f, "只更新位置流仍保留 UV 和血条比例");
+                batch.Submit(1, blend: 0, onGpu: true);
+                // 直接解码传给顶点 Shader 的数据，核对中心与局部四角，保留原血量和图集采样。
+                var endpoints = new List<Vector4>(4);
+                batch.Mesh.GetUVs(1, endpoints);
+                var origin = batch.Mesh.vertices[0];
+                var endpoint = endpoints[0];
+                Vector2 reconstructed = Vector2.Lerp(new Vector2(origin.x, origin.y), new Vector2(endpoint.x, endpoint.y), .5f)
+                    + new Vector2(endpoint.z, endpoint.w);
+                Check(reconstructed == new Vector2(1.5f, 2.5f) && batch.Mesh.colors[0].a == .5f
+                    && batch.LastPositionBytes == 112, "GPU 端点布局复用外观并重建与 CPU 相同的中点四角");
+                batch.Submit(1, blend: .5f, onGpu: true);
+                Check(batch.LastPositionBytes == 0 && batch.LastAppearanceBytes == 0, "相同快照的 GPU 中间帧不上传顶点");
+                batch.Submit(1, blend: .5f);
+                Check(batch.Mesh.vertices[0] == new Vector3(1.5f, 2.5f, 0)
+                    && batch.LastPositionBytes == EndlessQuadBatch.PositionBytesPerQuad, "退出 GPU 路径后按原布局立即重写坐标");
                 batch.Submit(0);
                 Check(batch.Mesh.GetIndexCount(0) == 0, "回收后索引范围立即清空");
             }

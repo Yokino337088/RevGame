@@ -118,7 +118,8 @@
       canvas.addEventListener("revgame:quit", quitGame);
 
       // WebGL 的 GPU 像素预算。CSS 画布铺满视口，高 DPI 和全屏也遵守独立的绘制上限。
-      const renderPixelBudget = 1600 * 900;
+      const defaultPixelBudget = 1600 * 900;
+      let renderPixelBudget = defaultPixelBudget;
 
       // 由网页控制绘制缓冲，保持宽高比例。只响应视口变化，同尺寸不重建缓冲。
       function resizeRenderTarget() {
@@ -138,6 +139,17 @@
 
       resizeRenderTarget();
       window.addEventListener("resize", resizeRenderTarget);
+
+      // Unity 只发送已选档位。页面保留 CSS 大小和输入坐标，在下一张浏览器帧至多重建一次缓冲。
+      canvas.addEventListener("revgame:pixel-budget", event => {
+        const requested = event.detail === 0 ? defaultPixelBudget : event.detail;
+        if ((requested !== 1280 * 720 && requested !== defaultPixelBudget && requested !== 1920 * 1080)
+            || requested === renderPixelBudget) {
+          return;
+        }
+        renderPixelBudget = requested;
+        requestAnimationFrame(resizeRenderTarget);
+      });
 
       // 在真实点击回调内请求浏览器全屏。浏览器拒绝时画布继续铺满视口，按钮保留再次进入的入口。
       function enterFullscreen() {
