@@ -103,6 +103,7 @@ namespace RevGame.Endless
             RevRuntimeAutomation.Register("endless.ecs-rules", "隔离验证80格部署、一格升星、盘外Boss总预算与存档", Empty, _ => EndlessService.CheckEcsRules(), owner: Owner);
 #if UNITY_EDITOR
             RevRuntimeAutomation.Register("endless.horde-presentation-check", "隔离验证敌潮插值、生命周期及顶点外观流复用", Empty, _ => EndlessHordePresentationChecks.Run(), owner: Owner);
+            RevRuntimeAutomation.Register("endless.effect-batches-check", "用临时网格验证局部特效的顶点通道、局部更新和退场复用", Empty, _ => EndlessEffectBatchChecks.Run(), owner: Owner);
             const string hordeModeSchema = "{\"type\":\"object\",\"properties\":{\"mode\":{\"type\":\"string\",\"enum\":[\"auto\",\"cpu\",\"gpu\"]}},\"required\":[\"mode\"],\"additionalProperties\":false}";
             RevRuntimeAutomation.Register("endless.horde-vertex-mode", "Editor 隔离局 A/B。auto 恢复策略，cpu 与 gpu 比较同一份显示样本", hordeModeSchema, SetHordeVertexMode, owner: Owner);
 #endif

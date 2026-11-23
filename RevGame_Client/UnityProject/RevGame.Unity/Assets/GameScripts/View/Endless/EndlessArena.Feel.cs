@@ -51,45 +51,22 @@ namespace RevGame.Endless
         /// <summary>本局实际播放和控频舍弃的计数，诊断读取；退出清零，不记录到玩家存档。</summary>
         private int _feelSoundsPlayed, _feelSoundsSuppressed;
 
-        /// <summary>由竞技场持有的剑气网格，回池可复用，销毁时释放。</summary>
-        private Mesh _auraMesh;
+        /// <summary>由竞技场持有的剑气批次，回池撤掉绘制范围，真实销毁才释放网格。</summary>
+        private EndlessEffectBatch _auraBatch;
         /// <summary>外围敌人血条网格。最大容量与外围并发一致，通常只提交少量受伤敌人的血条。</summary>
         private EndlessQuadBatch _barBatch;
         /// <summary>血条 Shader 读完整的 0～1 UV，用顶点 Alpha 表示填充比例。</summary>
         private static readonly Vector4 BarUv = new Vector4(0, 0, 1, 1);
-        /// <summary>剑气网格的局部顶点位置，随近战棋的位置刷新。</summary>
-        private Vector3[] _auraVertices;
-        /// <summary>每个剑气方块共有的 0～1 UV，首次创建时填充。</summary>
-        private Vector2[] _auraUv;
-        /// <summary>剑气第二纹理坐标保存每颗棋的相位和刃数。</summary>
-        private Vector2[] _auraData;
-        /// <summary>剑气顶点颜色与本次命中闪光强度，按当前棋种重写。</summary>
-        private Color[] _auraColors;
         /// <summary>每枚近战棋上次被剑气闪光点亮的时间（unscaled 秒）。</summary>
         private readonly Dictionary<int, float> _auraFlash = new Dictionary<int, float>(16);
         /// <summary>组合技飘字配置缓存，按组合技编号；首次用到时由表行拼出 BattleText，避免每次喊招分配字符串。</summary>
         private readonly Dictionary<int, BattleText> _comboTexts = new Dictionary<int, BattleText>(8);
         private int _comboShouts, _auraFlashes;
 
-        /// <summary>进入无尽时创建剑气与血条网格。血条沿用敌潮可选的 GPU 端点布局，随后登记本模式音效。</summary>
+        /// <summary>进入无尽时绑定剑气批次与外围血条。两者独立创建，血条保留原 GPU 端点布局。</summary>
         private void BeginFeel()
         {
-            if (_auraMesh == null)
-            {
-                _auraMesh = CreateMesh(AuraCapacity, out _auraVertices, out _auraUv, out _auraColors);
-                _auraData = new Vector2[AuraCapacity * 4];
-                _auraMesh.uv2 = _auraData;
-                _auraMesh.name = "无尽剑气批量网格";
-                auraRenderer.GetComponent<MeshFilter>().sharedMesh = _auraMesh;
-                for (int i = 0; i < _auraUv.Length; i += 4)
-                {
-                    _auraUv[i] = new Vector2(0, 0);
-                    _auraUv[i + 1] = new Vector2(1, 0);
-                    _auraUv[i + 2] = new Vector2(1, 1);
-                    _auraUv[i + 3] = new Vector2(0, 1);
-                }
-                _auraMesh.uv = _auraUv;
-            }
+            _auraBatch ??= BindEffectBatch(auraRenderer, AuraCapacity, "无尽剑气批量网格");
             // 两张网格各自判断就绪。若血条网格初始化中断，再进入时仍可单独重试。
             if (_barBatch == null)
             {
@@ -174,7 +151,7 @@ namespace RevGame.Endless
             }
         }
 
-        /// <summary>每帧重写剑气网格：只画当前带剑气的己方近战棋，其余方块收成一个点（不产生像素）。</summary>
+        /// <summary>采集当前带剑气棋子的中心、半径与闪光。没有变化时复用网格，Shader 继续按原节奏转动。</summary>
         private void UpdateAuras(EndlessService service)
         {
             float now = Time.unscaledTime;
@@ -196,33 +173,14 @@ namespace RevGame.Endless
                 }
                 Color tint = AuraTint(p.Def.Kind);
                 tint.a = flash;
-                int v = count * 4;
                 // z=-0.4：在棋子（-0.5）身后、棋盘和外围敌人前面，剑刃从棋子背后转出来。
-                _auraVertices[v] = new Vector3(center.x - half, center.y - half, -.4f);
-                _auraVertices[v + 1] = new Vector3(center.x + half, center.y - half, -.4f);
-                _auraVertices[v + 2] = new Vector3(center.x + half, center.y + half, -.4f);
-                _auraVertices[v + 3] = new Vector3(center.x - half, center.y + half, -.4f);
                 // 相位用编号乘黄金比例取小数，各棋子错开；刃数 = 星级 + 1。
                 Vector2 data = new Vector2(Mathf.Repeat(p.Id * .618f, 1), (int)p.Def.Star + 1);
-                for (int n = 0; n < 4; n++)
-                {
-                    _auraColors[v + n] = tint;
-                    _auraData[v + n] = data;
-                }
-                count++;
+                _auraBatch.WriteSquare(count++, center, half, -.4f, tint, data);
             }
-            for (int i = count; i < _auraLastCount; i++)
-            {
-                int v = i * 4;
-                _auraVertices[v] = _auraVertices[v + 1] = _auraVertices[v + 2] = _auraVertices[v + 3] = Vector3.zero;
-            }
-            _auraLastCount = count;
-            _auraMesh.vertices = _auraVertices;
-            _auraMesh.colors = _auraColors;
-            _auraMesh.uv2 = _auraData;
+            _auraBatch.Submit(count);
             AuraCount = count;
         }
-        private int _auraLastCount;
         /// <summary>验收用：当前画着几圈剑气。</summary>
         public int AuraCount
         {
@@ -259,7 +217,7 @@ namespace RevGame.Endless
             private set;
         }
 
-        /// <summary>退出无尽时卸载本模式音效并清掉闪光记录。提交范围已由竞技场在还原材质前清空。</summary>
+        /// <summary>回池撤掉剑气绘制范围，清闪光并卸载音效。血条由竞技场在还原材质前清空。</summary>
         private void ReleaseFeel()
         {
             for (int i = 0; i < FeelSounds.Length; i++)
@@ -267,7 +225,7 @@ namespace RevGame.Endless
                 RevSound.Unload(FeelSounds[i]);
             }
             _auraFlash.Clear();
-            _auraLastCount = AuraCapacity;
+            _auraBatch?.Submit(0);
             AuraCount = HordeBarCount = 0;
         }
 
@@ -278,10 +236,7 @@ namespace RevGame.Endless
         /// <summary>竞技场销毁时释放剑气和血条各自的运行时网格。</summary>
         private void DestroyFeelMeshes()
         {
-            if (_auraMesh != null)
-            {
-                Destroy(_auraMesh);
-            }
+            Destroy(_auraBatch?.Mesh);
             if (_barBatch != null)
             {
                 Destroy(_barBatch.Mesh);

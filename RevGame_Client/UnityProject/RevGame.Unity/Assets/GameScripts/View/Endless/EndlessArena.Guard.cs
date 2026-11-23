@@ -40,29 +40,39 @@ namespace RevGame.Endless
         private static readonly Color ThrustTint = new Color(.8f, .56f, 1f, 1f);
         private static readonly Color OrbitTint = new Color(.55f, .75f, 1f, 1f);
 
+        /// <summary>一个已经命中的突刺外观。攻击方向只在收到回执时算一次，每帧只推进播放进度。</summary>
         private struct Thrust
         {
-            public Vector2 From, To;
+            /// <summary>攻击的画面起点，单位棋格。</summary>
+            public Vector2 From;
+            /// <summary>攻击的画面终点，单位棋格。</summary>
+            public Vector2 To;
+            /// <summary>攻击线的垂直偏移，长度等于半宽，单位棋格。</summary>
+            public Vector2 Side;
+            /// <summary>现实播放时间，单位秒。零表示没有正在播放的突刺。</summary>
             public float StartedAt;
         }
         private readonly Thrust[] _thrusts = new Thrust[MaxThrusts];
         private int _thrustCursor;
-        private Mesh _orbitMesh, _bubbleMesh, _thrustMesh;
-        private Vector3[] _orbitVertices, _bubbleVertices, _thrustVertices;
-        private Vector2[] _orbitUv, _bubbleUv, _thrustUv, _orbitData, _bubbleData, _thrustData;
-        private Color[] _orbitColors, _bubbleColors, _thrustColors;
-        private int _orbitLast = GuardCapacity, _bubbleLast = GuardCapacity;
+        /// <summary>环绕盾牌的运行时批次，回池保留容量。</summary>
+        private EndlessEffectBatch _orbitBatch;
+        /// <summary>护盾泡泡的运行时批次，回池保留容量。</summary>
+        private EndlessEffectBatch _bubbleBatch;
+        /// <summary>刺客突刺的运行时批次，保留原环形队列的绘制顺序。</summary>
+        private EndlessEffectBatch _thrustBatch;
         private readonly float[] _zoneMask = new float[81];
         private MaterialPropertyBlock _zoneProperties;
         private int _zoneVersion = -1, _blockRead;
         /// <summary>每枚棋子最近一次格挡的时间（unscaled 秒），用于护盾波动。</summary>
         private readonly Dictionary<int, float> _blockAt = new Dictionary<int, float>(16);
         private int _thrustsShown, _blocksShown;
+        /// <summary>本帧画出的环绕盾牌方块数，一枚盾战对应一个方块。</summary>
         public int ShieldOrbitCount
         {
             get;
             private set;
         }
+        /// <summary>本帧画出的护盾泡泡方块数。</summary>
         public int BubbleCount
         {
             get;
@@ -72,36 +82,27 @@ namespace RevGame.Endless
         /// <summary>进入无尽：建网格（只建一次，随竞技场复用），对齐格挡回执序号。</summary>
         private void BeginGuard(EndlessService service)
         {
-            if (_orbitMesh == null)
-            {
-                _orbitMesh = GuardMesh(GuardCapacity, shieldOrbitRenderer, "无尽盾牌环绕网格", out _orbitVertices, out _orbitUv, out _orbitColors, out _orbitData);
-                _bubbleMesh = GuardMesh(GuardCapacity, bubbleRenderer, "无尽护盾泡泡网格", out _bubbleVertices, out _bubbleUv, out _bubbleColors, out _bubbleData);
-                _thrustMesh = GuardMesh(MaxThrusts, thrustRenderer, "无尽刺客突刺网格", out _thrustVertices, out _thrustUv, out _thrustColors, out _thrustData);
-                _zoneProperties = new MaterialPropertyBlock();
-            }
+            _orbitBatch ??= BindEffectBatch(shieldOrbitRenderer, GuardCapacity, "无尽盾牌环绕网格");
+            _bubbleBatch ??= BindEffectBatch(bubbleRenderer, GuardCapacity, "无尽护盾泡泡网格");
+            _thrustBatch ??= BindEffectBatch(thrustRenderer, MaxThrusts, "无尽刺客突刺网格");
+            _zoneProperties ??= new MaterialPropertyBlock();
             _zoneVersion = -1;
             _blockRead = service.BlockSerial;
             _blockAt.Clear();
             System.Array.Clear(_thrusts, 0, _thrusts.Length);
             _thrustsShown = _blocksShown = 0;
         }
-        /// <summary>建一张批量网格：uv 固定 0~1 只写一次，uv2 存每块的参数（相位/数量/进度）。</summary>
-        private static Mesh GuardMesh(int count, MeshRenderer renderer, string name, out Vector3[] vertices, out Vector2[] uv, out Color[] colors, out Vector2[] data)
+        /// <summary>将批次挂到现有预制体的网格节点。先核对节点再分配，不改变原对象的材质和排序。</summary>
+        private static EndlessEffectBatch BindEffectBatch(MeshRenderer renderer, int capacity, string name)
         {
-            Mesh mesh = CreateMesh(count, out vertices, out uv, out colors);
-            mesh.name = name;
-            for (int i = 0; i < uv.Length; i += 4)
+            var filter = renderer != null ? renderer.GetComponent<MeshFilter>() : null;
+            if (filter == null)
             {
-                uv[i] = new Vector2(0, 0);
-                uv[i + 1] = new Vector2(1, 0);
-                uv[i + 2] = new Vector2(1, 1);
-                uv[i + 3] = new Vector2(0, 1);
+                throw new System.InvalidOperationException(name + "缺少预制体网格节点");
             }
-            mesh.uv = uv;
-            data = new Vector2[count * 4];
-            mesh.uv2 = data;
-            renderer.GetComponent<MeshFilter>().sharedMesh = mesh;
-            return mesh;
+            var batch = new EndlessEffectBatch(capacity, name);
+            filter.sharedMesh = batch.Mesh;
+            return batch;
         }
 
         /// <summary>每帧入口：读格挡回执，刷新四种画面。</summary>
@@ -158,7 +159,7 @@ namespace RevGame.Endless
             shieldZoneRenderer.SetPropertyBlock(_zoneProperties);
         }
 
-        /// <summary>每枚己方盾战一块方块：盾牌数 = 星级 + 2，相位按编号错开。</summary>
+        /// <summary>每枚己方盾战写一个活动方块，保留星级和编号相位，原地旋转由 Shader 继续绘制。</summary>
         private void UpdateShieldOrbits(EndlessService service)
         {
             int count = 0;
@@ -171,18 +172,14 @@ namespace RevGame.Endless
                     continue;
                 }
                 float half = OrbitHalf + (p.Size - 1) * .5f;
-                WriteQuad(_orbitVertices, _orbitColors, _orbitData, count, VisualCenter(p), half, -.45f, OrbitTint, new Vector2(Mathf.Repeat(p.Id * .618f, 1), (int)p.Def.Star + 2));
+                _orbitBatch.WriteSquare(count, VisualCenter(p), half, -.45f, OrbitTint, new Vector2(Mathf.Repeat(p.Id * .618f, 1), (int)p.Def.Star + 2));
                 count++;
             }
-            ClearQuads(_orbitVertices, count, _orbitLast);
-            _orbitLast = count;
             ShieldOrbitCount = count;
-            _orbitMesh.vertices = _orbitVertices;
-            _orbitMesh.colors = _orbitColors;
-            _orbitMesh.uv2 = _orbitData;
+            _orbitBatch.Submit(count);
         }
 
-        /// <summary>防御区内的每枚己方棋子（不含石子）一块护盾泡泡；最近被格挡过的按衰减值波动。</summary>
+        /// <summary>为防御区内的非石子棋子画泡泡。位置随缓动，最近一次格挡的闪光按原节奏衰减。</summary>
         private void UpdateBubbles(EndlessService service)
         {
             float now = Time.unscaledTime;
@@ -202,54 +199,49 @@ namespace RevGame.Endless
                 }
                 Color color = Color.white;
                 color.a = hit;
-                WriteQuad(_bubbleVertices, _bubbleColors, _bubbleData, count, VisualCenter(p), BubbleRadius * p.Size, -.55f, color, new Vector2(Mathf.Repeat(p.Id * .37f, 1), 0));
+                _bubbleBatch.WriteSquare(count, VisualCenter(p), BubbleRadius * p.Size, -.55f, color, new Vector2(Mathf.Repeat(p.Id * .37f, 1), 0));
                 count++;
             }
-            ClearQuads(_bubbleVertices, count, _bubbleLast);
-            _bubbleLast = count;
             BubbleCount = count;
-            _bubbleMesh.vertices = _bubbleVertices;
-            _bubbleMesh.colors = _bubbleColors;
-            _bubbleMesh.uv2 = _bubbleData;
+            _bubbleBatch.Submit(count);
         }
 
-        /// <summary>登记一道突刺（满了覆盖最旧的那道）。</summary>
+        /// <summary>收到突刺回执时锁定攻击线的宽度方向。队列满后仍覆盖最旧的一道。</summary>
         private void PushThrust(Vector2 from, Vector2 to)
         {
-            _thrusts[_thrustCursor] = new Thrust { From = from, To = to, StartedAt = Time.unscaledTime };
+            Vector2 direction = (to - from).normalized;
+            _thrusts[_thrustCursor] = new Thrust
+            {
+                From = from,
+                To = to,
+                Side = new Vector2(-direction.y, direction.x) * ThrustHalfWidth,
+                StartedAt = Time.unscaledTime
+            };
             _thrustCursor = (_thrustCursor + 1) % MaxThrusts;
             _thrustsShown++;
         }
-        /// <summary>每道突刺一个沿攻击线摆放的长方块，uv2.x 写播放进度；播完的收成一个点。</summary>
+        /// <summary>沿环形队列的原有顺序收集正在播的突刺。结束的槽不参加索引范围，UV2.X 仍写播放进度。</summary>
         private void UpdateThrusts()
         {
             float now = Time.unscaledTime;
+            int count = 0;
             for (int i = 0; i < MaxThrusts; i++)
             {
                 Thrust t = _thrusts[i];
                 float progress = (now - t.StartedAt) / ThrustSeconds;
-                int v = i * 4;
                 if (t.StartedAt <= 0 || progress >= 1)
                 {
-                    _thrustVertices[v] = _thrustVertices[v + 1] = _thrustVertices[v + 2] = _thrustVertices[v + 3] = Vector3.zero;
                     continue;
                 }
-                Vector2 direction = (t.To - t.From).normalized;
-                Vector2 side = new Vector2(-direction.y, direction.x) * ThrustHalfWidth;
                 // z=-0.7：在棋子（-0.5）前面，突刺从刺客身上扎出去。
-                _thrustVertices[v] = new Vector3(t.From.x - side.x, t.From.y - side.y, -.7f);
-                _thrustVertices[v + 1] = new Vector3(t.To.x - side.x, t.To.y - side.y, -.7f);
-                _thrustVertices[v + 2] = new Vector3(t.To.x + side.x, t.To.y + side.y, -.7f);
-                _thrustVertices[v + 3] = new Vector3(t.From.x + side.x, t.From.y + side.y, -.7f);
-                for (int n = 0; n < 4; n++)
-                {
-                    _thrustColors[v + n] = ThrustTint;
-                    _thrustData[v + n] = new Vector2(progress, 0);
-                }
+                _thrustBatch.WriteQuad(count++,
+                    new Vector3(t.From.x - t.Side.x, t.From.y - t.Side.y, -.7f),
+                    new Vector3(t.To.x - t.Side.x, t.To.y - t.Side.y, -.7f),
+                    new Vector3(t.To.x + t.Side.x, t.To.y + t.Side.y, -.7f),
+                    new Vector3(t.From.x + t.Side.x, t.From.y + t.Side.y, -.7f),
+                    ThrustTint, new Vector2(progress, 0));
             }
-            _thrustMesh.vertices = _thrustVertices;
-            _thrustMesh.colors = _thrustColors;
-            _thrustMesh.uv2 = _thrustData;
+            _thrustBatch.Submit(count);
         }
 
         /// <summary>
@@ -265,59 +257,41 @@ namespace RevGame.Endless
             }
             return EndlessService.Position(p);
         }
-        private static void WriteQuad(Vector3[] vertices, Color[] colors, Vector2[] data, int index, Vector2 center, float half, float z, Color color, Vector2 parameters)
-        {
-            int v = index * 4;
-            vertices[v] = new Vector3(center.x - half, center.y - half, z);
-            vertices[v + 1] = new Vector3(center.x + half, center.y - half, z);
-            vertices[v + 2] = new Vector3(center.x + half, center.y + half, z);
-            vertices[v + 3] = new Vector3(center.x - half, center.y + half, z);
-            for (int n = 0; n < 4; n++)
-            {
-                colors[v + n] = color;
-                data[v + n] = parameters;
-            }
-        }
-        /// <summary>把上一帧用过、这一帧不用的方块收成一个点（不产生像素）；只清变化的那一段。</summary>
-        private static void ClearQuads(Vector3[] vertices, int from, int to)
-        {
-            for (int i = from; i < to; i++)
-            {
-                int v = i * 4;
-                vertices[v] = vertices[v + 1] = vertices[v + 2] = vertices[v + 3] = Vector3.zero;
-            }
-        }
-
-        /// <summary>验收用的只读计数。</summary>
+        /// <summary>验收用的只读计数。累计触发与当前实际索引范围分开，可以核对特效播完后的撤场。</summary>
         public object GuardSnapshot()
         {
             return new Dictionary<string, object>
             {
                 ["shieldOrbits"] = ShieldOrbitCount, ["bubbles"] = BubbleCount, ["thrusts"] = _thrustsShown, ["blocks"] = _blocksShown,
-                ["zoneVisible"] = shieldZoneRenderer != null && shieldZoneRenderer.enabled
+                ["zoneVisible"] = shieldZoneRenderer != null && shieldZoneRenderer.enabled,
+                ["orbitIndices"] = _orbitBatch == null ? 0 : _orbitBatch.Mesh.GetIndexCount(0),
+                ["bubbleIndices"] = _bubbleBatch == null ? 0 : _bubbleBatch.Mesh.GetIndexCount(0),
+                ["thrustIndices"] = _thrustBatch == null ? 0 : _thrustBatch.Mesh.GetIndexCount(0),
+                ["auraIndices"] = _auraBatch == null ? 0 : _auraBatch.Mesh.GetIndexCount(0)
             };
         }
 
-        /// <summary>退出无尽：清掉画面状态，网格随竞技场复用。</summary>
+        /// <summary>回池立即撤掉本局三个绘制范围与预警，保留网格容量给下一局。</summary>
         private void ReleaseGuard()
         {
             _blockAt.Clear();
             System.Array.Clear(_thrusts, 0, _thrusts.Length);
-            _orbitLast = _bubbleLast = GuardCapacity;
+            _orbitBatch?.Submit(0);
+            _bubbleBatch?.Submit(0);
+            _thrustBatch?.Submit(0);
+            ShieldOrbitCount = BubbleCount = 0;
             _zoneVersion = -1;
             if (shieldZoneRenderer != null)
             {
                 shieldZoneRenderer.enabled = false;
             }
         }
+        /// <summary>竞技场销毁后释放三张运行时网格；允许初始化中途失败，只释放实际持有的部分。</summary>
         private void DestroyGuardMeshes()
         {
-            if (_orbitMesh != null)
-            {
-                Destroy(_orbitMesh);
-                Destroy(_bubbleMesh);
-                Destroy(_thrustMesh);
-            }
+            Destroy(_orbitBatch?.Mesh);
+            Destroy(_bubbleBatch?.Mesh);
+            Destroy(_thrustBatch?.Mesh);
         }
     }
 }

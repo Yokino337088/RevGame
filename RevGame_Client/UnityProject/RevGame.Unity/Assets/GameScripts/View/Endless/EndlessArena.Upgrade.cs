@@ -27,12 +27,8 @@ namespace RevGame.Endless
         private readonly Dictionary<int, float> _upgradeAt = new Dictionary<int, float>(81);
         /// <summary>删除过期记录的竞技场私有缓冲，避免遍历Dictionary时修改或逐帧创建列表。</summary>
         private readonly List<int> _expiredUpgrades = new List<int>(81);
-        /// <summary>竞技场拥有的动态Mesh；数组只初始化一次，回池保留容量，真实销毁才释放Mesh。</summary>
-        private Mesh _upgradeMesh;
-        /// <summary>固定容量的顶点、局部UV、模式/进度和颜色缓冲；热帧重写不分配新数组。</summary>
-        private Vector3[] _upgradeVertices;
-        private Vector2[] _upgradeUv, _upgradeData;
-        private Color[] _upgradeColors;
+        /// <summary>竞技场持有的升级网格批次，首次显示时创建，回池保留容量。</summary>
+        private EndlessEffectBatch _upgradeBatch;
         /// <summary>上一帧实际方块数和本局累计爆发数；只读诊断不参与业务。</summary>
         private int _upgradeDrawCount, _upgradeBursts;
         /// <summary>缺资源只报告一次，避免每帧拼日志；新的Prefab组件会重新检查。</summary>
@@ -57,7 +53,7 @@ namespace RevGame.Endless
         }
         /// <summary>
         /// 复用预分配网格：拖牌对象用金色锁定环，已经升级对象用大环、光柱和星芒。
-        /// 进度写uv2而非材质实例，全部使用同一共享材质；模型删除或时间结束后方块收零。
+        /// 进度仍写 UV2。模型删除或播放结束后撤掉对应方块，只提交正在画的索引范围。
         /// </summary>
         private void UpdateCardUpgradeVisual(EndlessService service)
         {
@@ -75,22 +71,7 @@ namespace RevGame.Endless
                 }
                 return;
             }
-            if (_upgradeMesh == null)
-            {
-                _upgradeMesh = CreateMesh(UpgradeCapacity, out _upgradeVertices, out _upgradeUv, out _upgradeColors);
-                _upgradeMesh.name = "无尽升级目标与爆发共享网格";
-                _upgradeData = new Vector2[UpgradeCapacity * 4];
-                for (int i = 0; i < UpgradeCapacity; i++)
-                {
-                    int v = i * 4;
-                    _upgradeUv[v] = Vector2.zero;
-                    _upgradeUv[v + 1] = Vector2.right;
-                    _upgradeUv[v + 2] = Vector2.one;
-                    _upgradeUv[v + 3] = Vector2.up;
-                }
-                _upgradeMesh.uv = _upgradeUv;
-                upgradeRenderer.GetComponent<MeshFilter>().sharedMesh = _upgradeMesh;
-            }
+            _upgradeBatch ??= BindEffectBatch(upgradeRenderer, UpgradeCapacity, "无尽升级目标与爆发共享网格");
             int count = 0;
             float now = Time.unscaledTime;
             Piece target = service.Board.FindPiece(_cardUpgradeTarget);
@@ -106,7 +87,7 @@ namespace RevGame.Endless
             }
             if (target != null && target.IsAlive)
             {
-                WriteQuad(_upgradeVertices, _upgradeColors, _upgradeData, count++, VisualCenter(target), .85f, -.8f, new Color(1, .85f, .35f, 1), new Vector2(Mathf.Repeat(now, 10), 0));
+                _upgradeBatch.WriteSquare(count++, VisualCenter(target), .85f, -.8f, new Color(1, .85f, .35f, 1), new Vector2(Mathf.Repeat(now, 10), 0));
             }
             _expiredUpgrades.Clear();
             foreach (KeyValuePair<int, float> entry in _upgradeAt)
@@ -120,31 +101,29 @@ namespace RevGame.Endless
                 }
                 if (count < UpgradeCapacity)
                 {
-                    WriteQuad(_upgradeVertices, _upgradeColors, _upgradeData, count++, VisualCenter(upgraded), UpgradeHalfSize, -.8f, new Color(.65f, .92f, 1, 1), new Vector2(progress, 1));
+                    _upgradeBatch.WriteSquare(count++, VisualCenter(upgraded), UpgradeHalfSize, -.8f, new Color(.65f, .92f, 1, 1), new Vector2(progress, 1));
                 }
             }
             for (int i = 0; i < _expiredUpgrades.Count; i++)
             {
                 _upgradeAt.Remove(_expiredUpgrades[i]);
             }
-            ClearQuads(_upgradeVertices, count, _upgradeDrawCount);
             _upgradeDrawCount = count;
-            _upgradeMesh.vertices = _upgradeVertices;
-            _upgradeMesh.colors = _upgradeColors;
-            _upgradeMesh.uv2 = _upgradeData;
+            _upgradeBatch.Submit(count);
             upgradeRenderer.enabled = count > 0;
         }
-        /// <summary>开发态读取实际网格与材质，不允许通过此接口伪造升级成功。</summary>
+        /// <summary>开发态读取实际索引范围、材质与爆发计数，不改变升级状态。</summary>
         public object UpgradeVisualSnapshot()
         {
             return new Dictionary<string, object>
             {
                 ["target"] = _cardUpgradeTarget, ["quads"] = _upgradeDrawCount, ["bursts"] = _upgradeBursts,
                 ["activeBursts"] = _upgradeAt.Count, ["sharedShader"] = upgradeRenderer != null && upgradeRenderer.sharedMaterial != null && upgradeRenderer.sharedMaterial.shader.name == "RevGame/Endless/CardUpgrade",
-                ["visible"] = upgradeRenderer != null && upgradeRenderer.enabled && _upgradeDrawCount > 0
+                ["visible"] = upgradeRenderer != null && upgradeRenderer.enabled && _upgradeDrawCount > 0,
+                ["indices"] = _upgradeBatch == null ? 0 : _upgradeBatch.Mesh.GetIndexCount(0)
             };
         }
-        /// <summary>回池先删除本局身份/时刻，再关闭渲染器，避免下一局显示上一局目标。</summary>
+        /// <summary>回池清当前局身份和闪光，撤掉索引并关闭渲染器，防止旧目标在下一局出现。</summary>
         private void ResetCardUpgradeVisual()
         {
             _cardUpgradeTarget = 0;
@@ -155,11 +134,7 @@ namespace RevGame.Endless
             {
                 pair.Value.SetCardHighlight(0);
             }
-            if (_upgradeMesh != null)
-            {
-                ClearQuads(_upgradeVertices, 0, _upgradeDrawCount);
-                _upgradeMesh.vertices = _upgradeVertices;
-            }
+            _upgradeBatch?.Submit(0);
             _upgradeDrawCount = 0;
             if (upgradeRenderer != null)
             {
@@ -169,10 +144,7 @@ namespace RevGame.Endless
         /// <summary>竞技场真实销毁时才释放网格；普通回池保留容量供下次复用。</summary>
         private void DestroyCardUpgradeMesh()
         {
-            if (_upgradeMesh != null)
-            {
-                Destroy(_upgradeMesh);
-            }
+            Destroy(_upgradeBatch?.Mesh);
         }
     }
 }

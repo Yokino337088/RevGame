@@ -67,6 +67,14 @@ namespace RevGame.Endless
         private int _hordeInterpolatedFrames;
         /// <summary>采样窗口中读到的敌潮提交数，供验证采样与表现的频率差异。</summary>
         private int _hordeCaptures;
+        /// <summary>剑气、环绕盾牌、护盾泡泡和突刺在采样期间交给 Unity 的动态顶点字节。</summary>
+        private long _effectUploadBytes;
+        /// <summary>同样帧数按旧四批满容量写入的字节，不含固定纹理坐标或索引。</summary>
+        private long _effectWholeBytes;
+        /// <summary>四批每帧实际参与绘制的方块数之和，用来核对缩小的索引范围。</summary>
+        private long _effectDrawnQuads;
+        /// <summary>四批都没上传动态顶点的表现帧数。</summary>
+        private int _effectNoUploadFrames;
 #endif
         /// <summary>图集当前绑定的纹理页。使用同一页的帧只更新顶点 UV，不重复提交材质参数块。</summary>
         private Texture _hordeTexture;
@@ -109,7 +117,7 @@ namespace RevGame.Endless
             new Color(0.2f, 1, 1), new Color(1, 0.22f, 0.03f), new Color(1, 0.85f, 0.25f),
             new Color(0.75f, 0.3f, 1), new Color(0.3f, 0.7f, 1), new Color(0.2f, 1, 0.45f), new Color(1, 0.08f, 0.15f)
         };
-        /// <summary>出池决定能否准备 GPU 端点流。保留竞技场网格容量，首帧按实际样本重建可见内容。</summary>
+        /// <summary>出池准备敌潮与局部效果的网格，清本局采样计数。首帧按实际样本重建可见内容。</summary>
         public void OnPoolGet()
         {
             _generation++;
@@ -134,6 +142,10 @@ namespace RevGame.Endless
             _hordeInterpolatedFrames = 0;
             _hordeCaptures = 0;
             _hordeGpuFrames = 0;
+            _effectUploadBytes = 0;
+            _effectWholeBytes = 0;
+            _effectDrawnQuads = 0;
+            _effectNoUploadFrames = 0;
 #endif
             _gcRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "GC Allocated In Frame");
             RevSound.StopBgm(.6f);
@@ -304,34 +316,6 @@ namespace RevGame.Endless
             Sprite[] frames = art.Find(kind, StarTier.One, GameSide.Player).idleFrames;
             return frames != null && frames.Length > 0 ? frames[0] : null;
         }
-        private static Mesh CreateMesh(int count, out Vector3[] vertices, out Vector2[] uv, out Color[] colors)
-        {
-            vertices = new Vector3[count * 4];
-            uv = new Vector2[count * 4];
-            colors = new Color[count * 4];
-            int[] indices = new int[count * 6];
-            for (int i = 0; i < count; i++)
-            {
-                int v = i * 4, t = i * 6;
-                indices[t] = v;
-                indices[t + 1] = v + 1;
-                indices[t + 2] = v + 2;
-                indices[t + 3] = v;
-                indices[t + 4] = v + 2;
-                indices[t + 5] = v + 3;
-            }
-            var mesh = new Mesh
-            {
-                name = "无尽有限批量网格"
-            };
-            mesh.MarkDynamic();
-            mesh.vertices = vertices;
-            mesh.uv = uv;
-            mesh.colors = colors;
-            mesh.triangles = indices;
-            mesh.bounds = new Bounds(new Vector3(4, 4, 0), new Vector3(40, 40, 10));
-            return mesh;
-        }
         /// <summary>图集预载完成后，源 Sprite 的纹理还可能等到下一帧才绑定。全部帧可画后才提交绑定版本。</summary>
         private bool RefreshAtlas()
         {
@@ -351,7 +335,7 @@ namespace RevGame.Endless
             _bindingVersion = GameSpriteAtlasService.BindingVersion;
             return true;
         }
-        /// <summary>在表现帧消费已提交的无尽状态。出生、死亡和战斗回执照常消费，外围网格只提交变化。</summary>
+        /// <summary>在表现帧消费无尽状态。继续读取每条回执，外围和局部效果各自提交当前绘制范围并记录采样。</summary>
         private void Update()
         {
             if (!_active)
@@ -395,6 +379,12 @@ namespace RevGame.Endless
             UpdateHorde(horde, run, atlasReady, hordeChanged, hordeBlend, sampling);
             UpdateAuras(service);
             UpdateGuard(service);
+#if UNITY_EDITOR
+            if (sampling)
+            {
+                SampleLocalEffects();
+            }
+#endif
             UpdatePlacement(service);
             UpdateCardUpgradeVisual(service);
             UpdateHeart(service);
@@ -692,7 +682,22 @@ namespace RevGame.Endless
             DestroyGuardMeshes();
             DestroyCardUpgradeMesh();
         }
-        /// <summary>读取本局整帧观测及 Editor 的实际几何上传量、GPU 选择帧数，查询时才对样本排序。</summary>
+#if UNITY_EDITOR
+        /// <summary>只在整帧采样窗口内累计四批实际 API 写入和旧画法的同帧数基线，不包含按需出现的升星环。</summary>
+        private void SampleLocalEffects()
+        {
+            int bytes = _auraBatch.LastUploadBytes + _orbitBatch.LastUploadBytes + _bubbleBatch.LastUploadBytes + _thrustBatch.LastUploadBytes;
+            _effectUploadBytes += bytes;
+            _effectWholeBytes += _auraBatch.FullUploadBytes + _orbitBatch.FullUploadBytes + _bubbleBatch.FullUploadBytes + _thrustBatch.FullUploadBytes;
+            _effectDrawnQuads += _auraBatch.DrawnCount + _orbitBatch.DrawnCount + _bubbleBatch.DrawnCount + _thrustBatch.DrawnCount;
+            if (bytes == 0)
+            {
+                _effectNoUploadFrames++;
+            }
+        }
+#endif
+
+        /// <summary>查询时才排序帧样本。Editor 的字节只表示提交到网格接口的范围，整帧与显存带宽需分开解释。</summary>
         public object Metrics()
         {
             float[] sorted = new float[_frameCount];
@@ -717,6 +722,13 @@ namespace RevGame.Endless
                     ["wholeVertexBytesAtSameQuadCounts"] = _hordeWholeVertexBytes,
                     ["captures"] = _hordeCaptures, ["interpolatedFrames"] = _hordeInterpolatedFrames,
                     ["gpuFrames"] = _hordeGpuFrames, ["gpuInterpolation"] = _hordeInterpolatesOnGpu
+                },
+                ["localEffects"] = new Dictionary<string, object>
+                {
+                    ["dynamicBytes"] = _effectUploadBytes,
+                    ["fullBytesAtSameFrameCount"] = _effectWholeBytes,
+                    ["drawnQuads"] = _effectDrawnQuads,
+                    ["noUploadFrames"] = _effectNoUploadFrames
                 }
 #endif
             };

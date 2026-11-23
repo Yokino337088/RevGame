@@ -51,7 +51,7 @@ namespace RevGame.Endless
         };
 
         /// <summary>延续外围网格原有的保守包围盒，包含出生路线、盘外移动、棋盘及血条高度。</summary>
-        private static readonly Bounds ArenaBounds = new Bounds(new Vector3(4, 4, 0), new Vector3(40, 40, 10));
+        internal static readonly Bounds ArenaBounds = new Bounds(new Vector3(4, 4, 0), new Vector3(40, 40, 10));
 
         /// <summary>按最大并发预分配的局部坐标缓冲，单位格。</summary>
         private readonly Vector3[] _positions;
@@ -103,29 +103,13 @@ namespace RevGame.Endless
         /// <summary>初始化固定容量缓冲。只有设备和实际材质都允许时预留端点流，索引始终使用 16 位原有布局。</summary>
         internal EndlessQuadBatch(int capacity, string name, bool gpuCapable = false)
         {
-            if (capacity <= 0 || capacity > ushort.MaxValue / 4)
-            {
-                throw new ArgumentOutOfRangeException(nameof(capacity));
-            }
+            ushort[] indices = CreateIndices(capacity);
             _positions = new Vector3[capacity * 4];
             _motion = new QuadMotion[capacity];
             _appearance = new Appearance[capacity * 4];
             if (gpuCapable)
             {
                 _gpuEndpoints = new Vector4[capacity * 4];
-            }
-            var indices = new ushort[capacity * 6];
-            for (int quad = 0; quad < capacity; quad++)
-            {
-                int vertex = quad * 4;
-                int index = quad * 6;
-                // 保留旧方块的绕序。从同一份索引缓冲递增截取即可，无需随敌人数量重建索引。
-                indices[index] = (ushort)vertex;
-                indices[index + 1] = (ushort)(vertex + 1);
-                indices[index + 2] = (ushort)(vertex + 2);
-                indices[index + 3] = (ushort)vertex;
-                indices[index + 4] = (ushort)(vertex + 2);
-                indices[index + 5] = (ushort)(vertex + 3);
             }
             Mesh = new Mesh { name = name };
             try
@@ -144,6 +128,28 @@ namespace RevGame.Endless
                 UnityEngine.Object.Destroy(Mesh);
                 throw;
             }
+        }
+
+        /// <summary>构造固定容量的四角索引。敌潮和局部效果沿用相同绕序，绘制时只需截取实际范围。</summary>
+        internal static ushort[] CreateIndices(int capacity)
+        {
+            if (capacity <= 0 || capacity > ushort.MaxValue / 4)
+            {
+                throw new ArgumentOutOfRangeException(nameof(capacity));
+            }
+            var indices = new ushort[capacity * 6];
+            for (int quad = 0; quad < capacity; quad++)
+            {
+                int vertex = quad * 4;
+                int index = quad * 6;
+                indices[index] = (ushort)vertex;
+                indices[index + 1] = (ushort)(vertex + 1);
+                indices[index + 2] = (ushort)(vertex + 2);
+                indices[index + 3] = (ushort)vertex;
+                indices[index + 4] = (ushort)(vertex + 2);
+                indices[index + 5] = (ushort)(vertex + 3);
+            }
+            return indices;
         }
 
         /// <summary>重建时从槽 0 连续写入轨迹、大小和外观。后续补间直接消费这份紧凑队列。</summary>
