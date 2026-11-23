@@ -112,22 +112,24 @@ namespace RevGame.View
                 }
             }
         }
-        /// <summary>常驻格面完全使用GPU时钟；CPU只驱动少量可见眼位，不给81格各挂Update或Tween。</summary>
+        /// <summary>最多每秒采样 20 次。棋盘刷新时已整理可见眼位，平时只推进这些格子的眨眼。</summary>
         private void AnimateBoardEyes()
         {
-            float now = Time.unscaledTime;
-
-            if (_released || now < _nextEyeFrameAt)
+            if (_released || _visibleEyeCells.Count == 0)
             {
                 return;
             }
-            _nextEyeFrameAt = now + .05f;
-            foreach (BoardCellView cell in _cells)
+
+            float now = Time.unscaledTime;
+            if (now < _nextEyeFrameAt)
             {
-                if (cell.IsEyeVisible)
-                {
-                    cell.AnimateEye(now);
-                }
+                return;
+            }
+
+            _nextEyeFrameAt = now + .05f;
+            foreach (BoardCellView cell in _visibleEyeCells)
+            {
+                cell.AnimateEye(now);
             }
         }
         /// <summary>格子已回池并摘掉材质后再释放；递增版本让在途加载在finally中自行归还。</summary>

@@ -12,15 +12,22 @@ using UnityEngine.EventSystems;
 
 namespace RevGame.View
 {
+    /// <summary>由棋盘借用的单格视图，管理格面提示及点击回调，退场归还对象池。</summary>
     [RevPoolPrefab(RevResPath.Board_Tile, "BoardCell", Group = RevResGroup.Battle)]
     public sealed partial class BoardCellView : MonoBehaviour, IPointerClickHandler, IPointerDownHandler, IPointerUpHandler, IRevPoolable
     {
         [SerializeField]
         private SpriteRenderer starRenderer;
+        /// <summary>预制体的落点高亮层，由 SetHighlight 管理显隐。</summary>
         [SerializeField]
         private SpriteRenderer highlightRenderer;
+        /// <summary>预制体的眼位层，由 SetEye 管理显隐，眨眼只更换这层的图片。</summary>
         [SerializeField]
         private SpriteRenderer eyeRenderer;
+        /// <summary>当前租用期间已写入高亮层的显隐。空值表示首次绑定需要写入。</summary>
+        private bool? _lastHighlightVisible;
+        /// <summary>当前租用期间已写入眼位层的显隐。只记录显隐，眨眼继续按自己的时钟更新。</summary>
+        private bool? _lastEyeVisible;
         /// <summary>攻击范围用的独立渲染器：不能复用 highlightRenderer，否则"可落点"和范围会互相关掉。</summary>
         [SerializeField]
         private SpriteRenderer rangeRenderer;
@@ -74,7 +81,7 @@ namespace RevGame.View
             }
         }
 
-        /// <summary>绑定显示位置与两个交互去向；不在这里判断游戏规则。</summary>
+        /// <summary>绑定格子的位置与交互回调，重新建立本次租用的提示初始状态。</summary>
         public void Bind(BoardPos pos, bool isStar, Action<BoardPos> onClick, Action<BoardPos> onLongPress)
         {
             Position = pos;
@@ -88,28 +95,38 @@ namespace RevGame.View
             {
                 starRenderer.enabled = isStar;
             }
+            // 新租用先认领预制体的渲染器状态，再让棋盘提交本局有效提示。
+            _lastHighlightVisible = null;
+            _lastEyeVisible = null;
             SetHighlight(false);
             SetEye(false);
             SetRange(false);
         }
+
+        /// <summary>只在落点提示显隐变化时写入渲染器。首次绑定始终应用初始状态。</summary>
         public void SetHighlight(bool visible)
         {
-            if (highlightRenderer != null)
+            if (_lastHighlightVisible == visible || highlightRenderer == null)
             {
-                highlightRenderer.enabled = visible;
+                return;
             }
+
+            highlightRenderer.enabled = visible;
+            _lastHighlightVisible = visible;
         }
 
+        /// <summary>眼位显隐变化时才写渲染器。可见时仍用原时钟采样眨眼，保证新眼位立即有正确图片。</summary>
         public void SetEye(bool visible)
         {
-            if (eyeRenderer != null)
+            if (_lastEyeVisible != visible && eyeRenderer != null)
             {
                 eyeRenderer.enabled = visible;
+                _lastEyeVisible = visible;
+            }
 
-                if (visible)
-                {
-                    AnimateEye(Time.unscaledTime);
-                }
+            if (visible)
+            {
+                AnimateEye(Time.unscaledTime);
             }
         }
         public void SetRange(bool visible)

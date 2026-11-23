@@ -330,6 +330,7 @@ namespace RevGame.Editor
                 Require(seen.Count == 5 && materialByKind.Count == 5, "五职业箭矢、弩矢、水球、熔岩、圣光均实际出现");
                 await RevTask.Delay(800);
                 Require(board.ActiveProjectileCount == 0 && board.PendingProjectileCount == 0, "停止输入后弹道寿命和队列完整回收");
+                await VerifyProjectileColorReplacement(board);
                 int beforeMelee = board.PendingProjectileCount;
                 RevEvent.DispatchEvent<BattleHitInfo>(Events.BattleHit, new BattleHitInfo(target.Id, target.Pos, 1, target.Side, 2, true, player.Pos, player.Id));
                 RevEvent.DispatchEvent<BattleHitInfo>(Events.BattleHit, new BattleHitInfo(target.Id, target.Pos, 1, target.Side, 2, true, player.Pos, player.Id, true, PieceKind.MageFire, 1, true));
@@ -394,6 +395,39 @@ namespace RevGame.Editor
                 System.IO.File.WriteAllText("Temp/ReadabilityVerification/Result.txt", LastResult);
             }
         }
+        /// <summary>借真实池预制体，验证同一个实例在透明度相同时重播也能换阵营色，末段继续淡出。</summary>
+        private static async RevTask VerifyProjectileColorReplacement(BoardView board)
+        {
+            var ready = new RevTaskCompletionSource<BattleEffectView>();
+            GamePoolRequests.GetAsync<BattleEffectView>(ready.SetResult, board.transform);
+            BattleEffectView effect = await ready.Task;
+            Require(effect != null, "借到真实弹道视图");
+
+            try
+            {
+                Vector3 source = Vector3.zero;
+                Vector3 target = Vector3.right * 2f;
+                effect.ShowProjectile(source, target, null, GameSide.Player);
+                SpriteRenderer body = GetField<SpriteRenderer>(effect, "spriteRenderer");
+                Require(body.enabled && body.color.a == 1f && body.color.g < 1f, "敌方弹道首帧带暖色，完全不透明");
+
+                // 同一实例在旧弹道尚未淡出时重新开播，旧透明度相同也必须提交新颜色。
+                effect.ShowProjectile(source, target, null, GameSide.Enemy);
+                Require(body.color.Equals(Color.white), "新弹道首帧恢复玩家颜色");
+                SpriteRenderer outline = GetField<SpriteRenderer>(effect, "projectileOutline");
+                SpriteRenderer trail = GetField<SpriteRenderer>(effect, "projectileTrail");
+                float outlineAlpha = outline.color.a;
+                Tween flight = GetField<Tween>(effect, "_animation");
+                flight.Goto(flight.Duration() * .91f);
+                Require(Mathf.Abs(body.color.a - .5f) < .01f && Mathf.Abs(outline.color.a - outlineAlpha * .5f) < .01f &&
+                    Mathf.Abs(trail.color.a - .5f) < .01f, "飞行末段三层仍按原进度淡出");
+            }
+            finally
+            {
+                RevPool.Return(effect, 0);
+            }
+        }
+
         private static T GetField<T>(object target, string name)
         {
             return (T)target.GetType().GetField(name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic).GetValue(target);

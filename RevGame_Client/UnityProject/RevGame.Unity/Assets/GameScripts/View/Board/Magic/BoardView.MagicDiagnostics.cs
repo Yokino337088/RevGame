@@ -9,7 +9,7 @@ namespace RevGame.View
 {
     public sealed partial class BoardView
     {
-        /// <summary>开发态只读快照：比较真实Renderer、模型合法性与资源引用，不修改棋盘来制造通过。</summary>
+        /// <summary>开发态只读快照，比较实际渲染器、模型合法性、眼位动画名单和资源引用。</summary>
         public object MagicSnapshot()
         {
             var materials = new HashSet<int>();
@@ -79,6 +79,7 @@ namespace RevGame.View
                 ["invalidHighlights"] = invalidHighlights,
                 ["missingHighlights"] = missingHighlights,
                 ["placementShader"] = _cells.Count == 0 ? "" : _cells[0].PlacementRenderer.sharedMaterial.shader.name,
+                ["eyeAnimationCells"] = _visibleEyeCells.Count,
                 ["eyes"] = eyeStates,
                 ["eyePacked"] = eyePacked,
                 ["materialRefs"] = refs,

@@ -205,6 +205,8 @@ namespace RevGame.View
         /// <summary>只在首次实例化时查找描边Renderer；反复出入池不再查找或分配数组。</summary>
         private Renderer[] _outlineRenderers;
         private Color _projectileColor;
+        /// <summary>当前弹道三层已提交的透明度，范围 0～1。-1 表示本次反馈开始后仍需首次写入。</summary>
+        private float _projectileAlpha = -1f;
         // 弹道额外持有寿命上限。即使外部意外 Kill/Pause 了 Tween，也不能留一根永远不动的黄条。
         // 使用游戏时间：正常暂停时整个战斗一起停，恢复后再继续回收。
         private bool _projectileActive;
@@ -630,8 +632,14 @@ namespace RevGame.View
             layer.transform.localRotation = Quaternion.identity;
             layer.transform.localScale = scale;
         }
+        /// <summary>将本发弹道的透明度应用于本体、轮廓和拖尾，期间只在输出变化时写颜色。</summary>
         private void SetProjectileAlpha(float alpha)
         {
+            if (_projectileAlpha == alpha)
+            {
+                return;
+            }
+
             Color color = _projectileColor;
             color.a = alpha;
             spriteRenderer.color = color;
@@ -646,6 +654,7 @@ namespace RevGame.View
                 tail.a = alpha;
                 projectileTrail.color = tail;
             }
+            _projectileAlpha = alpha;
         }
 
         /// <summary>这个预制体承担数字、口号和弹道；复用为文字前必须关尾巴，避免旧弹道“粘”在文字上。</summary>
@@ -768,6 +777,8 @@ namespace RevGame.View
             HideProjectileLayers();
             spriteRenderer.sortingOrder = _defaultSpriteOrder;
             _projectileActive = false;
+            // 同一实例重播时阵营和职业色可能已换。即使开场仍为完全不透明，也要重新给三层上色。
+            _projectileAlpha = -1f;
             _onFinished = onFinished;
             _progress = 0f;
             _fadeAlpha = _occlusionAlpha = 1f;

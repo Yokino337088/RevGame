@@ -18,6 +18,8 @@ namespace RevGame.View
     {
         private readonly Dictionary<int, float> _attackTextAt = new Dictionary<int, float>();
         private readonly List<BoardCellView> _cells = new List<BoardCellView>();
+        /// <summary>当前棋盘正在显示眼位的格子。由棋盘刷新重建，眨眼时钟只遍历此名单，退场时清空。</summary>
+        private readonly List<BoardCellView> _visibleEyeCells = new List<BoardCellView>(Consts.BoardSize * Consts.BoardSize);
         // 长按范围要按坐标反查格子；81 格就算线性找也不慢，但波纹每圈要查很多次，字典更直接。
         private readonly Dictionary<BoardPos, BoardCellView> _cellByPos = new Dictionary<BoardPos, BoardCellView>();
         private readonly Dictionary<int, PieceView> _pieces = new Dictionary<int, PieceView>();
@@ -614,22 +616,34 @@ namespace RevGame.View
             view.SetBossStatus(piece.BossHidden, piece.BossFrozen, piece.BossAttackFactor < 1f || piece.BossSpeedFactor < 1f);
             PrimeBossIntro(view);
         }
+        /// <summary>响应棋盘规则、手牌或选择变化，刷新每格的提示，并重建当前需要眨眼的格子名单。</summary>
         private void RefreshCells()
         {
             if (_released)
             {
                 return;
             }
+
+            // 一次同步遍历共用同一棋盘、教学状态和选中棋子。每格的落点是否合法仍由服务判断。
             IBattleService battle = RevServices.GetRequired<IBattleService>();
+            var board = battle.Board;
+            var lesson = RevLogic.Get<RevGame.Flow.TutorialLogic>();
+            bool guided = lesson != null && lesson.Active;
+            int selectedPieceId = battle.SelectedPieceId;
+            _visibleEyeCells.Clear();
             foreach (BoardCellView view in _cells)
             {
-                // 教学也点真实BoardCellView；只收窄已有高亮，不画第二张UI棋盘。
-                var lesson = RevLogic.Get<RevGame.Flow.TutorialLogic>();
-                bool guided = lesson != null && lesson.Active;
+                BoardPos position = view.Position;
                 // 教学只显示浮层的柔和魔法边框，避免原落点贴图与边框叠加变亮。
-                view.SetHighlight(guided ? false :
-                    battle.CanPlaySelectedAt(view.Position) || (battle.SelectedPieceId != 0 && battle.Board.GetPiece(view.Position)?.Id == battle.SelectedPieceId));
-                view.SetEye(battle.Board.GetCell(view.Position).IsEyeMarked);
+                view.SetHighlight(!guided && (battle.CanPlaySelectedAt(position) ||
+                    (selectedPieceId != 0 && board.GetPiece(position)?.Id == selectedPieceId)));
+                bool eyeMarked = board.GetCell(position).IsEyeMarked;
+                view.SetEye(eyeMarked);
+                // 全盘刷新与眨眼时钟共用这份结果。只收录已绑定且实际可见的眼位。
+                if (eyeMarked && view.IsEyeVisible)
+                {
+                    _visibleEyeCells.Add(view);
+                }
             }
         }
         private void OnRound(int round)
@@ -1009,6 +1023,7 @@ namespace RevGame.View
             ReleaseBoardSurface();
             _pieces.Clear();
             _cells.Clear();
+            _visibleEyeCells.Clear();
             _cellByPos.Clear();
             _pendingPieces.Clear();
             _pendingBirths.Clear();
