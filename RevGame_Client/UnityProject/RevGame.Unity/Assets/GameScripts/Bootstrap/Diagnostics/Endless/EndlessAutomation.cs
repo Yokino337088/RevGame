@@ -144,10 +144,15 @@ namespace RevGame.Endless
                 case "auto": enabled = null; break;
                 case "cpu": enabled = false; break;
                 case "gpu": enabled = true; break;
-                default: return new { accepted = false, reason = "仅支持 auto、cpu、gpu" };
+                default: return new Dictionary<string, object> { ["accepted"] = false, ["reason"] = "仅支持 auto、cpu、gpu" };
             }
             bool accepted = Service.Isolated && arena != null && arena.OverrideHordeGpuForChecks(enabled);
-            return new { accepted, reason = accepted ? "" : "需要已就绪的隔离无尽和对应设备与 Shader 能力", mode };
+            return new Dictionary<string, object>
+            {
+                ["accepted"] = accepted,
+                ["reason"] = accepted ? "" : "需要已就绪的隔离无尽和对应设备与 Shader 能力",
+                ["mode"] = mode
+            };
         }
 
         /// <summary>Editor 隔离 A/B 请求的白名单参数，不接受任意材质或资源目标。</summary>

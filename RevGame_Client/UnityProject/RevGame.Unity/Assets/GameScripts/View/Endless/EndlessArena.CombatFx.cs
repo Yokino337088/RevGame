@@ -249,6 +249,7 @@ namespace RevGame.Endless
         ///   有出手者 → 出手动作 + 口号 + 远程弹道或近战斩击（按棋种）；
         ///   有半径   → 火环/圣光/水波/重剑范围特效（按路线或出手棋种）；
         ///   领主技能的范围已由 BossSkillFxView 播放（见 BossFx），这里跳过避免画两遍。
+        /// 设备省电档只收紧最后的普通弹道容量。棋心受击、范围、领主预警和既有攻击反馈沿原入口绘制。
         /// </summary>
         private void PlayImpact(EndlessRun run, EndlessImpact hit)
         {
@@ -298,7 +299,8 @@ namespace RevGame.Endless
             GameSide side = hostile ? GameSide.Player : GameSide.Enemy;
             if (HasProjectileArt(kind))
             {
-                if (CanSpawn(FxKind.Projectile, run.lowEffects ? MaxProjectiles / 2 : MaxProjectiles))
+                bool limitProjectiles = run.lowEffects || GameBattleDevicePolicy.Current.LimitOrdinaryProjectiles;
+                if (CanSpawn(FxKind.Projectile, limitProjectiles ? MaxProjectiles / 2 : MaxProjectiles))
                 {
                     Spawn(new FxRequest { Kind = FxKind.Projectile, From = from, To = to, Piece = kind, Side = side });
                 }

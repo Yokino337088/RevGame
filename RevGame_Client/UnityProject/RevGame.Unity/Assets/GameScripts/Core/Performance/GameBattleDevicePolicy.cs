@@ -54,10 +54,12 @@ namespace RevGame.Core
         public int AndroidFrameRate { get; }
         /// <summary>网页绘制缓冲的像素总预算。零代表由宿主决定。</summary>
         public int WebPixelBudget { get; }
+        /// <summary>省电设备只收紧无尽普通弹道的表现容量，独立于全局画质、伤害和预警。</summary>
+        public bool LimitOrdinaryProjectiles { get; }
 
         /// <summary>由预算策略统一构造。调用者以一份完整的值读取路径和阈值。</summary>
         internal GameBattleDevicePlan(GameBattlePlatform platform, GameBattleGpuKind gpuKind, GameBattleDeviceTier tier,
-            bool gpu, int gpuMinimum, int androidFps, int webPixels)
+            bool gpu, int gpuMinimum, int androidFps, int webPixels, bool limitOrdinaryProjectiles)
         {
             Platform = platform;
             GpuKind = gpuKind;
@@ -66,6 +68,7 @@ namespace RevGame.Core
             GpuMinimumSprites = gpuMinimum;
             AndroidFrameRate = androidFps;
             WebPixelBudget = webPixels;
+            LimitOrdinaryProjectiles = limitOrdinaryProjectiles;
         }
     }
 
@@ -118,9 +121,20 @@ namespace RevGame.Core
             int webPixels = tier == GameBattleDeviceTier.Economy ? 1280 * 720 :
                 tier == GameBattleDeviceTier.High ? 1920 * 1080 : 1600 * 900;
             int mobileCap = tier == GameBattleDeviceTier.Economy ? 30 : tier == GameBattleDeviceTier.High ? 120 : 60;
+            // 网页的试降只改像素。保持那里的弹道容量固定，便于比较同一个调整项的收益。
+            bool limitProjectiles = !fixedTest && tier == GameBattleDeviceTier.Economy &&
+                (platform == GameBattlePlatform.Windows || platform == GameBattlePlatform.Android);
             return new GameBattleDevicePlan(platform, gpuKind, tier, !fixedTest && gpu, gpuMinimum,
                 !fixedTest && platform == GameBattlePlatform.Android ? DisplayDivisor(refreshRate, mobileCap) : 0,
-                !fixedTest && platform == GameBattlePlatform.Web ? webPixels : 0);
+                !fixedTest && platform == GameBattlePlatform.Web ? webPixels : 0, limitProjectiles);
+        }
+
+        /// <summary>判定降低网页像素是否有实质结果。参数依次是原帧间隔、原慢帧比例、试验帧间隔和试验慢帧比例。</summary>
+        public static bool WebPixelReductionHelps(float beforeSeconds, float beforeSlow, float afterSeconds, float afterSlow)
+        {
+            // 平均间隔明显缩短即可保留。若只是偶发慢帧变少，还须保证平均间隔没有明显变差。
+            return afterSeconds <= beforeSeconds * .92f ||
+                (afterSeconds <= beforeSeconds * 1.02f && afterSlow <= beforeSlow - .05f);
         }
 
         /// <summary>选择最接近预算上限的屏幕整数分频，避免在 90 Hz 屏幕上要求不均匀的 60 FPS。</summary>

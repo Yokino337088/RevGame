@@ -46,6 +46,24 @@ namespace RevGame.Bootstrap
         private int _stableWindows;
         /// <summary>最近一次更新计划的实时时刻，单位秒。升档需要经过冷却期。</summary>
         private float _changedAt;
+        /// <summary>前一个 Update 是否也在同一段有效交火，用来过滤属于遮挡或恢复过程的时间。</summary>
+        private bool _observePrevious;
+        /// <summary>采样对应的远征章回或无尽波次。零表示尚无有效阶段。</summary>
+        private int _observationStage;
+        /// <summary>网页试降未获益的阶段，本阶段不重复尝试减少像素。</summary>
+        private int _webRejectedStage;
+        /// <summary>确认较低像素有实际收益的阶段，避免仅因降档后稳定就在同一战况反复升回去。</summary>
+        private int _webAcceptedStage;
+        /// <summary>试降前的档位。存在时需要完成两个同阶段窗口才接受结果。</summary>
+        private GameBattleDeviceTier? _webTrialPrevious;
+        /// <summary>试降前可比较的平均帧间隔和慢帧占比。</summary>
+        private float _webBeforeTime, _webBeforeSlow;
+        /// <summary>试降期间的累计采样时间、帧数及超线帧数。</summary>
+        private float _webTrialSeconds;
+        /// <summary>试降期间完整的窗口数、实际帧数和慢帧数。</summary>
+        private int _webTrialWindows, _webTrialFrames, _webTrialSlowFrames;
+        /// <summary>最近的策略决定，用于诊断实际档位与试验状态。</summary>
+        private string _lastDecision = "startup";
         /// <summary>Android 热等级，-1 表示接口不可用。其他平台也保持 -1。</summary>
         private int _thermal = -1;
         /// <summary>下次查询系统热状态的时刻，单位秒；失焦后归零，回到前台立即复核。</summary>
@@ -75,7 +93,7 @@ namespace RevGame.Bootstrap
                 RevServices.GetRequired<StoryProgress>().IsIsolated;
             GameBattleDevicePolicy.Publish(Create(_initial));
             RevEvent.AddEventListener<GameScreen>(Events.ScreenChanged, OnScreen, owner: this);
-            if (_platform == GameBattlePlatform.Android)
+            if (_platform == GameBattlePlatform.Android || _platform == GameBattlePlatform.Web)
             {
                 RevEvent.AddEventListener(RevAppLifecycle.Paused, OnSuspending, owner: this);
             }
@@ -100,6 +118,9 @@ namespace RevGame.Bootstrap
                 ["androidTarget"] = plan.AndroidFrameRate,
                 ["actualTargetFrameRate"] = Application.targetFrameRate,
                 ["webPixels"] = plan.WebPixelBudget,
+                ["webPixelTrial"] = _webTrialPrevious.HasValue,
+                ["ordinaryProjectileLimit"] = plan.LimitOrdinaryProjectiles,
+                ["decision"] = _lastDecision,
                 ["gpuInterpolation"] = plan.AllowGpuInterpolation,
                 ["gpuMinimumSprites"] = plan.GpuMinimumSprites
             };
@@ -154,7 +175,7 @@ namespace RevGame.Bootstrap
 
             _active = true;
             _originalFrameRate = Application.targetFrameRate;
-            Apply(_initial);
+            Apply(_initial, "battle-enter");
             if (!_fixedTest && (_platform == GameBattlePlatform.Android || _platform == GameBattlePlatform.Web))
             {
                 RevMono.AddUpdate(ObserveFrame, owner: this);
@@ -167,6 +188,7 @@ namespace RevGame.Bootstrap
             if (!_active || !Application.isFocused)
             {
                 _nextThermalAt = 0f;
+                CancelWebTrial("focus-lost");
                 DiscardEvidence();
                 return;
             }
@@ -179,20 +201,41 @@ namespace RevGame.Bootstrap
                 GameBattleDeviceTier allowed = AllowedTier();
                 if (GameBattleDevicePolicy.Current.Tier > allowed)
                 {
-                    Apply(allowed);
+                    Apply(allowed, "thermal-ceiling");
                     return;
                 }
             }
 
-            if (_flow.IsGameplayBlocked || !IsFighting())
+            int stage = _flow.IsGameplayBlocked ? 0 : FightingStage();
+            if (stage == 0)
             {
+                CancelWebTrial("battle-interrupted");
                 DiscardEvidence();
+                return;
+            }
+            if (stage != _observationStage)
+            {
+                CancelWebTrial("stage-changed");
+                _observationStage = stage;
+                DiscardEvidence();
+            }
+            if (!_observePrevious)
+            {
+                // 这个 delta 覆盖的是上一次 Update 到现在，中间可能仍在加载、切波、恢复或重建画布。
+                _observePrevious = true;
                 return;
             }
 
             var plan = GameBattleDevicePolicy.Current;
             int target = plan.AndroidFrameRate > 0 ? plan.AndroidFrameRate : 60;
             float elapsed = Time.unscaledDeltaTime;
+            if (elapsed >= WindowSeconds)
+            {
+                // 浏览器挂起时可能没有失焦帧。单个间隔不能冒充整段连续交火，长停顿由独立诊断记录。
+                CancelWebTrial("observation-gap");
+                DiscardEvidence();
+                return;
+            }
             _elapsed += elapsed;
             _frames++;
             if (elapsed > 1.25f / target)
@@ -204,8 +247,17 @@ namespace RevGame.Bootstrap
                 return;
             }
 
-            bool slow = _slowFrames * 10 > _frames;
-            bool stable = _slowFrames * 50 <= _frames && _frames >= _elapsed * target * .96f;
+            if (_webTrialPrevious.HasValue)
+            {
+                ObserveWebTrialWindow();
+                ResetWindow();
+                return;
+            }
+
+            int frames = _frames, late = _slowFrames;
+            float seconds = _elapsed;
+            bool slow = late * 10 > frames;
+            bool stable = late * 50 <= frames && frames >= seconds * target * .96f;
             ResetWindow();
 
             GameBattleDeviceTier current = plan.Tier;
@@ -215,16 +267,27 @@ namespace RevGame.Bootstrap
             _stableWindows = stable ? _stableWindows + 1 : 0;
             if (_slowWindows >= 2 && current > GameBattleDeviceTier.Economy)
             {
-                Apply(current - 1);
+                if (_platform == GameBattlePlatform.Web)
+                {
+                    if (_webRejectedStage != stage)
+                    {
+                        BeginWebTrial(current, seconds / frames, (float)late / frames);
+                    }
+                }
+                else
+                {
+                    Apply(current - 1, "slow-windows");
+                }
             }
             else if (_stableWindows >= 5 && current < ceiling && now - _changedAt >= 20f &&
-                (_platform == GameBattlePlatform.Web || (_thermal >= 0 && _thermal < 2)))
+                ((_platform == GameBattlePlatform.Web && _webAcceptedStage != stage) ||
+                 (_platform == GameBattlePlatform.Android && _thermal >= 0 && _thermal < 2)))
             {
-                Apply(current + 1);
+                Apply(current + 1, "stable-windows");
             }
             else if (_platform == GameBattlePlatform.Android && Create(current).AndroidFrameRate != plan.AndroidFrameRate)
             {
-                Apply(current);
+                Apply(current, "display-refresh-changed");
             }
         }
 
@@ -238,15 +301,70 @@ namespace RevGame.Bootstrap
             return _thermal >= 3 ? GameBattleDeviceTier.Economy : GameBattleDeviceTier.Balanced;
         }
 
-        /// <summary>真正交火才说明设备在当前负载能维持帧节奏，布阵、成长、暂停和结果时排除。</summary>
-        private bool IsFighting()
+        /// <summary>真正交火返回可比阶段标记。远征以章回、无尽以波次区分，布阵和结算返回零。</summary>
+        private int FightingStage()
         {
             if (_flow.Screen == GameScreen.Battle)
             {
-                return RevServices.GetRequired<IBattleService>().Phase == GamePhase.Battle;
+                var battle = RevServices.GetRequired<IBattleService>();
+                return battle.Phase == GamePhase.Battle ? battle.Chapter * 100 + battle.Round : 0;
             }
-            return _flow.Screen == GameScreen.Endless &&
-                RevServices.GetRequired<EndlessService>().Run?.phase == EndlessPhase.Fighting;
+            if (_flow.Screen == GameScreen.Endless)
+            {
+                var endless = RevServices.GetRequired<EndlessService>();
+                return endless.Run?.phase == EndlessPhase.Fighting ? -1 - endless.WaveNumber : 0;
+            }
+            return 0;
+        }
+
+        /// <summary>只改网页像素一项。两段后核对是否得到了实质性改善，未确认前保留原档。</summary>
+        private void BeginWebTrial(GameBattleDeviceTier previous, float meanSeconds, float slowShare)
+        {
+            _webTrialPrevious = previous;
+            _webBeforeTime = meanSeconds;
+            _webBeforeSlow = slowShare;
+            _webTrialWindows = 0;
+            _webTrialFrames = 0;
+            _webTrialSlowFrames = 0;
+            _webTrialSeconds = 0f;
+            Apply(previous - 1, "web-pixel-trial");
+        }
+
+        /// <summary>累积试降后的两个有效窗口。收益不足恢复原档，同阶段避免反复试降。</summary>
+        private void ObserveWebTrialWindow()
+        {
+            _webTrialFrames += _frames;
+            _webTrialSlowFrames += _slowFrames;
+            _webTrialSeconds += _elapsed;
+            if (++_webTrialWindows < 2)
+            {
+                return;
+            }
+
+            if (GameBattleDevicePolicy.WebPixelReductionHelps(_webBeforeTime, _webBeforeSlow,
+                _webTrialSeconds / _webTrialFrames, (float)_webTrialSlowFrames / _webTrialFrames))
+            {
+                _webTrialPrevious = null;
+                _webAcceptedStage = _observationStage;
+                _lastDecision = "web-pixel-kept";
+                return;
+            }
+
+            _webRejectedStage = _observationStage;
+            CancelWebTrial("web-pixel-no-gain");
+        }
+
+        /// <summary>中断或未见收益时恢复到试验前。没有在途试验就不重新触发画布变更。</summary>
+        private void CancelWebTrial(string reason)
+        {
+            if (!_webTrialPrevious.HasValue)
+            {
+                return;
+            }
+
+            var previous = _webTrialPrevious.Value;
+            _webTrialPrevious = null;
+            Apply(previous, reason);
         }
 
         /// <summary>读取 Android 热等级。API 或服务出错后不再重复探查。</summary>
@@ -291,8 +409,8 @@ namespace RevGame.Bootstrap
 #endif
         }
 
-        /// <summary>发布完整计划后只应用当前平台的显示预算。重置窗口防止把切换本身算作持续慢帧。</summary>
-        private void Apply(GameBattleDeviceTier tier)
+        /// <summary>发布完整计划后应用当前平台的显示预算并记录原因。用新窗口观察生效后的节奏。</summary>
+        private void Apply(GameBattleDeviceTier tier, string reason)
         {
             var plan = Create(tier);
             GameBattleDevicePolicy.Publish(plan);
@@ -307,9 +425,8 @@ namespace RevGame.Bootstrap
             }
 #endif
             _changedAt = Time.realtimeSinceStartup;
-            _slowWindows = 0;
-            _stableWindows = 0;
-            ResetWindow();
+            _lastDecision = reason;
+            DiscardEvidence();
         }
 
         /// <summary>清空尚未下结论的采样窗口。</summary>
@@ -326,12 +443,14 @@ namespace RevGame.Bootstrap
             ResetWindow();
             _slowWindows = 0;
             _stableWindows = 0;
+            _observePrevious = false;
         }
 
         /// <summary>进入后台时清掉旧的热采样截止时间；恢复后的第一帧读取系统现状。</summary>
         private void OnSuspending()
         {
             _nextThermalAt = 0f;
+            CancelWebTrial("application-paused");
             DiscardEvidence();
         }
 
@@ -362,6 +481,11 @@ namespace RevGame.Bootstrap
 #endif
             _thermal = -1;
             _nextThermalAt = 0f;
+            _observationStage = 0;
+            _webRejectedStage = 0;
+            _webAcceptedStage = 0;
+            _webTrialPrevious = null;
+            _lastDecision = "battle-exit";
             GameBattleDevicePolicy.Publish(Create(_initial));
         }
 
