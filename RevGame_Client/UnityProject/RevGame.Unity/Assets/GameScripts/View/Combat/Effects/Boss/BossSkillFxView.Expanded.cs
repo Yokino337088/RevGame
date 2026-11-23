@@ -10,7 +10,7 @@ namespace RevGame.View
     {
         /// <summary>
         /// 同一池对象承载一段预警或爆发。最多81格加主环、星芒和三条光束，不超过90片固定预算。
-        /// 主体放大只影响视觉，精确危险区始终由生产几何标记；动画被回池取消不会追加伤害。
+        /// 同段格片共用时间轨。主体放大只影响视觉，精确危险区始终由生产几何标记；回池取消不会追加伤害。
         /// </summary>
         private float BuildExpanded(BossSkillInfo info, bool warning)
         {
@@ -44,17 +44,18 @@ namespace RevGame.View
 
                     if (warning)
                     {
-                        Zone(position, _cellSize * .94f, 1f, tint, duration);
+                        CreateZone(position, _cellSize * .94f, 1f, tint);
                     }
                     else
                     {
                         int tile = Take(glow, (FxMode)(10 + theme), tint, .18f, GroundOrder + 1);
                         Place(tile, position, _cellSize * 1.18f);
-                        TweenProgress(tile, 0f, 1f, duration);
                         _sequence.Insert(0f, _renderers[tile].transform.DOPunchScale(Vector3.one * .32f, .5f, 5));
                     }
                 }
             }
+            // 格片共享进度结束登记，中心与外环按自己的节奏分别提交。
+            TweenTileProgress(duration);
             // 两层反向旋转与快速膨胀形成“大招”轮廓。颜色与几何不同，避免每招只换名称。
             float diameter = Mathf.Max(3f, def.Radius * 2f + 2f) * _cellSize;
             int core = Take(glow, (FxMode)(10 + theme), tint, .18f, ImpactOrder);

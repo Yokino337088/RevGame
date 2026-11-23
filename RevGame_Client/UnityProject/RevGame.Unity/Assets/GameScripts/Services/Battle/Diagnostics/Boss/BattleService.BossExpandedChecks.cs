@@ -83,7 +83,7 @@ namespace RevGame.Services
                         {
                             check(!p.BossFrozen && !p.BossHidden && p.BossAttackFactor == 1f && p.BossSpeedFactor == 1f, kind + "到期清除控制与减益");
                         }
-                        check(battle._bossEffects.Count == 0, kind + "效果租约归零");
+                        check(battle._bossBurns.Count == 0 && battle._bossZones.Count == 0, kind + "效果租约归零");
                     }
                     // 其它章节即使目标合法也应拒绝，拒绝不改变已完成状态或占格。
                     int version = battle._board.TopologyVersion;

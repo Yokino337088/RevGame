@@ -231,7 +231,15 @@ Shader "RevGame/Combat/BossSkill"
             // 深色能量壳+高亮内纹在亮冰盘和暗星盘都可读；所有遮罩保持透明外边缘。
             float4 CommonPattern(float2 p, float t)
             {
-                float r = length(p), a = atan2(p.y,p.x);
+                float r = length(p);
+                // 16~23 的外壳和能量由单位圆遮罩归零，陨星另有的一项也在圆外归零。
+                // 在浮点边界外保留余量。最终颜色按 Alpha 预乘，这些像素原本不会遮住或照亮背景。
+                // 24 的末日法印还有跨过单位圆的刻度尾光，完整保留原计算。
+                [branch] if (_Mode < 23.5 && r > 1.0001)
+                {
+                    return 0;
+                }
+                float a = atan2(p.y,p.x);
                 float edge = 1.0-smoothstep(.82,1.0,r);
                 float energy = 0, body = 0;
                 float envelope = smoothstep(0,.065,t)*(1.0-smoothstep(.63,1.0,t));

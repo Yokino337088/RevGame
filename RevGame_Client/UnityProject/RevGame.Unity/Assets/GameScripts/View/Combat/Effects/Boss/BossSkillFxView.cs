@@ -10,7 +10,7 @@
 // · 一个池对象内部预先建好 MaxSlots 个子 SpriteRenderer（过场中分帧创建，之后反复复用）；
 // · 每个“片”共享同一个材质 BossSkill.mat，通过 MaterialPropertyBlock 设置自己的
 //   模式（_Mode）、进度（_Progress）、颜色（_Tint）——不克隆材质；
-// · DOTween 负责时间轴：缩放、移动、旋转、淡出，以及把进度从 0 推到 1。
+// · DOTween 负责时间轴：缩放、移动、旋转、淡出，以及把进度从 0 推到 1。同段格片共享一条进度轨。
 //
 // 【和框架的关系】
 // RevPool 负责创建/复用（[RevPoolPrefab]），IRevPoolable 的 OnPoolReturn 里 Kill 动画、隐藏所有片，
@@ -27,6 +27,7 @@ using UnityEngine.Sprites;
 
 namespace RevGame.View
 {
+    /// <summary>把一次 Boss 或能量炸弹快照画成池化特效，动画完成或战斗退出后由调用方收回。</summary>
     [RevPoolPrefab(RevResPath.Effects_Combat, "BossSkillFx", Group = RevResGroup.Battle)]
     public sealed partial class BossSkillFxView : MonoBehaviour, IRevPoolable
     {
@@ -154,21 +155,29 @@ namespace RevGame.View
         /// <summary>所有片的父节点：放在技能中心，旋转它就能让激光/刀光整体环绕 Boss 转动。</summary>
         private Transform _pivot;
         private SpriteRenderer[] _renderers;
-        /// <summary>每片的当前参数；进度变化时整块重新写入（MaterialPropertyBlock 写入是整体覆盖）。</summary>
+        /// <summary>各片的 Shader 效果模式，本次租约由 Take 设定。</summary>
         private FxMode[] _modes;
+        /// <summary>各片的 Shader 颜色，本次租约由 Take 设定。</summary>
         private Color[] _tints;
+        /// <summary>Shader 的当前动画进度。连续同材质格片由第零片代表，独立片各自保存当前值。</summary>
         private float[] _progress;
+        /// <summary>圆形、方形或技能专用外形，构建时间轴时由调用处选定。</summary>
         private float[] _shapes;
+        /// <summary>各片的 Shader 叠加系数，零为普通混合，一为纯发光。</summary>
         private float[] _additive;
         /// <summary>写参数用的临时块，全对象复用一个，不在动画每帧分配。</summary>
         private MaterialPropertyBlock _block;
-        // 每片只在换Sprite/图集版本时查询原生UV和纹理；动画进度变化不需要重新查图集。
+        /// <summary>独立片或共享格片首片的实际纹理页，归还本次格片时清除引用。</summary>
         private Texture[] _textures;
+        /// <summary>实际纹理页上的精灵矩形，换精灵或图集绑定版本时重新取得。</summary>
         private Vector4[] _uvs;
+        /// <summary>每个缓存的图集绑定版本；取用新精灵或回池时设为 -1，下一次提交重新绑定。</summary>
         private int[] _bindingVersions;
         private int _createdSlots;
         /// <summary>已经分配出去的片数；每次播放从 0 开始重新分配。</summary>
         private int _used;
+        /// <summary>当前技能起始处连续共用同一纹理、参数和进度的格片数。纯装饰从这个区间之后开始。</summary>
+        private int _tileSlots;
         /// <summary>本次播放的时间轴；回池时 Kill(false)，不会触发完成回调。</summary>
         private Sequence _sequence;
         private Action<BossSkillFxView> _onFinished;
@@ -254,6 +263,7 @@ namespace RevGame.View
             _pivot.position = center;
             Color tint = SkillTint(info.Kind, info.Enraged);
             float lifetime = telegraph ? BuildTelegraph(info, center, tint) : BuildCast(info, center, tint);
+            SubmitInitialSlots();
             // 用一个空回调把总时长“撑住”：所有片的动画都在 lifetime 内结束，最后统一回池。
             _sequence.InsertCallback(lifetime, Finish);
         }
@@ -285,6 +295,7 @@ namespace RevGame.View
                 Flash(center, _cellSize * 4f, 0.35f);
                 _sequence.InsertCallback(0.9f, Finish);
             }
+            SubmitInitialSlots();
         }
         /// <summary>预警逐格调用与伤害完全相同的几何函数；命中后使用各技能独立外部素材、主色和Shader模式。</summary>
         private float BuildPattern(BossSkillInfo info, bool warning, Color tint)
@@ -315,7 +326,7 @@ namespace RevGame.View
                     }
                     if (warning)
                     {
-                        Zone(Center(pos, 1), _cellSize * 0.94f, 1f, tint, duration);
+                        CreateZone(Center(pos, 1), _cellSize * 0.94f, 1f, tint);
                     }
                     else
                     {
@@ -323,11 +334,11 @@ namespace RevGame.View
                         FxMode mode = (FxMode)((int)FxMode.Meteor + spriteIndex);
                         int slot = Take(glow != null ? glow : art, mode, tint, 0.12f, ImpactOrder);
                         Place(slot, Center(pos, 1), _cellSize * 1.3f);
-                        TweenProgress(slot, 0f, 1f, duration);
                         _sequence.Insert(0f, _renderers[slot].transform.DOScale(_renderers[slot].transform.localScale * 1.18f, duration).SetEase(Ease.OutBack));
                     }
                 }
             }
+            TweenTileProgress(duration);
             if (!warning)
             {
                 BuildPatternBeams(info, tint, duration);
@@ -688,7 +699,7 @@ namespace RevGame.View
             return 0.1f;
         }
         // ================================================================ 片的通用操作
-        /// <summary>取一片并设置贴图、模式、颜色、叠加程度与排序。片不够时复用最后一片（只会少画，不会报错）。</summary>
+        /// <summary>取一片并暂存贴图、模式、颜色、叠加程度与排序。时间轴搭好后再提交初值；片不够时复用最后一片。</summary>
         private int Take(Sprite sprite, FxMode mode, Color tint, float additive, int order)
         {
             int index = Mathf.Min(_used, MaxSlots - 1);
@@ -711,29 +722,49 @@ namespace RevGame.View
             _progress[index] = 0f;
             _shapes[index] = 0f;
             _additive[index] = additive;
-            Apply(index);
             return index;
         }
+        /// <summary>同步完成整招构建后提交首帧。格片共用一份块，初值不同的中心光、光束等单独提交。</summary>
+        private void SubmitInitialSlots()
+        {
+            if (_tileSlots > 0)
+            {
+                SubmitTileProgress();
+            }
+            int used = Mathf.Min(_used, _createdSlots);
+            for (int index = _tileSlots; index < used; index++)
+            {
+                SubmitSlot(index);
+            }
+        }
+        /// <summary>独立片使用自己的纹理、颜色与当前进度，并把参数提交给自己的 Renderer。</summary>
+        private void SubmitSlot(int index)
+        {
+            if (PrepareBlock(index))
+            {
+                _renderers[index].SetPropertyBlock(_block);
+            }
+        }
         /// <summary>
-        /// 把一片的全部参数写进参数块。
-        /// ★ 必须显式写 _MainTex：SpriteRenderer 一旦设置了自定义参数块，Shader 读到的 _MainTex 会退回白图。
+        /// 由指定片的参数准备临时块。Unity 提交时复制内容，后续可继续复用同一临时块。
+        /// 必须显式写 _MainTex：SpriteRenderer 一旦设置了自定义参数块，Shader 读到的 _MainTex 会退回白图。
         /// _FxUV 是当前 Sprite 在图集页里的矩形，Shader 用它换算回 0~1 的局部坐标。
         /// </summary>
-        private void Apply(int index)
+        private bool PrepareBlock(int index)
         {
-            SpriteRenderer renderer = _renderers[index];
-            Sprite sprite = renderer.sprite;
+            int bindingVersion = GameSpriteAtlasService.BindingVersion;
+            if (_bindingVersions[index] != bindingVersion)
+            {
+                Sprite sprite = _renderers[index].sprite;
+                if (sprite == null)
+                {
+                    return false;
+                }
 
-            if (sprite == null)
-            {
-                return;
-            }
-            if (_bindingVersions[index] != GameSpriteAtlasService.BindingVersion)
-            {
                 Vector4 outer = DataUtility.GetOuterUV(sprite);
                 _uvs[index] = new Vector4(outer.x, outer.y, outer.z - outer.x, outer.w - outer.y);
                 _textures[index] = sprite.texture;
-                _bindingVersions[index] = GameSpriteAtlasService.BindingVersion;
+                _bindingVersions[index] = bindingVersion;
             }
             _block.Clear();
             _block.SetTexture(MainTexId, _textures[index]);
@@ -743,7 +774,7 @@ namespace RevGame.View
             _block.SetColor(TintId, _tints[index]);
             _block.SetFloat(ShapeId, _shapes[index]);
             _block.SetFloat(AdditiveId, _additive[index]);
-            renderer.SetPropertyBlock(_block);
+            return true;
         }
         /// <summary>把片放到世界坐标 world，并缩放到 worldSize 宽（贴图原始尺寸不同也能对齐格子）。</summary>
         private void Place(int index, Vector3 world, float worldSize)
@@ -775,16 +806,20 @@ namespace RevGame.View
         /// <summary>画一块地面预警区：shape 0=圆 1=方；进度在 duration 内从 0 到 1（越接近 1 闪得越急）。</summary>
         private void Zone(Vector3 world, float worldSize, float shape, Color tint, float duration)
         {
-            int z = Take(glow, FxMode.Telegraph, tint, 0.15f, GroundOrder);
-            _shapes[z] = shape;
-            Place(z, world, worldSize);
-            Apply(z);
-            TweenProgress(z, 0f, 1f, duration);
+            TweenProgress(CreateZone(world, worldSize, shape, tint), 0f, 1f, duration);
+        }
+        /// <summary>建立一个危险区格片并插入弹出变换，调用方用独立或共享时间轨推进 Shader 进度。</summary>
+        private int CreateZone(Vector3 world, float worldSize, float shape, Color tint)
+        {
+            int slot = Take(glow, FxMode.Telegraph, tint, 0.15f, GroundOrder);
+            _shapes[slot] = shape;
+            Place(slot, world, worldSize);
             // 出现时轻微弹一下，让“危险区刚出现”这个瞬间更醒目。
-            Transform t = _renderers[z].transform;
+            Transform t = _renderers[slot].transform;
             Vector3 target = t.localScale;
             t.localScale = target * 0.85f;
             _sequence.Insert(0f, t.DOScale(target, 0.2f).SetEase(Ease.OutBack));
+            return slot;
         }
         /// <summary>一圈冲击波：进度 0→1 时圆环由内向外扩散并变细变淡。</summary>
         private void Shockwave(Vector3 world, float worldSize, Color tint, float duration, float delay = 0f)
@@ -808,17 +843,51 @@ namespace RevGame.View
             _sequence.Insert(0f, t.DOScale(t.localScale * 2.5f, duration).SetEase(Ease.OutExpo));
             TweenProgress(f, 0f, 1f, duration);
         }
-        /// <summary>用 DOTween 把某片的 _Progress 从 from 推到 to；每次变化都重写参数块。</summary>
+        /// <summary>用 DOTween 把独立片的 _Progress 从 from 推到 to。进度或图集绑定改变时才更新参数块。</summary>
         private void TweenProgress(int index, float from, float to, float duration, float delay = 0f)
         {
             _progress[index] = from;
-            Apply(index);
             _sequence.Insert(delay, DOTween.To(() => _progress[index], value =>
             {
+                if (_progress[index] == value && _bindingVersions[index] == GameSpriteAtlasService.BindingVersion)
+                {
+                    return;
+                }
                 _progress[index] = value;
-                Apply(index);
+                SubmitSlot(index);
             }, to, Mathf.Max(0.01f, duration)).SetEase(Ease.Linear));
         }
+        /// <summary>接在逐格构建之后、独立装饰之前。所有已建格片都使用同纹理、同样式和同一条 0 到 1 的时间轨。</summary>
+        private void TweenTileProgress(float duration)
+        {
+            _tileSlots = Mathf.Min(_used, _createdSlots);
+            if (_tileSlots == 0)
+            {
+                return;
+            }
+            _sequence.Insert(0f, DOTween.To(() => _progress[0], value =>
+            {
+                if (_progress[0] == value && _bindingVersions[0] == GameSpriteAtlasService.BindingVersion)
+                {
+                    return;
+                }
+                _progress[0] = value;
+                SubmitTileProgress();
+            }, 1f, Mathf.Max(0.01f, duration)).SetEase(Ease.Linear));
+        }
+        /// <summary>使用首格真实图集绑定和共同进度准备一次参数，再按原顺序提交给各格的 Renderer。</summary>
+        private void SubmitTileProgress()
+        {
+            if (!PrepareBlock(0))
+            {
+                return;
+            }
+            for (int index = 0; index < _tileSlots; index++)
+            {
+                _renderers[index].SetPropertyBlock(_block);
+            }
+        }
+        /// <summary>完成回调先摘除本次时间轴与回调引用，再交给调用者回池，避免回池时重复触发。</summary>
         private void Finish()
         {
             Action<BossSkillFxView> callback = _onFinished;
@@ -831,6 +900,7 @@ namespace RevGame.View
         {
             int used = Mathf.Min(_used, _createdSlots);
             _used = 0;
+            _tileSlots = 0;
 
             if (_renderers == null)
             {

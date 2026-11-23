@@ -147,7 +147,7 @@ namespace RevGame.Services
                         int expiredHp = target.Hp;
                         battle._battleElapsed += def.Interval;
                         battle.TickBossEffects();
-                        check(target.Hp == expiredHp && battle._bossEffects.Count == 0, kind + "到期停止灼烧并释放租约");
+                        check(target.Hp == expiredHp && battle._bossBurns.Count == 0, kind + "到期停止灼烧并释放租约");
                     }
                     else
                         if (kind == BossSkillKind.TidalSurge || kind == BossSkillKind.Maelstrom)
@@ -191,6 +191,7 @@ namespace RevGame.Services
             }
             check(crossCells == Consts.BoardSize * 2 - 1, "十字神罚只命中交叉行列17格");
         }
+        /// <summary>用真实服务断言控制到期、区域进出、相交减益及本局清理，结果交给调用方汇总。</summary>
         private static void VerifyExclusiveBoundaries(Action<bool, string> check)
         {
             var battle = new BattleService(false, 1029);
@@ -228,6 +229,26 @@ namespace RevGame.Services
                 check(battle._board.Move(target, new BoardPos(0, 8), respectEnemyEyes: false), "移出圣域");
                 battle.RefreshBossZones();
                 check(target.BossAttackFactor == 1f && target.BossSpeedFactor == 1f, "离开圣域立即撤销减益");
+
+                // 第 8 行已超过第一个 64 位掩码。交叠时按各自最强倍率，较早领域结束后仍保留另一块。
+                var sanctuary = new BossSkillInfo(boss.Id, BossSkillKind.Sanctuary, boss.Pos, boss.Size, target.Pos, target.Pos, target.Pos, 1, 1, 0, 1, false);
+                var chains = new BossSkillInfo(boss.Id, BossSkillKind.MireChains, boss.Pos, boss.Size, target.Pos, target.Pos, target.Pos, 1, 1, 0, 1, false);
+                BossSkillDef sanctuaryDef = BossSkillCatalog.Get(sanctuary.Kind);
+                BossSkillDef chainsDef = BossSkillCatalog.Get(chains.Kind);
+                battle.ApplyExclusiveHit(boss, sanctuary);
+                float sanctuaryEnds = battle._battleElapsed + sanctuaryDef.Duration;
+                battle._battleElapsed = sanctuaryEnds - .125f;
+                battle.ApplyExclusiveHit(boss, chains);
+                float chainsEnd = battle._battleElapsed + chainsDef.Duration;
+                check(target.BossAttackFactor == Math.Min(sanctuaryDef.AttackFactor, chainsDef.AttackFactor)
+                      && target.BossSpeedFactor == Math.Min(sanctuaryDef.SpeedFactor, chainsDef.SpeedFactor), "上半掩码重叠领域分别取最强倍率");
+                battle._battleElapsed = sanctuaryEnds;
+                battle.TickBossEffects();
+                check(target.BossAttackFactor == chainsDef.AttackFactor && target.BossSpeedFactor == chainsDef.SpeedFactor, "一个领域到期保留仍有效的领域");
+                battle._battleElapsed = chainsEnd;
+                battle.TickBossEffects();
+                check(target.BossAttackFactor == 1f && target.BossSpeedFactor == 1f, "最后一个领域到期恢复倍率");
+
                 boss.BossInvulnerable = true;
                 hp = boss.Hp;
                 foreach (DamageBasis basis in Enum.GetValues(typeof(DamageBasis)))
@@ -235,7 +256,9 @@ namespace RevGame.Services
                     check(battle.ResolveDamage(new DamageRequest(boss, basis, BattleDamageKind.Normal, target, .5f, 100)) == 0 && boss.Hp == hp, "冰封免疫统一伤害来源" + basis);
                 }
                 battle.ClearBossEffects();
-                check(!boss.BossInvulnerable && battle._bossEffects.Count == 0 && battle._playerPieces.All(p => !p.BossHidden && !p.BossFrozen && p.BossSpeedFactor == 1f), "取消清空全部控制和无敌");
+                check(!boss.BossInvulnerable && battle._bossBurns.Count == 0 && battle._bossZones.Count == 0
+                      && float.IsPositiveInfinity(battle._nextBossControlExpiry)
+                      && battle._playerPieces.All(p => !p.BossHidden && !p.BossFrozen && p.BossAttackFactor == 1f && p.BossSpeedFactor == 1f), "取消清空全部控制和无敌");
             }
             finally { battle.StopEnemyAI(); }
         }

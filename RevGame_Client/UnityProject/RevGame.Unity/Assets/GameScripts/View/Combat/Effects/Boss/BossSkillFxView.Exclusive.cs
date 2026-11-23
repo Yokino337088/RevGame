@@ -27,7 +27,7 @@ namespace RevGame.View
                     return new Color(1f, .79f, .16f);
             }
         }
-        /// <summary>所有格子只从业务几何取集合。黑洞持续到返场，圣域持续到减益结束，不能提前淡出误导玩家。</summary>
+        /// <summary>所有格子只从业务几何取集合，同一段共用进度。黑洞持续到返场，圣域持续到减益结束。</summary>
         private float BuildExclusive(BossSkillInfo info, bool warning)
         {
             BossSkillDef def = BossSkillCatalog.Get(info.Kind);
@@ -57,17 +57,18 @@ namespace RevGame.View
                     }
                     if (warning)
                     {
-                        Zone(Center(pos, 1), _cellSize * .94f, 1f, tint, duration);
+                        CreateZone(Center(pos, 1), _cellSize * .94f, 1f, tint);
                     }
                     else
                     {
                         int tile = Take(glow, (FxMode)(10 + theme), tint, .15f, GroundOrder + 1);
                         Place(tile, Center(pos, 1), _cellSize * 1.1f);
-                        TweenProgress(tile, 0f, 1f, duration);
                         _sequence.Insert(0f, _renderers[tile].transform.DOPunchScale(Vector3.one * .15f, .45f, 4));
                     }
                 }
             }
+            // 先登记同图集和参数的格片，再独立构建中心主形态与光束。
+            TweenTileProgress(duration);
             // 中心主形态负责远读：紫色吸积盘、日冕、蓝色涡流、沼泽旋口、冰晶、金色法印。
             int core = Take(glow, (FxMode)(10 + theme), tint, .25f, ImpactOrder);
 
@@ -76,7 +77,6 @@ namespace RevGame.View
             {
                 _shapes[core] = 2f;
                 _additive[core] = 0f;
-                Apply(core);
             }
             float diameter = info.Kind == BossSkillKind.StarStorm ? (info.Index + 1) * 2f
                 : info.Kind == BossSkillKind.GlacialAegis ? Consts.BoardSize : def.Radius * 2f + 2f;
