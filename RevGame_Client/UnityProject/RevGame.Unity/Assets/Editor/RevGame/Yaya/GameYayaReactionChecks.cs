@@ -12,7 +12,7 @@ namespace RevGame.Editor
     /// <summary>互动纯规则与Excel校验，编辑态仅读生成表，不修改正式配置、随机源或玩家存档。</summary>
     public static class GameYayaReactionChecks
     {
-        /// <summary>读磁盘生成表仅用于编辑态，无初始化/全局注册；与生产分类函数共用同一Excel参数。</summary>
+        /// <summary>编辑态读取生成表，核对生产分类、两种玩法共用的闲置台词及立绘布局。</summary>
         public static string Rules()
         {
             var rules = new YayaReactionRuleTable();
@@ -36,23 +36,24 @@ namespace RevGame.Editor
             Check(Classify(1, good + 10, 1, 0, 100) == 3, "损失优先于击杀");
             Check(Classify(1, 0, 0, (int)(V("PoorTakenRatio") * 1000) + 1, 100) == 3, "高损伤嘲讽");
             Check(Classify(1, good, 0, (int)(V("GoodTakenRatio") * 1000) + 1, 100) == 2, "受伤过高不能夸奖");
-            Check(V("CampaignIdleTauntSeconds") >= V("SampleSeconds"), "六章无操作观察期能覆盖一个采样");
+            Check(V(YayaReactionConfig.IdleTauntSecondsKey) >= V("SampleSeconds"), "无操作观察期能覆盖一个采样");
             var idleLines = new HashSet<string>();
             foreach (YayaReactionLine line in lines.All)
             {
-                if (line.Band == YayaReactionConfig.CampaignIdleTauntBand)
+                if (line.Band == YayaReactionConfig.IdleTauntBand)
                 {
+                    Check(YayaReactionConfig.MatchesMode(line, 1) && YayaReactionConfig.MatchesMode(line, 2), "两种玩法共用无操作台词 " + line.Id);
                     idleLines.Add(line.Text);
                 }
             }
-            Check(idleLines.Count > 1, "六章无操作重复触发时能换台词");
+            Check(idleLines.Count > 1, "无操作重复触发时有不同台词可抽选");
             CheckSidebar(new Rect(.01f, .028f, .24f, .78f), .25f);
             CheckSidebar(new Rect(.012f, .145f, .145f, .48f), .18f);
             // 16:9 下无尽棋盘投影的左边约为 .302，安全区全宽时应能装下完整两倍区域。
             var mobile = new Rect(.012f, .145f, .29f, .96f);
             Check(YayaReactionPresenter.TryFitSidebar(mobile, new Rect(0, 0, 1, 1), new Rect(.302f, .15f, .396f, .7f), out Rect expanded)
                 && Mathf.Approximately(expanded.width, mobile.width) && Mathf.Approximately(expanded.height, mobile.height), "安卓无尽两倍布局");
-            return "8项表现分类边界、两模式台词、六章无操作配置、横屏刘海和安卓无尽两倍布局检查通过";
+            return "8项表现分类边界、两模式共用无操作台词、横屏刘海和安卓无尽两倍布局检查通过";
         }
         /// <summary>模拟左边有刘海的横屏。原坐标落在刘海内，适配后应在安全区与棋盘之间保留等比区域。</summary>
         private static void CheckSidebar(Rect preferred, float boardLeft)

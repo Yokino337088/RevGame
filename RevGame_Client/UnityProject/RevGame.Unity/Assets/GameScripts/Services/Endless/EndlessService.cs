@@ -264,7 +264,7 @@ namespace RevGame.Endless
             Run.selectedUnit = -1;
             return true;
         }
-        /// <summary>处理落子、点选、升星和玩家主动换格。换格成功后刷新占格规则与静守计时，非法落点保留原站位。</summary>
+        /// <summary>处理落子、点选、升星和玩家主动换格。换格成功后更新占格与静守状态，再通知互动观察者。</summary>
         public bool ClickCell(int x, int y)
         {
             var pos = new BoardPos(x, y);
@@ -318,9 +318,10 @@ namespace RevGame.Endless
             unit.StationarySince = Run.seconds;
             unit.SteadyShield = false;
             ApplyBrokenEyeBonus();
+            RevEvent.DispatchEvent(Events.EndlessPlayerBoardAction, this);
             return true;
         }
-        /// <summary>先预检合法空格，再随机升级一个同名未满星主力；没有目标才部署，成功后只扣一张牌。</summary>
+        /// <summary>先验证空格，优先升星同名主力。新部署提交占格与手牌后通知互动观察者。</summary>
         private bool Deploy(int index, BoardPos pos)
         {
             if (index < 0 || index >= Run.hand.Count)
@@ -344,6 +345,7 @@ namespace RevGame.Endless
             LastCardAction = "Deploy";
             LastCardTarget = placed.Piece.Id;
             RefreshRules();
+            RevEvent.DispatchEvent(Events.EndlessPlayerBoardAction, this);
             return true;
         }
         /// <summary>Id来自本局实体注册表，死亡/升星移除时同步失效，不扫描整个演员名单。</summary>

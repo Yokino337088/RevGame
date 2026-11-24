@@ -15,6 +15,8 @@ namespace RevGame.Core
     {
         /// <summary>唯一签名YayaCombatFact：已结算的伤害与真正死亡，供局内互动观察，不承载任何战斗规则。</summary>
         public const string YayaCombatObserved = "RevGame.Yaya.CombatObserved";
+        /// <summary>无尽玩家落子、升星或移动成功后发布。唯一参数为提交动作的 EndlessService 实例，供本局监听核对归属。</summary>
+        public const string EndlessPlayerBoardAction = "RevGame.Endless.PlayerBoardAction";
         /// <summary>string：吞噬/数量上限等规则事实提示，UI只能播放动画。</summary>
         public const string BoardRuleNotice = "RevGame.Board.RuleNotice";
         /// <summary>HelperShotInfo：帮手已扣积分并提交伤害后的攻击快照。</summary>

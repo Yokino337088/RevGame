@@ -43,7 +43,7 @@ namespace RevGame.Flow
             base.OnStop();
         }
     }
-    /// <summary>无尽域内观察者，与六章不共享窗口/冷却；读档进入新场景重新等待首个观察窗口。</summary>
+    /// <summary>无尽域内的互动观察者。读档进入场景后，以存档战斗时刻为新一轮观察起点。</summary>
     [RevLogic(GameDomain.Endless)]
     public sealed class EndlessYayaReactionLogic : YayaReactionLogic
     {
@@ -62,11 +62,11 @@ namespace RevGame.Flow
         /// <summary>表现观察时间/窗口与冷却，单位实际战斗秒；暂停和阅读剧情不消耗。</summary>
         private float _clock, _window, _nextGlobal, _initialHealth;
         /// <summary>各档下次允许的观察时间，长度与台词表的档位约定一致。</summary>
-        private readonly float[] _nextBand = new float[YayaReactionConfig.CampaignIdleTauntBand];
-        /// <summary>六章最后一次按住鼠标或触屏时的本轮战斗秒数。准备期不读，开战归零，暂停由战斗时钟自然冻结。</summary>
-        private float _lastCampaignActivity;
-        /// <summary>本局进入时缓存的无操作阈值，单位战斗秒，只有六章使用。</summary>
-        private float _campaignIdleTauntAfter;
+        private readonly float[] _nextBand = new float[YayaReactionConfig.IdleTauntBand];
+        /// <summary>最近一次玩家操作的战斗时刻（秒）。远征换轮归零，无尽读档从本次进场时刻开始。</summary>
+        private float _lastActivity;
+        /// <summary>两种玩法共用的无操作阈值（战斗秒），每次进入互动域从原表读取。</summary>
+        private float _idleTauntAfter;
         /// <summary>当前窗口事实，long避免密集伤害累加溢出；敌伤只用来判断窗口有实际交战。</summary>
         private long _taken, _dealt;
         /// <summary>窗口击杀/真实死亡、采样累计与六章回合标识，换回合必须清窗口但保留本局控频。</summary>
@@ -77,13 +77,13 @@ namespace RevGame.Flow
         /// <summary>仅隔离夹具暂停本观察者的自然采样，不暂停实际战斗或任何其它逻辑。</summary>
         private bool _preview;
         /// <summary>本场进入域后接受的无操作台词次数，和通用战绩互动分开，便于验证确实重复触发。</summary>
-        private int _campaignIdleTaunts;
+        private int _idleTaunts;
 #endif
         /// <summary>互动随机源独立于战斗，不消费服务随机数，不会因开关台词影响掉落或AI。</summary>
         private uint _random = 3187781;
         /// <summary>每档上次台词编号，抽取时排除连续重复。</summary>
-        private readonly int[] _lastLine = new int[YayaReactionConfig.CampaignIdleTauntBand];
-        /// <summary>最近一次通过正式控频的评价，1好/2一般/3不佳/4六章无操作，0尚未评价。</summary>
+        private readonly int[] _lastLine = new int[YayaReactionConfig.IdleTauntBand];
+        /// <summary>最近一次通过正式控频的评价，1 好、2 一般、3 不佳、4 无操作，0 尚未评价。</summary>
         public int LastBand
         {
             get; private set;
@@ -98,7 +98,7 @@ namespace RevGame.Flow
         {
             get; private set;
         }
-        /// <summary>本域观察只安装一条事实监听与固定采样；找不到场景根直接阻止进入半接线玩法。</summary>
+        /// <summary>在本域装配表现、操作监听与固定采样。框架在离场时按所有者移除监听和计时器。</summary>
         protected override void OnStart()
         {
             YayaReactionConfig.Validate();
@@ -109,34 +109,56 @@ namespace RevGame.Flow
             }
             _presenter.BeginSession(Mode);
             _lastRound = Mode == 1 ? RevServices.GetRequired<IBattleService>().Round : -1;
+            _idleTauntAfter = YayaReactionConfig.Value(YayaReactionConfig.IdleTauntSecondsKey);
             if (Mode == 1)
             {
-                _campaignIdleTauntAfter = YayaReactionConfig.Value("CampaignIdleTauntSeconds");
-                Listen<int>(Events.PhaseEnterBattle, _ => _lastCampaignActivity = 0f);
+                Listen<int>(Events.PhaseEnterBattle, _ => _lastActivity = 0f);
+            }
+            else
+            {
+                // 无尽的战斗时钟可能从存档中途开始。只接收当前棋局已经提交的玩家操作。
+                var endless = RevServices.GetRequired<EndlessService>();
+                _lastActivity = endless.Run.seconds;
+                Listen<EndlessService>(Events.EndlessPlayerBoardAction, source =>
+                {
+                    if (ReferenceEquals(source, endless))
+                    {
+                        RecordActivity(endless.Run.seconds);
+                    }
+                });
             }
             Listen<YayaCombatFact>(Events.YayaCombatObserved, OnFact);
             Every(YayaReactionConfig.Value("SampleSeconds"), Sample);
         }
 
-        /// <summary>点击与拖动刷新无操作计时，正在弹出的无操作台词也立刻收起。所有来源都经过同一战斗阶段门禁。</summary>
+        /// <summary>远征触屏或鼠标操作通过战斗阶段门禁后刷新计时，返回本次输入是否被记录。</summary>
         internal bool TryRecordCampaignActivity()
         {
             if (Mode != 1 || !CanObserve())
             {
                 return false;
             }
-            _lastCampaignActivity = RevServices.GetRequired<IBattleService>().BattleElapsed;
-            if (LastBand == YayaReactionConfig.CampaignIdleTauntBand && _presenter.Busy)
-            {
-                _presenter.Hide();
-            }
+            RecordActivity(RevServices.GetRequired<IBattleService>().BattleElapsed);
             return true;
         }
 
-        /// <summary>用服务自己的回合时钟计算无操作秒数。计时器回调只抽查结果，掉帧时不会累加虚假的战斗时间。</summary>
-        private float CampaignIdleSeconds()
+        /// <summary>记录最近一次操作的战斗时刻。收回当前闲置嘲讽及其在途加载，保留已消耗的控频时间。</summary>
+        private void RecordActivity(float elapsed)
         {
-            return Math.Max(0f, RevServices.GetRequired<IBattleService>().BattleElapsed - _lastCampaignActivity);
+            _lastActivity = elapsed;
+            if (LastBand == YayaReactionConfig.IdleTauntBand && _presenter.Busy)
+            {
+                _presenter.Hide();
+            }
+        }
+
+        /// <summary>仅在可观察战斗中调用，按当前玩法的战斗时钟计算闲置秒数。暂停和过场由服务冻结时钟。</summary>
+        private float IdleSeconds()
+        {
+            float elapsed = Mode == 1
+                ? RevServices.GetRequired<IBattleService>().BattleElapsed
+                : RevServices.GetRequired<EndlessService>().Run.seconds;
+            return Math.Max(0f, elapsed - _lastActivity);
         }
         /// <summary>事件已在伤害/死亡提交后产生；只有真实交战且无剧情/暂停时才进入窗口。</summary>
         private void OnFact(YayaCombatFact fact)
@@ -162,7 +184,7 @@ namespace RevGame.Flow
             _kills += fact.Kills;
             _losses += fact.Losses;
         }
-        /// <summary>所有玩家可见门禁先判断，准备/暂停/教学/剧情均不评价，也不发嘲讽。</summary>
+        /// <summary>只在玩法已就绪且实际交战时返回允许观察。准备、暂停、教学和剧情期间隐藏互动。</summary>
         public bool CanObserve()
         {
             GameFlow flow = RevServices.GetRequired<GameFlow>();
@@ -170,9 +192,11 @@ namespace RevGame.Flow
             {
                 return false;
             }
-            return Mode == 1 ? RevServices.GetRequired<IBattleService>().Phase == GamePhase.Battle : RevServices.GetRequired<EndlessService>().Run.phase == EndlessPhase.Fighting;
+            return Mode == 1
+                ? RevServices.GetRequired<IBattleService>().Phase == GamePhase.Battle
+                : RevServices.GetRequired<EndlessService>().Run?.phase == EndlessPhase.Fighting;
         }
-        /// <summary>固定采样只累计可观察的战斗时间；换回合重置窗口，不能把上一轮损失带入新轮。</summary>
+        /// <summary>固定采样只累计可观察的战斗时间。达到闲置阈值时优先尝试嘲讽，远征换轮清理上一轮窗口。</summary>
         private void Sample()
         {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
@@ -205,10 +229,10 @@ namespace RevGame.Flow
             _clock += step;
             _window += step;
             _samples++;
-            if (Mode == 1 && CampaignIdleSeconds() >= _campaignIdleTauntAfter)
+            if (IdleSeconds() >= _idleTauntAfter)
             {
-                // 无操作优先使用专用台词，仍走已有全局/同档冷却。照常滚动事实窗口，玩家一点击就能恢复近期表现评价。
-                TryPublish(YayaReactionConfig.CampaignIdleTauntBand);
+                // 无操作优先使用专用台词，沿用全局和同档冷却。继续滚动事实窗口供下一次表现评价。
+                TryPublish(YayaReactionConfig.IdleTauntBand);
                 if (_window >= YayaReactionConfig.Value("WindowSeconds"))
                 {
                     ResetWindow();
@@ -268,20 +292,20 @@ namespace RevGame.Flow
             LastBand = band;
             TriggerCount++;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
-            if (band == YayaReactionConfig.CampaignIdleTauntBand)
+            if (band == YayaReactionConfig.IdleTauntBand)
             {
-                _campaignIdleTaunts++;
+                _idleTaunts++;
             }
 #endif
             return true;
         }
-        /// <summary>先加权计总数再做第二次顺序选择；只在低频触发分配随机抽选，不复制台词列表。</summary>
+        /// <summary>在适用当前玩法的台词中按权重抽选。排除上一条，有且只有一条可用时允许复用。</summary>
         private YayaReactionLine ChooseLine(int band)
         {
             int total = 0;
             foreach (YayaReactionLine line in RevDataTableManager.Get<YayaReactionLineTable>().All)
             {
-                if (line.Band == band && (line.Mode == 0 || line.Mode == Mode) && line.Id != _lastLine[band - 1])
+                if (line.Band == band && YayaReactionConfig.MatchesMode(line, Mode) && line.Id != _lastLine[band - 1])
                 {
                     total += line.Weight;
                 }
@@ -290,7 +314,7 @@ namespace RevGame.Flow
             {
                 foreach (YayaReactionLine line in RevDataTableManager.Get<YayaReactionLineTable>().All)
                 {
-                    if (line.Band == band && (line.Mode == 0 || line.Mode == Mode))
+                    if (line.Band == band && YayaReactionConfig.MatchesMode(line, Mode))
                     {
                         return line;
                     }
@@ -302,7 +326,7 @@ namespace RevGame.Flow
             int pick = (int)(_random % (uint)total);
             foreach (YayaReactionLine line in RevDataTableManager.Get<YayaReactionLineTable>().All)
             {
-                if (line.Band != band || (line.Mode != 0 && line.Mode != Mode) || line.Id == _lastLine[band - 1])
+                if (line.Band != band || !YayaReactionConfig.MatchesMode(line, Mode) || line.Id == _lastLine[band - 1])
                 {
                     continue;
                 }
@@ -347,18 +371,21 @@ namespace RevGame.Flow
             _presenter?.EndSession();
         }
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
-        /// <summary>只读业务证据，状态来自本观察者而非视图猜测，计数不写进玩家存档。</summary>
+        /// <summary>查询本域两类互动的计时与次数。保留旧六章查询键供现有回归计划读取。</summary>
         public object Snapshot()
         {
-            float idleSeconds = Mode == 1 && CanObserve() ? CampaignIdleSeconds() : 0f;
+            bool campaign = Mode == 1;
+            float idleSeconds = CanObserve() ? IdleSeconds() : 0f;
+            bool idle = idleSeconds >= _idleTauntAfter;
             return new Dictionary<string, object>
             {
                 ["mode"] = Mode, ["clock"] = _clock, ["window"] = _window, ["kills"] = _kills, ["losses"] = _losses, ["taken"] = _taken,
                 ["lastBand"] = LastBand, ["triggers"] = TriggerCount, ["samples"] = _samples, ["factsObserved"] = FactsObserved,
-                ["campaignIdleSeconds"] = idleSeconds,
-                ["campaignIdle"] = Mode == 1 && idleSeconds >= _campaignIdleTauntAfter,
-                ["campaignIdleTauntAfter"] = _campaignIdleTauntAfter,
-                ["campaignIdleTaunts"] = _campaignIdleTaunts
+                ["idleSeconds"] = idleSeconds, ["idle"] = idle, ["idleTauntAfter"] = _idleTauntAfter, ["idleTaunts"] = _idleTaunts,
+                ["campaignIdleSeconds"] = campaign ? idleSeconds : 0f,
+                ["campaignIdle"] = campaign && idle,
+                ["campaignIdleTauntAfter"] = campaign ? _idleTauntAfter : 0f,
+                ["campaignIdleTaunts"] = campaign ? _idleTaunts : 0
             };
         }
         /// <summary>隔离测试给出固定已结算事实窗口，再经相同分类/控频入口；不修改战斗服务或随机源。</summary>

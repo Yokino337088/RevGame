@@ -1,6 +1,7 @@
 using RevGame.Core;
 using RevGame.Data;
 using RevGame.Pieces;
+using Revolution;
 using UnityEngine;
 
 namespace RevGame.Endless
@@ -125,7 +126,7 @@ namespace RevGame.Endless
         }
         /// <summary>
         /// 单卡升级原子提交：先预检，再替换同一演员的Piece，保持Id/位置/计时与复活状态。
-        /// 血量按原比例继承到新星级上限，避免每次升级偷偷回满；不动其它场上同名演员。
+        /// 血量按原比例继承到新星级上限。占格与手牌提交后通知互动观察者。
         /// </summary>
         private bool UpgradeWithCard(int index, EndlessUnit actor)
         {
@@ -158,6 +159,7 @@ namespace RevGame.Endless
             LastCardAction = "Upgrade";
             LastCardTarget = old.Id;
             RefreshRules();
+            RevEvent.DispatchEvent(Events.EndlessPlayerBoardAction, this);
             return true;
         }
     }
