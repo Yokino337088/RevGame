@@ -60,7 +60,8 @@ AI 可通过 `ab.configure` 的 `configJson` 设置 `resPathCodePath`，然后 `
 
 | 文件 | 谁生成 | 作用 |
 |---|---|---|
-| `Assets/Revolution/Resources/ResourceSystem/ResMap.txt` | 打包工具「仅生成映射」/ 一键打包 | 逻辑名 → 包名 + 资源名（运行时引导表，随包体进 Resources） |
+| `Assets/Revolution/Editor/RevResourceSystem/ResMap.txt` | 打包工具「仅生成映射」或打包 | 编辑器可读映射与热更发布源 |
+| `Assets/Revolution/Resources/ResourceSystem/ResMapPacked.bytes` | 同次映射生成 | Player 的 gzip 引导副本，出包前与可读表校验一致 |
 | `Assets/Revolution/Generation/RevResPath.cs` | 资源路径常量生成器 | 资源目录常量（业务写 `RevResPath.Data` 而不是手拼字符串） |
 | `Assets/Revolution/Runtime/RevSoundSystem/Generated/RevSoundPath.cs` | 音效目录常量生成器 | 音效目录常量 |
 | `Assets/link.xml`（业务侧） | 菜单「生成 IL2CPP 裁剪保护 (link.xml)」 | 开裁剪时的业务类型 / 原生模块保护；带"生成标记"，已有手写文件时弹窗确认。框架自带的 `Assets/Revolution/link.xml` 是手写的，**不是**生成物 |

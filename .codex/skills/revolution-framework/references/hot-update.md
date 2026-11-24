@@ -42,7 +42,7 @@ if (result.Success == false)
 | `RevABLoader.BundlePathResolver` | `Func<string, string>`：包名 → 完整文件路径/URL；null/空返回值回退 `StreamingAssets/<平台>/<包名>` | `RevHotStore.ResolveBundlePath` |
 | `RevABLoader.BundleCacheKeyResolver` | `Func<string, RevBundleCacheKey>`：包名 → Unity Hash128/CRC 缓存键；无有效键走默认请求 | `RevHotStore.ResolveBundleCacheKey` |
 | `RevABLoader.DependenciesOverride` | `Func<string, string[]>`：包名 → 依赖；null 回退内置主包 Manifest，空数组表示明确无依赖 | `RevHotStore.ResolveDependencies` |
-| `RevResBootstrap.ResMapOverride` | `Func<Dictionary<string, string>>`：热更映射覆盖合并内置表；null 只用内置表，合并不能删除内置旧键 | `RevHotStore.LoadHotResMap` |
+| `RevResBootstrap.ResMapSnapshot` | `Func<Dictionary<string, string>>`：整版安装已验证的热更映射，空值使用首包 | `RevHotStore.LoadHotResMap` |
 
 - 安装发生在 `RevResBootstrap.Init` 前；`InitializeAsync` 与 `CheckAsync→UpdateAsync` 正式路径均安装桥。实现见 `Assets/Revolution.HotUpdate/Runtime/Integration/RevHotResBridge.cs`，绑定用静态方法组。
 - 断开清理要与安装区分：当前 `RevHotResBridge.Reset()` 仅复位 `_installed`，未将四个静态委托置 null；`RevHotUpdateUnityHooks` 复位内存、不删磁盘。不要把“重置标志”宣称成完整卸载钩子。
@@ -52,7 +52,7 @@ if (result.Success == false)
 
 ```text
 已验证清单中的业务包 → 只从当前完整快照/版本化 URL 读；缺失不得混读任意同名旧包
-无有效清单的旧版兼容路径 → 版本目录/历史目录/首包落地 → 交回框架默认
+没有已激活的清单 → 首包落地或框架默认内置路径
 平台主包 Manifest → 始终来自随该 App 发布的内置基线，不由热更清单覆盖
 ```
 
@@ -72,10 +72,16 @@ if (result.Success == false)
 - **两条缓存纪律**：内容路径 `immutable` 长缓存（URL 带版本段）；清单路径 **no-cache**（否则玩家永远拿到旧清单）。
 - **平台名**：编辑器里恒为 `PC`（`RevHotPlatform` 带 `!UNITY_EDITOR`）；打包侧 `ABBuildSetting.GetPlatformName`（Standalone* → `PC`）——**两边必须对齐**，否则编辑器调试会 404。
 
+### 清单验签与 ResMap 完整性
+
+- 发布端用 `WriteOutputs(manifest, outputDir, signingKey)` 生成 RSA / SHA-256 签名。私钥由发布环境加载。客户端在可信包体内设置 `RevHotConfig.ManifestPublicKey`（`RevHotManifestSignature.ExportPublicKey` 格式）。配置后在线清单及恢复用的本地清单都必须验签。
+- 热更沿用 `ResMap.txt` 发布地址。校验按收到的原始字节计算 SHA-256，支持 CDN 传输压缩。候选映射使用与首包一致的严格解析器，并只允许指向候选清单内的包。同一资源版本有内容变更时发布新版本号。
+- 测试用隔离的发布密钥覆盖拒绝错公钥、损坏清单、重复键和坏摘要。另测重启读取已验活动版本、网络错误保留已验快照、首包与候选交接及平台策略。未配置公钥的旧项目以摘要校验内容。
+
 ## 5. 版本模型：大版本锚定（`@appVersion` = `Application.version`）
 
 - 清单里 `@appVersion` 与客户端不一致 → `AppVersionMismatch`（**设计如此**）：跨大版本必须重新出包，资源层因此**不需要做向后兼容**。
-- "大版本内热更资源、跨大版本重出包"是这个框架推荐的发版纪律（王者那套做法）；`ForceUpdateRequired` / `OnForceUpdateRequired` 只负责**识别 + 回调**，跳商店 / 整包下载由业务决定。
+- 大版本内热更资源，跨大版本重新出包。`ForceUpdateRequired` / `OnForceUpdateRequired` 报告升级要求，业务接入商店或整包下载。
 - 版本目录：`{LocalRoot}/{平台}/{大版本}/{资源版本}/`；保留目录提供恢复来源，但不是任意版本兼容保证。当前切换为 `完整候选校验 → MarkVersionComplete → BeginActivation(previousVersion) → 旧依赖图 ShutdownAll → 写 current/切生效版本与缓存键 → Init → CommitActivation → DeleteOldVersions`；旧目录必须保留到重装成功后。
 
 ### 5.1 当前门禁与续传事实（2026-10-16；含提交 `6ac97b2`，以源码复核）

@@ -9,13 +9,14 @@
 #  ⚠️ 以下文件永远不要被同步覆盖（脚本已内置保护清单）：
 #     · Generation/RevResPath.cs                          本项目资源目录常量
 #     · Runtime/RevSoundSystem/Generated/RevSoundPath.cs  本项目音效目录常量
-#     · Resources/ResourceSystem/ResMap.txt               本项目资源映射表
+#     · Editor/RevResourceSystem/ResMap.txt                本项目可读资源映射
+#     · Resources/ResourceSystem/ResMapPacked.bytes        本项目 Player 压缩映射
 #     · PACKAGE_VERSION.txt（本文件）
 # ============================================================
 
-commit      = 40a8fd1bd9486ec9c09267626cf53d4feda48750
-short       = 40a8fd1
-date        = 2026-11-22 20:21
-source      = 40a8fd1bd9486ec9c09267626cf53d4feda48750（Revolution 仓库 package 分支）
-previous    = 7f2c2a3439c7079d55bac88c58cd50d75a0051f1
+commit      = 552df4c8c393f0cfbdeb76b181bc4c73c74233fb
+short       = 552df4c
+date        = 2026-11-24 11:08
+source      = upstream/package（Revolution 仓库 package 分支）
+previous    = 40a8fd1bd9486ec9c09267626cf53d4feda48750
 updated_by  = tools/sync-framework.ps1

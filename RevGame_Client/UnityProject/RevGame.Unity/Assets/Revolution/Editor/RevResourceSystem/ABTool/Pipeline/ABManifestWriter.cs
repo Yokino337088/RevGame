@@ -3,12 +3,12 @@
 //
 // 位置：Editor\RevResourceSystem\ABTool\Pipeline\
 //
-//   1. ResMap.txt        给运行时的：逻辑名|包名|资源名（RevResBootstrap 读它）
+//   1. ResMap.txt 与压缩副本     逻辑名|包名|资源名，分别供编辑器审计和 Player 引导
 //   2. BuildManifest.json 给人/CI 看的：版本、平台、时间、每个包大小
 //
 // 【为什么 ResMap 不直接读 Manifest？】
 //   AssetBundleManifest 是二进制资产，运行时读它要先把主包加载起来；
-//   而纯文本 ResMap 可以直接 Resources.Load 读，速度快且不依赖 AB。
+//   压缩映射从 Resources 读，AB 尚未打开时也可以验证。
 // ============================================================
 using System;
 using System.IO;
@@ -21,33 +21,27 @@ namespace Revolution.Editor
 {
     public static class ABManifestWriter
     {
-        /// <summary>写运行时映射表，返回条目数。每行格式：逻辑名|包名|资源名</summary>
+        /// <summary>同时生成编辑器文本和 Player 压缩映射，返回完整条目数。</summary>
         public static int WriteResMap(ABCollectResult collect)
         {
+            if (collect.duplicateLogics.Count != 0)
+            {
+                throw new InvalidDataException("ResMap 含重复逻辑路径：" + string.Join("、", collect.duplicateLogics));
+            }
+
             var sb = new StringBuilder();
 
-            // # 开头的行在运行时 RevResBootstrap 里会被跳过（当注释）
-            sb.AppendLine("# 自动生成，请勿手改。格式：逻辑名|包名|资源名");
-            sb.AppendLine("# 逻辑名 = 资源相对资源根目录的路径（去扩展名）；包名由你在资源上自行设置");
+            // 固定行序和换行，源标记未变时两份产物维持相同字节。
+            sb.Append("# 自动生成，请勿手改。格式：逻辑名|包名|资源名\n");
+            sb.Append("# 逻辑名来自资源根目录的相对路径，去掉文件扩展名。\n");
 
-            int count = 0;
-            foreach (ResMapEntry e in collect.entries)
+            foreach (ResMapEntry e in collect.entries.OrderBy(entry => entry.logic, StringComparer.Ordinal))
             {
-                sb.AppendLine($"{e.logic}|{e.bundle}|{e.asset}");
-                count++;
+                sb.Append(e.logic).Append('|').Append(e.bundle).Append('|').Append(e.asset).Append('\n');
             }
 
-            // 目标目录（Assets/Revolution/Resources/ResourceSystem）第一次写时还不存在 → 先建出来
-            string dir = Path.GetDirectoryName(ABBuildSetting.MapAssetPath);
-            if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
-            {
-                Directory.CreateDirectory(dir);
-                AssetDatabase.Refresh();      // 新目录要先让 AssetDatabase "看见"，否则下面的 ImportAsset 会失败
-            }
-
-            File.WriteAllText(ABBuildSetting.MapAssetPath, sb.ToString(), Encoding.UTF8);
-            AssetDatabase.ImportAsset(ABBuildSetting.MapAssetPath);   // 立刻让 Unity 识别
-            return count;
+            ABResMapBuildGuard.Write(sb.ToString());
+            return collect.entries.Count;
         }
 
         /// <summary>写产物清单 JSON（不参与运行时，纯记录 / 排查用）</summary>

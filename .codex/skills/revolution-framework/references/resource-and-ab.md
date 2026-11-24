@@ -55,15 +55,13 @@ RevGame 的实测环境是 Windows Editor、Android 构建目标与 Direct3D 11�
 
 **最小验证。** 等待脚本编译和依赖解析完成，保留 Android Build Target，开启真实 AB 并从正式场景冷启动。核对主包和相关依赖的最终路径，桌面应读取同套 PC 构建的包。打开使用自定义 Shader 的实际界面，读回 Shader 支持、纹理绑定并截图，再退出重进一次。涉及 Android 发布时另验 Android Player 的主包、依赖和相同场景。直读只用于区分资源模式。
 
-## 3. ResMap.txt（逻辑名 → 包名 + 资源名）
+## 3. ResMap（逻辑名 → 包名 + 资源名）
 
-- 位置：`Assets/Revolution/Resources/ResourceSystem/ResMap.txt`（**随包体进 Resources**，运行时 `Resources.Load<TextAsset>("ResourceSystem/ResMap")` 读）。
-- 格式三列：`逻辑名|包名|资源名`；`#` 开头跳过；**段数 ≠ 3 的整行跳过**。
-  - 逻辑名 = 资源相对**资源根目录**（默认 `Assets/GameRes`，见 `ABBuildConfig.resRoot`）的路径去扩展名，如 `Hero/1001`
-  - 包名 = 该资源的 AB 包名（=`assetBundleName`）
-  - 资源名 = 包内资源名（文件名去扩展名）
-- **它是"引导链的起点"**：表放在 `Resources` 里、路径写死（运行时 `"ResourceSystem/ResMap"` ↔ 编辑器 `ABBuildSetting.MapAssetPath` 是一对，改一个必须改另一个）——因为读表**不能依赖资源系统自身**（否则死循环）。
-- **表缺失不崩**：返回空表 → 查不到映射 → 全部走 Resources 兜底。这也是"编辑器里一切正常、真机大面积失败"的经典成因。
+- RevAB 的「仅生成映射」和打包同时写 `Assets/Revolution/Editor/RevResourceSystem/ResMap.txt` 和 `Assets/Revolution/Resources/ResourceSystem/ResMapPacked.bytes`。首包引导使用 `Resources.Load<TextAsset>("ResourceSystem/ResMapPacked")`。构建时校验两份内容一致。
+- 文本三列为 `逻辑名|包名|资源名`。保持逻辑名大小写。空行和注释可忽略，坏行、重复逻辑键、非法相对路径拒绝整张表。首包同时检查格式版本、头部长度、正文 SHA-256 和解压长度。
+- 升级时将旧文本迁到编辑器目录，保留原 `.meta`。新项目按资源标记正常生成两份产物。同步框架时保护项目自己的文本、压缩文件和 GUID。
+- 已安装的旧 Player 可以解析原来内置的文本。存在压缩副本时按其校验结果初始化。没有首包映射的远端或纯 Resources 项目按各自配置装配。
+- 发版前以实际 Player 查压缩 TextAsset，并与文本逐条比对。覆盖损坏、截断、同键和纯远端路径。热更清单验签、活动快照和回退见 [热更](hot-update.md)。
 
 ## 4. 引用计数、分组与释放（写业务必须懂）
 
@@ -114,6 +112,8 @@ if (!h.IsLoaded) { RevLog.Error($"加载失败：{h.ErrorReason}", "Res"); }
 4. 出包核对实际目标的依赖报告、`ResMap` 和构建产物。先发现已注册动作，用 `ab.issues` 的重复依赖结果或 `ab.dependencies` 检查隐式重复，再用 `ab.check-map` 核对包与映射，用 `ab.artifacts` 或构建清单核对实际包名和字节数。内容相同但 GUID 不同的资产须在导入或资产审计时识别。清理任务记录涉及包的大小变化，用真 AB 验证消费者能加载同一资源。
 
 ## 7. 写业务的四条硬规则
+
+AI 进行小范围资源迭代时，可用 RevCLI 的显式增量构建、映射检查、增量发布流程。三步使用同一 BuildTarget，发布回执会返回实际更新与移除数量。见 [增量 AB 配方](../../revolution-unity-editor/references/incremental-ab.md)。
 
 1. **只写逻辑路径**：用 `RevResPath.*` 生成常量（`Assets/Revolution/Generation/RevResPath.cs`）或两段式参数；**禁止** `StreamingAssets` / `dataPath` / `Resources.Load` 自己拼路径。
 2. **成对 Release**：`Load`/`LoadAsync` 每次都要有对应释放点（面板 `OnClose` / 状态退出 / 分组卸载）。

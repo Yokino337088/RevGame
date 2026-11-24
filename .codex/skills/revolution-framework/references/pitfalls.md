@@ -58,7 +58,7 @@
 
 ## 11. ResMap 读到空表 / 改了路径读不到表
 
-- **原因**：表是**引导链起点**，运行时路径（`"ResourceSystem/ResMap"`）与编辑器路径（`ABBuildSetting.MapAssetPath`）是**两处平行硬编码**，改一个忘一个就落到"空表 → 全部 Resources 兜底"（编辑器里看不出问题）。
+- **检查**：先读压缩副本 `ResourceSystem/ResMapPacked` 的构建与运行诊断，再按实际平台检查 AB。同一轮 RevAB 会生成 Editor 文本和派生副本，遇到摘要或格式错误时重新生成并走实际 Player 验收。
 - **做法**：只改一处时同步另一处；表缺失时框架**不崩**但语义变了，排查时先确认表在不在。
 
 ## 12. 文件夹 `.meta` 位置写错

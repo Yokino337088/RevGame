@@ -69,6 +69,11 @@ $Protect = @(
     "Generation/RevResPath.cs",
     "Runtime/RevSoundSystem/Generated/RevSoundPath.cs",
     "Resources/ResourceSystem/ResMap.txt",
+    "Resources/ResourceSystem/ResMap.txt.meta",
+    "Editor/RevResourceSystem/ResMap.txt",
+    "Editor/RevResourceSystem/ResMap.txt.meta",
+    "Resources/ResourceSystem/ResMapPacked.bytes",
+    "Resources/ResourceSystem/ResMapPacked.bytes.meta",
     "PACKAGE_VERSION.txt"
 )
 
@@ -474,7 +479,8 @@ try
 #  ⚠️ 以下文件永远不要被同步覆盖（脚本已内置保护清单）：
 #     · Generation/RevResPath.cs                          本项目资源目录常量
 #     · Runtime/RevSoundSystem/Generated/RevSoundPath.cs  本项目音效目录常量
-#     · Resources/ResourceSystem/ResMap.txt               本项目资源映射表
+#     · Editor/RevResourceSystem/ResMap.txt                本项目可读资源映射
+#     · Resources/ResourceSystem/ResMapPacked.bytes        本项目 Player 压缩映射
 #     · PACKAGE_VERSION.txt（本文件）
 # ============================================================
 

@@ -6,7 +6,7 @@
 // 【哪些放这里，哪些放配置？】
 //   ★ 放这里：有"技术约束"、一般不该乱动的路径
 //       - 产物输出目录 OutputRoot（相对工程根）
-//       - ResMap.txt 路径（必须落在某个 Resources 文件夹下：运行时靠 Resources.Load 读它）
+//       - ResMap 作者文本和 Player 压缩副本的路径
 //       - RevResPath.cs 路径（生成的代码必须落在 Assets 下才会被编译）
 //   ★ 放 ABBuildConfig：由"项目结构 / 使用者"决定的
 //       - 资源根目录 resRoot（可在编辑器窗口里拖拽 / 选择，不用改代码）
@@ -30,16 +30,14 @@ namespace Revolution.Editor
         /// <summary>打包产物输出根目录（其下还会按平台再分子目录，如 AssetBundles/Android）</summary>
         public const string OutputRoot = "AssetBundles";
 
-        /// <summary>
-        /// 运行时映射表路径：放在**框架自己的 Resources 文件夹**里，
-        /// 而不是工程根的 Assets/Resources —— 框架的东西归框架，不占用使用者的目录。
-        ///
-        /// ★ 它与运行时 RevResBootstrap.LoadResMap 里的 Resources.Load 路径是一对：
-        ///   Resources.Load 的路径"相对任意 Resources 文件夹"、且不带扩展名，
-        ///   所以这里是 ".../Resources/ResourceSystem/ResMap.txt" → 那边写 "ResourceSystem/ResMap"。
-        ///   改一个必须改另一个。
-        /// </summary>
-        public const string MapAssetPath = "Assets/Revolution/Resources/ResourceSystem/ResMap.txt";
+        /// <summary>编辑器生成和审计的可读映射表。放在编辑器目录，避免 Player 同时携带两份内容。</summary>
+        public const string MapAssetPath = "Assets/Revolution/Editor/RevResourceSystem/ResMap.txt";
+
+        /// <summary>旧版可读表位置。升级时迁移其既有 GUID，正式构建只收压缩副本。</summary>
+        public const string LegacyMapAssetPath = "Assets/Revolution/Resources/" + RevResMapCodec.LegacyResourcePath + ".txt";
+
+        /// <summary>由可读表派生的 Player 引导资产，Unity 按 TextAsset 的 bytes 读取。</summary>
+        public const string PackedMapAssetPath = "Assets/Revolution/Resources/" + RevResMapCodec.PackedResourcePath + ".bytes";
 
         /// <summary>
         /// 自动生成的 RevResPath 常量类路径。

@@ -37,14 +37,27 @@ namespace Revolution
         private const string UseABInEditorKey = "Revolution.Res.UseABInEditor";
         private const string MenuPath = "Revolution.Tools/资源/AB 加载模式（编辑器）";
 
+        /// <summary>编辑器中启用实际 AB 解析。新映射验证失败时恢复原设置和已装配策略。</summary>
         public static bool UseABInEditor
         {
             get => UnityEditor.EditorPrefs.GetBool(UseABInEditorKey, false);
             set
             {
-                if (UseABInEditor == value) return;
+                bool previous = UseABInEditor;
+                if (previous == value)
+                {
+                    return;
+                }
                 UnityEditor.EditorPrefs.SetBool(UseABInEditorKey, value);
-                Instance.Init();          // 切换后立即重建策略，无需重启编辑器
+                try
+                {
+                    Instance.Init();
+                }
+                catch
+                {
+                    UnityEditor.EditorPrefs.SetBool(UseABInEditorKey, previous);
+                    throw;
+                }
             }
         }
 
@@ -72,6 +85,9 @@ namespace Revolution
         /// </summary>
         public static Func<Dictionary<string, string>> ResMapOverride { get; set; }
 
+        /// <summary>已验证的完整版本映射。存在时整体使用该版本，返回空值时使用内置首包和显式覆盖。</summary>
+        public static Func<Dictionary<string, string>> ResMapSnapshot { get; set; }
+
         // ==================== 初始化 ====================
 
         /// <summary>结束上一轮 Play 的资源回执和覆盖委托。新会话的扩展随后通过正常启动入口重新注册。</summary>
@@ -83,13 +99,23 @@ namespace Revolution
 
             // 委托可能捕获旧场景对象。当前会话可以在 RevInitialize 的资源装配回调中重新安装自己的解析器。
             ResMapOverride = null;
+            ResMapSnapshot = null;
             RevABLoader.BundlePathResolver = null;
             RevABLoader.BundleCacheKeyResolver = null;
             RevABLoader.DependenciesOverride = null;
         }
 
+        /// <summary>验证目标映射后重建资源策略。非法映射会在释放当前策略前中断。</summary>
         public void Init()
         {
+            // 映射是策略的前置条件。失败时不要把当前资源缓存和依赖图清掉。
+#if UNITY_EDITOR
+            bool useBundles = UseABInEditor;
+            Dictionary<string, string> map = useBundles ? LoadResMap() : null;
+#else
+            Dictionary<string, string> map = LoadResMap();
+#endif
+
             // Init 可能是编辑器 AB 开关触发的热切换，也可能在关闭 Domain Reload 后重复执行；
             // 先终止旧请求并用旧策略释放缓存，再替换策略，避免缓存继续返回旧来源资源。
             RevAsyncLoadPump.CancelAll();
@@ -106,7 +132,7 @@ namespace Revolution
             // ================== 开发模式（默认）==================
             // 只注册编辑器策略 → 所有资源一律 AssetDatabase 直读；
             // 直接 return，AB / Resources 策略根本不注册。
-            if (!UseABInEditor)
+            if (!useBundles)
             {
                 RevResManager.RegisterPolicy(new RevEditorResPolicy());
                 return;
@@ -117,7 +143,6 @@ namespace Revolution
             // ================== AB 模式（运行时 / 编辑器手动开启）==================
             // ① AB 策略（主方案）：除 "Res/" 前缀外全部接管；失败可兜底
             _abLoader = new RevABLoader();
-            Dictionary<string, string> map = LoadResMap();
             RevResManager.RegisterPolicy(new RevABResPolicy(map, _abLoader));
 
             // ② Resources 策略（链尾兜底）：接住 "Res/" 特殊资源 + AB 加载失败兜底
@@ -126,35 +151,17 @@ namespace Revolution
             // 注册顺序 = 优先级 → AB > Resources
         }
 
-        /// <summary>读取打包工具生成的映射表（每行：逻辑名|包名|资源名）</summary>
+        /// <summary>优先读完整热更版本。首包解压并验证，旧 Player 可继续加载原有内置文本。</summary>
         private Dictionary<string, string> LoadResMap()
         {
-            var map = new Dictionary<string, string>();
-
-            // ★ 路径规则：ResMap.txt 放在框架自己的 Resources 文件夹里
-            //   （Assets/Revolution/Resources/ResourceSystem/ResMap.txt）。
-            //   而 Resources.Load 的路径是"相对任意 Resources 文件夹"、且不带扩展名，
-            //   所以这里写 "ResourceSystem/ResMap"。
-            //   ★ 与 ABBuildSetting.MapAssetPath 是一对，改一个必须改另一个。
-            TextAsset ta = Resources.Load<TextAsset>("ResourceSystem/ResMap");
-            // 内置表可能不存在（纯远端首包）：此时仍须继续读取热更覆盖表。
-            // 如果这里直接 return，客户端即使已下载 ResMap，也会把所有资源误判为缺失。
-            if (ta != null)
+            Dictionary<string, string> snapshot = ResMapSnapshot?.Invoke();
+            if (snapshot != null)
             {
-                foreach (string raw in ta.text.Split('\n'))
-                {
-                    string line = raw.Trim();
-                    if (line.Length == 0 || line.StartsWith("#")) continue;
-
-                    string[] p = line.Split('|');
-                    if (p.Length != 3) continue;
-
-                    map[p[0]] = p[1] + "|" + p[2];
-                }
+                return snapshot;
             }
 
-            // ★ 热更表覆盖内置表（合并而不是替换）：新资源能热更；热更表残缺时内置表仍是兜底。
-            //   钩子先取快照再调用 —— 与 RevABLoader.BundlePathResolver 同一条纪律（防并发清空）。
+            Dictionary<string, string> map = LoadBuiltinResMap();
+            // 保留宿主显式增量覆盖入口。版本级热更新用完整快照，避免已删除的逻辑键回落到旧包坐标。
             Func<Dictionary<string, string>> overrideSource = ResMapOverride;
             if (overrideSource != null)
             {
@@ -166,6 +173,32 @@ namespace Revolution
             }
 
             return map;
+        }
+
+        /// <summary>读取一份内置引导资产。派生副本损坏时中止，旧格式只在压缩资产不存在时读取。</summary>
+        private static Dictionary<string, string> LoadBuiltinResMap()
+        {
+            TextAsset asset = Resources.Load<TextAsset>(RevResMapCodec.PackedResourcePath);
+            bool packed = asset != null;
+            if (!packed)
+            {
+                asset = Resources.Load<TextAsset>(RevResMapCodec.LegacyResourcePath);
+            }
+            if (asset == null)
+            {
+                return new Dictionary<string, string>(StringComparer.Ordinal); // 纯远端或 Resources 项目。
+            }
+
+            try
+            {
+                byte[] bytes = asset.bytes;
+                string text = packed ? RevResMapCodec.Unpack(bytes) : RevResMapCodec.DecodeText(bytes);
+                return RevResMapCodec.ParseText(text);
+            }
+            finally
+            {
+                Resources.UnloadAsset(asset);
+            }
         }
 
         // ==================== 清理 ====================
