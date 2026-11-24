@@ -3,6 +3,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using RevGame.Services;
+using RevGame.View;
 using Revolution;
 using UnityEngine;
 using Stopwatch = System.Diagnostics.Stopwatch;
@@ -53,6 +54,10 @@ namespace RevGame.Bootstrap
         private bool _finished;
         /// <summary>当前是否采集稳定阶段帧间隔。</summary>
         private bool _sampling;
+        /// <summary>仅远征的显式定位轮附带分段计时，常规配对继续用原采样。</summary>
+        private bool _profileFrames;
+        /// <summary>本次窗口的远征帧归因探针。完成后停止采集但保留回执，开新局替换。</summary>
+        private CampaignFrameDiagnostics _campaignProbe;
 
         /// <summary>从本次操作提交到同进程反馈点的延迟样本。</summary>
         private readonly struct Feedback
@@ -80,6 +85,8 @@ namespace RevGame.Bootstrap
             public string variant;
             /// <summary>仅战斗的受控排障轮可固定模型时钟，常规体验对照省略。</summary>
             public bool controlledClock;
+            /// <summary>远征定位慢帧时打开分段探针，缺省为常规轻量采样。</summary>
+            public bool profileFrames;
         }
 
         /// <summary>本地 Play 启动后注册三条测试能力。开始动作另外验证隔离状态。</summary>
@@ -88,7 +95,7 @@ namespace RevGame.Bootstrap
         {
             RevRuntimeAutomation.UnregisterAllOf(Owner);
             const string empty = "{\"type\":\"object\",\"properties\":{},\"additionalProperties\":false}";
-            const string options = "{\"type\":\"object\",\"properties\":{\"mode\":{\"type\":\"string\",\"enum\":[\"pvp\",\"campaign\",\"endless\"]},\"variant\":{\"type\":\"string\",\"enum\":[\"before\",\"after\"]},\"controlledClock\":{\"type\":\"boolean\"}},\"required\":[\"mode\",\"variant\"],\"additionalProperties\":false}";
+            const string options = "{\"type\":\"object\",\"properties\":{\"mode\":{\"type\":\"string\",\"enum\":[\"pvp\",\"campaign\",\"endless\"]},\"variant\":{\"type\":\"string\",\"enum\":[\"before\",\"after\"]},\"controlledClock\":{\"type\":\"boolean\"},\"profileFrames\":{\"type\":\"boolean\"}},\"required\":[\"mode\",\"variant\"],\"additionalProperties\":false}";
             RevRuntimeAutomation.Register("mathab.start", "启动本地隔离的玩法对照，完成后读 mathab.state", options,
                 json => StartRun(JsonUtility.FromJson<Args>(json)), owner: Owner);
             RevRuntimeAutomation.Register("mathab.state", "只读当前对照是否完成、帧样本和规则、反馈摘要", empty,
@@ -121,6 +128,7 @@ namespace RevGame.Bootstrap
             MathAbRun run = root.AddComponent<MathAbRun>();
             run._case = args.mode;
             run._variant = args.variant;
+            run._profileFrames = args.profileFrames && args.mode == "campaign";
             run._previousCaptureStep = Time.captureDeltaTime;
             if (args.controlledClock && args.mode != "pvp")
             {
@@ -166,6 +174,14 @@ namespace RevGame.Bootstrap
                 }
                 yield return step;
             }
+            if (_campaignProbe != null && !_finished)
+            {
+                // Unity 原生帧计时会滞后几帧。阶段战果已记完，窗口关闭后仅让回传数据到齐。
+                for (int i = 0; i < 8 && !_finished; i++)
+                {
+                    yield return null;
+                }
+            }
             Finish(string.Empty);
         }
 
@@ -185,6 +201,10 @@ namespace RevGame.Bootstrap
                 ["focused"] = Application.isFocused
             };
             _lastFrameAt = 0;
+            if (_profileFrames)
+            {
+                _campaignProbe = new CampaignFrameDiagnostics(FindObjectOfType<BoardView>());
+            }
             _sampling = true;
         }
 
@@ -203,17 +223,28 @@ namespace RevGame.Bootstrap
         /// <summary>从本次操作启动时的 Stopwatch 计数，量到玩法确认反馈的这个运行点。</summary>
         internal void RecordFeedback(string label, long since)
         {
-            _feedback.Add(new Feedback(label, (Stopwatch.GetTimestamp() - since) * MillisecondsPerTick));
+            RecordFeedback(label, since, Stopwatch.GetTimestamp());
+        }
+
+        /// <summary>使用已在同进程两个观察点捕获的时间戳，记录精确的反馈区段。</summary>
+        internal void RecordFeedback(string label, long since, long until)
+        {
+            _feedback.Add(new Feedback(label, (until - since) * MillisecondsPerTick));
         }
 
         /// <summary>只在窗口内测每个完整帧间隔，稳定阶段无日志、资源查询或组织输出。</summary>
         private void LateUpdate()
         {
+            if (!_finished)
+            {
+                _campaignProbe?.SampleNative();
+            }
             if (!_sampling)
             {
                 return;
             }
             long now = Stopwatch.GetTimestamp();
+            _campaignProbe?.ObserveLateUpdate(Time.frameCount, now);
             if (_lastFrameAt != 0)
             {
                 if (_count == FrameCapacity)
@@ -253,6 +284,7 @@ namespace RevGame.Bootstrap
             }
             finally
             {
+                _campaignProbe?.Dispose();
                 Time.captureDeltaTime = _previousCaptureStep;
             }
         }
@@ -279,6 +311,10 @@ namespace RevGame.Bootstrap
                 });
                 state["rules"] = _rules;
                 state["environment"] = _environment;
+                if (_campaignProbe != null)
+                {
+                    state["campaignProfile"] = _campaignProbe.Retell();
+                }
             }
             return state;
         }

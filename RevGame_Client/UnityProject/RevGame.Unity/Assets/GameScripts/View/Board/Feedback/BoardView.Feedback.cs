@@ -250,6 +250,9 @@ namespace RevGame.View
             pending.Damage = (int)System.Math.Min(int.MaxValue, (long)pending.Damage + hit.Damage);
             pending.Position = position; // 玩家换位后，以最近一次命中位置播报。
             _pendingDamage[key] = pending;
+#if UNITY_EDITOR
+            RecordCampaignDamageEnqueued();
+#endif
         }
         /// <summary>在本帧动画推进后检查文字位置，让移动和放大的字也能获得遮挡淡化。</summary>
         private void LateUpdate()
@@ -258,6 +261,9 @@ namespace RevGame.View
             {
                 return;
             }
+#if UNITY_EDITOR
+            using var campaignFeedback = BeginCampaignFeedbackTiming(CampaignFeedbackStage.Frame);
+#endif
             using (FeedbackFrameMarker.Auto())
             {
                 FlushSkillTileQueue();
@@ -464,6 +470,9 @@ namespace RevGame.View
             _textEffects.Add(effect);
             effect.UseProjection(_feedbackProjection.Camera != null ? _feedbackProjection : null);
             effect.ShowDamage(message.Position, message.Damage, message.Kind, _effectFinishedCallback, message.Side, _arrangeTextCallback);
+#if UNITY_EDITOR
+            RecordCampaignDamageShown(message.TargetId, message.Kind);
+#endif
         }
         /// <summary>
         /// 先预留放大和上浮范围，再尝试周围25个位置；加密文字时扩大可选位置，避免全挤在同一棋子头顶。
@@ -473,6 +482,9 @@ namespace RevGame.View
         // 单位统一为屏幕像素，窗口变化后仍按可见大小避让；胜出位置转回世界坐标供Tween从那里开始。
         private void ArrangeFloatingText(BattleEffectView text)
         {
+#if UNITY_EDITOR
+            using var campaignFeedback = BeginCampaignFeedbackTiming(CampaignFeedbackStage.Arrange);
+#endif
             using (FeedbackArrangeMarker.Auto())
             {
                 Camera camera = Camera.main;
@@ -520,36 +532,31 @@ namespace RevGame.View
                     candidate.position += delta;
                     // 重叠面积的权重远大于移动距离；先争取不挡字，再尽量贴近受击棋子。
                     float cost = delta.sqrMagnitude * 0.001f;
-#if UNITY_WEBGL && !UNITY_EDITOR && !UNITY_WEIXINMINIGAME && !UNITY_BYTEDANCE_MINIGAME && !UNITY_BYTEDANCEMINIGAME
-                    // 重叠面积只会增加代价。追不上当前最优点时就停止比较，保留原有的同分顺序。
+                    // 剩余重叠面积只会增加代价。当前值已追不上最佳时，直接保留先找到的点。
                     if (cost >= bestCost)
                     {
                         continue;
                     }
-#endif
                     for (int j = 0; j < occupiedCount; j++)
                     {
                         Rect occupied = _reservationRects[j];
                         float width = Mathf.Max(0f, Mathf.Min(candidate.xMax, occupied.xMax) - Mathf.Max(candidate.xMin, occupied.xMin));
                         float height = Mathf.Max(0f, Mathf.Min(candidate.yMax, occupied.yMax) - Mathf.Max(candidate.yMin, occupied.yMin));
                         cost += width * height * 100f;
-#if UNITY_WEBGL && !UNITY_EDITOR && !UNITY_WEIXINMINIGAME && !UNITY_BYTEDANCE_MINIGAME && !UNITY_BYTEDANCEMINIGAME
                         if (cost >= bestCost)
                         {
                             break;
                         }
-#endif
                     }
                     if (cost < bestCost)
                     {
                         bestCost = cost;
                         best = delta;
-#if UNITY_WEBGL && !UNITY_EDITOR && !UNITY_WEIXINMINIGAME && !UNITY_BYTEDANCE_MINIGAME && !UNITY_BYTEDANCEMINIGAME
+                        // 所有候选代价均非负；零分出现后，后面的候选不可能更好。
                         if (bestCost == 0f)
                         {
                             break;
                         }
-#endif
                     }
                 }
                 Vector3 pixel = camera.WorldToScreenPoint(anchor);

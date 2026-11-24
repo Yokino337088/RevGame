@@ -758,6 +758,9 @@ namespace RevGame.View
         }
         private void OnAttack(PieceAttackInfo attack)
         {
+#if UNITY_EDITOR
+            using var campaignFeedback = BeginCampaignFeedbackTiming(CampaignFeedbackStage.Intake);
+#endif
             // ★ 口号和子弹受全场预算限制，但每颗真实出手的棋子仍要有本地动作。
             // 否则后排/新落的一星棋即使已经造成伤害，也会被玩家误认为“整场不攻击”。
             // 这里只播身体姿态，不移动根节点、不改占格、不再结算一次伤害。
@@ -815,6 +818,9 @@ namespace RevGame.View
         }
         private void OnDamage(BattleHitInfo hit)
         {
+#if UNITY_EDITOR
+            using var campaignFeedback = BeginCampaignFeedbackTiming(CampaignFeedbackStage.Intake);
+#endif
             Vector3 target = hit.Position.ToWorldPosition(Consts.CellSize, Consts.BoardOriginOffset);
             target += Vector3.one * ((hit.TargetSize - 1) * Consts.CellSize * 0.5f);
             target.z = 0f;

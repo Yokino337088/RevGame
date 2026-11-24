@@ -26,6 +26,46 @@ namespace RevGame.Editor
         }
         // 桥接层只包装text，里面的JSON仍需解析并核对status/errors/cleaned；工具成功不等于战斗通过。
         [Serializable] private sealed class Result { public string text; }
+        /// <summary>编辑态远征归因的显式配置输入。读回原值，由测量调用方在收尾时恢复。</summary>
+        [Serializable]
+        private sealed class FrameTimingOptions
+        {
+            /// <summary>read 只读。on 或 off 只更改 Unity 的 Frame Timing Stats 开关。</summary>
+            public string mode = "read";
+        }
+
+        /// <summary>交付给 CLI 的字段，记录原开关值和设置完成后的读回值。</summary>
+        [Serializable]
+        private sealed class FrameTimingResult
+        {
+            /// <summary>设置前的值，用于还原用户环境。</summary>
+            public bool previous;
+            /// <summary>当前 Unity 设置里的值。</summary>
+            public bool enabled;
+        }
+
+        /// <summary>配置 Unity 原生帧计时。Play 前设置，诊断结束后按 previous 归还，无关的立项设置不经过这里。</summary>
+        [RevAutomationAction("game.perf.frame-timing", Environment = "edit", Keys = new[] { "mode" }, Description = "读写 Unity Frame Timing Stats，返回原值，归因完成后恢复")]
+        public static object FrameTiming(RevAutomationRequest request)
+        {
+            var options = JsonUtility.FromJson<FrameTimingOptions>(request.payloadJson) ?? new FrameTimingOptions();
+            bool before = UnityEditor.PlayerSettings.enableFrameTimingStats;
+            switch (options.mode)
+            {
+                case "on":
+                    UnityEditor.PlayerSettings.enableFrameTimingStats = true;
+                    break;
+                case "off":
+                    UnityEditor.PlayerSettings.enableFrameTimingStats = false;
+                    break;
+                case "read":
+                    break;
+                default:
+                    throw new ArgumentException("mode 只接受 read、on 或 off");
+            }
+            return new FrameTimingResult { previous = before, enabled = UnityEditor.PlayerSettings.enableFrameTimingStats };
+        }
+
         [RevAutomationAction("game.perf.begin",Environment="play",Keys=new[]{"label","first","last","seconds","repeats","pieces","skillSpikes"},Description="48棋或81满盘真实攻击采样；skillSpikes通过GM触发炸弹与波动峰值")]
         // 启动固定类型的异步作业并返回“运行中”；调用方后续查State，不阻塞MCP等十分钟而超时。
         public static object Begin(RevAutomationRequest request)

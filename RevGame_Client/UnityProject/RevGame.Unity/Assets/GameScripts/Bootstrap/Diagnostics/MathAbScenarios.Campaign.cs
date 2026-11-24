@@ -88,7 +88,9 @@ namespace RevGame.Bootstrap
             // 每场棋子的编号起点不同，保留局内相对编号来比较同一个棋子。
             int firstId = battle.PlayerPieces[0].Id - 1;
             int attacks = 0, hits = 0, uniqueCount = 0, ranged = 0, deaths = 0;
-            long damage = 0, firstHitStarted = 0;
+            long damage = 0, started = 0, firstHitStarted = 0;
+            int firstHitModelStep = 0, firstHitSource = 0, firstHitTarget = 0;
+            float firstHitModelSeconds = 0f;
             ulong trace = 14695981039346656037UL;
             var attackers = new HashSet<int>(CampaignPieces);
             object owner = new object();
@@ -107,6 +109,12 @@ namespace RevGame.Bootstrap
                 if (hits == 0)
                 {
                     firstHitStarted = Stopwatch.GetTimestamp();
+                    // 规则回调在本次固定步计数累加之前发出。模型时间已经进入这一拍。
+                    firstHitModelStep = BattleLogic.MeasuredTickCount + 1;
+                    firstHitModelSeconds = battle.BattleElapsed;
+                    firstHitSource = hit.SourceId == 0 ? 0 : hit.SourceId - firstId;
+                    firstHitTarget = hit.TargetId - firstId;
+                    run.RecordFeedback("开战松手到首笔规则扣血", started, firstHitStarted);
                 }
                 hits++;
                 damage += hit.Damage;
@@ -140,7 +148,7 @@ namespace RevGame.Bootstrap
                 }
                 yield return null;
                 BattleLogic.ResetTickMeasurements();
-                long started = Stopwatch.GetTimestamp();
+                started = Stopwatch.GetTimestamp();
                 if (!pointer.Release(click: true) || battle.Phase != GamePhase.Battle)
                 {
                     throw new InvalidOperationException("开战按钮未进入正式战斗：" + battle.LastError);
@@ -203,6 +211,7 @@ namespace RevGame.Bootstrap
                 {
                     run.RecordRule($"远征棋|{piece.Id - firstId}|{piece.Side}|{piece.Def.Kind}|{piece.Pos.X},{piece.Pos.Y}|{piece.Hp}/{piece.MaxHp}|盾={piece.ShieldCharges}");
                 }
+                run.RecordRule(FormattableString.Invariant($"远征首击|步={firstHitModelStep}|模拟秒={firstHitModelSeconds:F6}|来源={firstHitSource}|目标={firstHitTarget}"));
             }
             finally
             {

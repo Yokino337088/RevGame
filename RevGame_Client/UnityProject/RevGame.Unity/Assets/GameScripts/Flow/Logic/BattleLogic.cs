@@ -43,11 +43,36 @@ namespace RevGame.Flow
         {
             get; private set;
         }
+        /// <summary>远征分段探针只在隔离的实测窗口开启，记录同一 Unity 帧里的固定步耗时。</summary>
+        public static bool CampaignFrameProbeEnabled { get; set; }
+        /// <summary>最后几帧的固定步计数和累计毫秒。读回前总会核对帧号。</summary>
+        private static readonly CampaignTickFrame[] CampaignFrames = new CampaignTickFrame[8];
+
+        /// <summary>同一帧的 Battle.Tick 计时，包含此方法内部同步发出的业务和表现回调。</summary>
+        public struct CampaignTickFrame
+        {
+            /// <summary>所测 Unity 帧号。</summary>
+            public int Frame;
+            /// <summary>此帧实际执行的固定步数。</summary>
+            public int Count;
+            /// <summary>此帧所有固定步的秒表耗时，毫秒。</summary>
+            public double Milliseconds;
+        }
+
+        /// <summary>只读最近某帧的实测固定步。有探针而此帧无记录表示这一帧没有执行战斗步。</summary>
+        public static bool TryReadCampaignTick(int frame, out CampaignTickFrame sample)
+        {
+            sample = CampaignFrames[frame % CampaignFrames.Length];
+            return sample.Count > 0 && sample.Frame == frame;
+        }
+
+        /// <summary>从隔离场景重置固定步汇总与帧号缓存，防止前一局污染本局。</summary>
         public static void ResetTickMeasurements()
         {
             MeasuredTickCount = 0;
             MeasuredTickTotalMs = 0;
             MeasuredTickMaxMs = 0;
+            System.Array.Clear(CampaignFrames, 0, CampaignFrames.Length);
         }
 #endif
         /// <summary>
@@ -131,6 +156,17 @@ namespace RevGame.Flow
                     MeasuredTickCount++;
                     MeasuredTickTotalMs += elapsed;
                     MeasuredTickMaxMs = System.Math.Max(MeasuredTickMaxMs, elapsed);
+                    if (CampaignFrameProbeEnabled)
+                    {
+                        int frame = UnityEngine.Time.frameCount;
+                        ref CampaignTickFrame sample = ref CampaignFrames[frame % CampaignFrames.Length];
+                        if (sample.Frame != frame)
+                        {
+                            sample = new CampaignTickFrame { Frame = frame };
+                        }
+                        sample.Count++;
+                        sample.Milliseconds += elapsed;
+                    }
                 }
 #endif
             }
