@@ -168,6 +168,18 @@ namespace RevGame.Pvp.Networking
         public void ConfirmRoom(string id)
         {
         }
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+        /// <summary>保留开发版编译所需的入口。此离线工具没有房间验收连接，调用时明确失败。</summary>
+        internal void ConnectRoomFixture()
+        {
+            throw new NotSupportedException("离线工具不运行房间连接夹具");
+        }
+        /// <summary>保留开发版编译所需的结束入口。房间夹具的收尾由 Unity 回归验证。</summary>
+        internal void DisconnectRoomFixture()
+        {
+            throw new NotSupportedException("离线工具不运行房间断开夹具");
+        }
+#endif
         public event Action<string> Error;
         public event Action<string> RequestRejected;
         public void Connect(string endpoint, string nickname, string rules, string kind, string token, bool allowNewIdentity = false)

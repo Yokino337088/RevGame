@@ -87,12 +87,12 @@ internal static class TacticalSearchChecks
         }
     }
 
-    /// <summary>复跑固定局面，核对旧版排序、并行排序、诱敌和源棋盘。失败直接中止进程。</summary>
+    /// <summary>复跑固定局面，核对旧版排序、并行排序、诱敌和源棋盘，再检查安卓热态与构建隔离。</summary>
     internal static void Run()
     {
         var positions = CreatePositions();
         bool sawParallel = false;
-        int checks = 0;
+        int checks = CheckAndroidTrialPolicy();
         foreach (var indices in new[] { new[] { 0, 1, 2, 3, 0 }, new[] { 4, 5, 4 } })
         {
             // 同规格的搜索对象常驻并复用。先走密盘和终局，再回头读稀疏盘，防止复用工作区留下旧评分。
@@ -136,7 +136,9 @@ internal static class TacticalSearchChecks
                 }
             }
         }
-#if UNITY_EDITOR_WIN || UNITY_STANDALONE_WIN
+#if UNITY_ANDROID && !UNITY_EDITOR
+        checks += CheckAndroidBuild(positions[0].Position, positions[0].Expected);
+#elif UNITY_EDITOR_WIN || (UNITY_STANDALONE_WIN && !UNITY_EDITOR)
         if (Environment.ProcessorCount > 1)
         {
             Check(sawParallel, "机器有可用核心时，原生测试应实际走到多分片");
@@ -145,6 +147,80 @@ internal static class TacticalSearchChecks
 #endif
         Console.WriteLine("PASS: " + checks + " tactical assertions; exercised parallel partitions: " + sawParallel + ".");
     }
+
+    /// <summary>用固定输入核对设备组数上限和退回单组的触发条件，不读取机器热状态。</summary>
+    private static int CheckAndroidTrialPolicy()
+    {
+        (int Requested, int Thermal, bool PowerSave, bool Focused, bool ThermallyReady,
+            int Processors, int Expected, string Reason)[] cases =
+        {
+            (1, 0, false, true, true, 8, 1, "主动选择单组"),
+            (2, 0, false, true, true, 8, 2, "冷态请求两组"),
+            (4, 0, false, true, true, 8, 4, "冷态请求四组"),
+            (4, 1, false, true, true, 8, 2, "轻度发热最多两组"),
+            (2, 1, false, true, true, 8, 2, "轻度发热保留两组"),
+            (4, 2, false, true, true, 8, 1, "中度热状态退回单组"),
+            (4, 3, false, true, true, 8, 1, "严重热状态退回单组"),
+            (4, -1, false, true, true, 8, 1, "热状态未知退回单组"),
+            (4, 0, true, true, true, 8, 1, "省电模式退回单组"),
+            (4, 0, false, false, true, 8, 1, "失焦退回单组"),
+            (4, 0, false, true, false, 8, 1, "冷却观察未完成时保持单组"),
+            (4, 0, false, true, true, 4, 4, "设备恰好能容纳四组"),
+            (4, 0, false, true, true, 3, 2, "设备余量只够两组"),
+            (4, 1, false, true, true, 1, 1, "轻度发热且只有一个处理器"),
+            (4, 0, false, true, true, 0, 1, "处理器数量不可用"),
+            (3, 0, false, true, true, 8, 1, "无效组数退回单组"),
+            (8, 0, false, true, true, 8, 1, "超出测试组数范围")
+        };
+        foreach (var input in cases)
+        {
+            int partitions = GoTacticalSearch.ResolveAndroidTrialPartitions(input.Requested, input.Thermal,
+                input.PowerSave, input.Focused, input.ThermallyReady, input.Processors);
+            Check(partitions == input.Expected, input.Reason + "，实际组数=" + partitions);
+        }
+        return cases.Length;
+    }
+
+#if UNITY_ANDROID && !UNITY_EDITOR
+    /// <summary>用同一盘和同一个搜索器模拟热态变化，检查开发版切组和正式版串行隔离。</summary>
+    private static int CheckAndroidBuild(GoCore position, string expected)
+    {
+        var normal = new GoTacticalSearch(position);
+        var trial = new GoTacticalSearch(position, 4);
+        var hints = new GoHint[10];
+        ulong original = position.StateHash;
+        normal.Rank(position, hints, out _);
+        Check(normal.LastPartitionCount == 1, "安卓常规构造保持单组");
+
+        // 模拟从冷态升温、回温后的观察期，以及观察通过后的下一次搜索。
+        (int Requested, int Thermal, bool Ready, int Expected)[] steps =
+        {
+            (1, 0, true, 1), (2, 0, true, 2), (4, 0, true, 4), (4, 1, true, 2),
+            (4, 2, true, 1), (4, 0, false, 1), (4, 0, true, 4)
+        };
+        foreach (var step in steps)
+        {
+            int limit = GoTacticalSearch.ResolveAndroidTrialPartitions(step.Requested, step.Thermal,
+                powerSave: false, focused: true, thermallyReady: step.Ready, processorCount: 8);
+#if DEVELOPMENT_BUILD || REV_AUTOMATION
+            int groups = step.Expected;
+#else
+            const int groups = 1;
+#endif
+            int count = trial.Rank(position, hints, out GoHint bait, partitionLimit: limit);
+            Check(trial.LastPartitionCount == groups, "安卓请求 " + step.Requested + " 组，热状态 " + step.Thermal
+                + "，预期 " + groups + " 组，实际 " + trial.LastPartitionCount + " 组");
+            Check(Signature(hints, count, bait) == expected, "安卓切组前后完整候选和诱敌结果一致");
+            Check(position.StateHash == original, "安卓切组试算不修改实盘");
+        }
+#if DEVELOPMENT_BUILD || REV_AUTOMATION
+        Console.WriteLine("PASS: Android dev search 1→2→4→2→1→1→4 groups, default group=1.");
+#else
+        Console.WriteLine("PASS: Android release keeps one group for default and explicit search requests.");
+#endif
+        return 1 + steps.Length * 3;
+    }
+#endif
 
     /// <summary>逐个属性比对合法提示或诱敌，保留提示文字的空值差异。</summary>
     private static bool SameHint(GoHint left, GoHint right)

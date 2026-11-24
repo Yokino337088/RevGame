@@ -1,6 +1,12 @@
+#if UNITY_EDITOR_WIN || (UNITY_STANDALONE_WIN && !UNITY_EDITOR && !UNITY_ANDROID)
+#define REVGAME_TACTICAL_WINDOWS
+#define REVGAME_TACTICAL_PARALLEL
+#elif UNITY_ANDROID && !UNITY_EDITOR && (DEVELOPMENT_BUILD || REV_AUTOMATION)
+#define REVGAME_TACTICAL_PARALLEL
+#endif
 using System;
 using System.Collections.Generic;
-#if UNITY_EDITOR_WIN || (UNITY_STANDALONE_WIN && !UNITY_EDITOR)
+#if REVGAME_TACTICAL_PARALLEL
 using System.Runtime.ExceptionServices;
 using System.Threading;
 #endif
@@ -12,11 +18,13 @@ namespace RevGame.Pvp
     {
         /// <summary>首轮评分保留的候选数上限，沿用原两手搜索宽度。</summary>
         private const int ShortlistSize = 10;
-#if UNITY_EDITOR_WIN || (UNITY_STANDALONE_WIN && !UNITY_EDITOR)
-        /// <summary>Windows 单次至多分四组，给渲染和游戏其他运行线程留出空间。</summary>
+        /// <summary>单次至多分四组，给渲染和游戏其他运行线程留出空间。</summary>
         private const int MaxPartitions = 4;
+#if REVGAME_TACTICAL_WINDOWS
         /// <summary>Windows 至少报告八个逻辑处理器时才默认用并行试算。</summary>
         private const int MinimumProcessorCount = 8;
+#endif
+#if REVGAME_TACTICAL_PARALLEL
         /// <summary>最少六个可分的候选点，避免少量工作也等待调度。</summary>
         private const int MinimumParallelCandidates = 6;
         /// <summary>局面少于十八个空位时直接顺算。空位只用来估计试算量，不决定合法点。</summary>
@@ -35,21 +43,26 @@ namespace RevGame.Pvp
         /// <summary>最近一次查询启用的试算组数，用于核对平台和负载分支。</summary>
         internal int LastPartitionCount { get; private set; }
 
-        /// <summary>绑定同一局的规则配置。0 使用平台默认分组，显式设置供同输入对照。</summary>
+        /// <summary>绑定同一局的规则配置和可复用的工作区上限。安卓开发版只按显式试验请求预留多组，正式包只留一组。</summary>
         internal GoTacticalSearch(GoCore position, int maxPartitions = 0)
         {
             _source = position.Clone();
             int partitions = 1;
-#if UNITY_EDITOR_WIN || (UNITY_STANDALONE_WIN && !UNITY_EDITOR)
+#if REVGAME_TACTICAL_WINDOWS
             partitions = maxPartitions > 0 ? Math.Min(maxPartitions, MaxPartitions)
                 : Environment.ProcessorCount >= MinimumProcessorCount ? MaxPartitions : 1;
+#elif REVGAME_TACTICAL_PARALLEL
+            if (maxPartitions == 2 || maxPartitions == MaxPartitions)
+            {
+                partitions = maxPartitions;
+            }
 #endif
             _workspaces = new SearchWorkspace[partitions];
             _workspaces[0] = new SearchWorkspace(position);
         }
 
-        /// <summary>同一搜索实例一次处理一份盘面。各组试算完成后按原短名单顺序挑建议和反制，返回实际写入数。</summary>
-        internal int Rank(GoCore position, GoHint[] best, out GoHint bait)
+        /// <summary>根据本次允许使用的组数试算，复用本局工作区。按原短名单顺序挑建议和反制，返回实际写入数。</summary>
+        internal int Rank(GoCore position, GoHint[] best, out GoHint bait, int partitionLimit = MaxPartitions)
         {
             bait = default;
             LastPartitionCount = 1;
@@ -93,7 +106,7 @@ namespace RevGame.Pvp
                 count = Math.Min(count + 1, _ranked.Length);
             }
 
-            ScoreReplies(side, count, emptyPoints);
+            ScoreReplies(side, count, emptyPoints, partitionLimit);
 
             // 保持原有同分与诱敌顺序。各组完成的时间完全不参与排位。
             int written = 0;
@@ -130,29 +143,43 @@ namespace RevGame.Pvp
             return written;
         }
 
-        /// <summary>足量时按连续下标分组并在本次调用内等待全部结果。小局、终局前一手和其他平台仍用组 0。</summary>
-        private void ScoreReplies(GoSide side, int count, int emptyPoints)
+        /// <summary>用安卓系统热等级、前台和冷却确认后的状态限制试验组数。0 为正常、1 为轻度，未知或中度及以上回到一组。</summary>
+        internal static int ResolveAndroidTrialPartitions(int requested, int thermalStatus, bool powerSave, bool focused, bool thermallyReady, int processorCount)
         {
-#if UNITY_EDITOR_WIN || (UNITY_STANDALONE_WIN && !UNITY_EDITOR)
-            bool oneMoveToScoring = _source.PlacementLimit > 0 && _source.PlacementCount >= _source.PlacementLimit - 1;
-            if (_workspaces.Length > 1 && count >= MinimumParallelCandidates && emptyPoints >= MinimumParallelEmptyPoints && !oneMoveToScoring)
+            if ((requested != 2 && requested != MaxPartitions) || thermalStatus < 0 || thermalStatus >= 2 ||
+                powerSave || !focused || !thermallyReady || processorCount < 2)
             {
-                LastPartitionCount = _workspaces.Length;
+                return 1;
+            }
+
+            // 轻度发热或只有两到三个逻辑处理器时，四组试验缩到两组，给画面线程留出余量。
+            return requested == MaxPartitions && thermalStatus == 0 && processorCount >= MaxPartitions ? MaxPartitions : 2;
+        }
+
+        /// <summary>足量时按本次实际组数划分连续下标并收齐结果。小局和终局前一手直接用常驻的组 0。</summary>
+        private void ScoreReplies(GoSide side, int count, int emptyPoints, int partitionLimit)
+        {
+#if REVGAME_TACTICAL_PARALLEL
+            int partitions = Math.Min(partitionLimit, _workspaces.Length);
+            bool oneMoveToScoring = _source.PlacementLimit > 0 && _source.PlacementCount >= _source.PlacementLimit - 1;
+            if (partitions > 1 && count >= MinimumParallelCandidates && emptyPoints >= MinimumParallelEmptyPoints && !oneMoveToScoring)
+            {
+                LastPartitionCount = partitions;
                 // 每局首次达到门槛才准备额外试盘。退出本局随原搜索实例一起释放。
-                for (int i = 1; i < _workspaces.Length; i++)
+                for (int i = 1; i < partitions; i++)
                 {
                     _workspaces[i] ??= new SearchWorkspace(_source);
                 }
-                ScoreInParallel(side, count);
+                ScoreInParallel(side, count, partitions);
                 return;
             }
 #endif
             ScoreRange(_workspaces[0], side, 0, count);
         }
 
-#if UNITY_EDITOR_WIN || (UNITY_STANDALONE_WIN && !UNITY_EDITOR)
-        /// <summary>调用线程自己算一组，其余组交给线程池。成功或异常都等本次任务退出，保证下次查询可复用草稿。</summary>
-        private void ScoreInParallel(GoSide side, int count)
+#if REVGAME_TACTICAL_PARALLEL
+        /// <summary>按本次实际组数派发，调用线程自己算一组。成功或异常都收齐当手已派出的任务，下一手才能复用草稿。</summary>
+        private void ScoreInParallel(GoSide side, int count, int partitions)
         {
             var gate = new object();
             int queued = 0;
@@ -162,8 +189,8 @@ namespace RevGame.Pvp
             // 同样的分段同时用于调用线程、后台线程和线程池拒绝入队的回退。
             void ScorePartition(int partition)
             {
-                int start = count * partition / _workspaces.Length;
-                int end = count * (partition + 1) / _workspaces.Length;
+                int start = count * partition / partitions;
+                int end = count * (partition + 1) / partitions;
                 ScoreRange(_workspaces[partition], side, start, end);
             }
 
@@ -193,7 +220,7 @@ namespace RevGame.Pvp
 
             try
             {
-                for (int partition = 1; partition < _workspaces.Length; partition++)
+                for (int partition = 1; partition < partitions; partition++)
                 {
                     if (ThreadPool.QueueUserWorkItem(run, partition))
                     {

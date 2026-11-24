@@ -949,6 +949,7 @@ namespace RevGame.Pvp
             HintsVisible = !HintsVisible;
             Revision++;
         }
+        /// <summary>主线程推进对局与连接，已启用的本地安卓试验在搜索前更新热状态。</summary>
         public void Poll()
         {
             if (_disposed)
@@ -978,6 +979,9 @@ namespace RevGame.Pvp
                 PollDuel();
                 return;
             }
+#if UNITY_EDITOR || (UNITY_ANDROID && UNITY_5_3_OR_NEWER && (DEVELOPMENT_BUILD || REV_AUTOMATION))
+            AndroidTacticalTrial?.Refresh();
+#endif
             PollComputerPlacement();
             PollAgent();
             PollComputer();
@@ -1085,9 +1089,12 @@ namespace RevGame.Pvp
             Status = "已离开对局，请选择联机方式";
             Revision++;
         }
-        /// <summary>先使连接回调过期，再回收会话和同步状态。</summary>
+        /// <summary>先回收本局试验，再使连接回调过期并收回会话和同步状态。</summary>
         private void CloseConnection()
         {
+#if UNITY_EDITOR || (UNITY_ANDROID && UNITY_5_3_OR_NEWER && (DEVELOPMENT_BUILD || REV_AUTOMATION))
+            ClearAndroidTacticalTrial();
+#endif
             // 断开旧连接时连同决斗副本一起释放，防止迟到消息污染下一局。
             ResetDuel();
             CancelAgent();

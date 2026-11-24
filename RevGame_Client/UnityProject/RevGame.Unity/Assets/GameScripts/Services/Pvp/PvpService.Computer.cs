@@ -1,3 +1,7 @@
+#if UNITY_EDITOR || (UNITY_ANDROID && UNITY_5_3_OR_NEWER && (DEVELOPMENT_BUILD || REV_AUTOMATION))
+using Stopwatch = System.Diagnostics.Stopwatch;
+#endif
+
 namespace RevGame.Pvp
 {
     public sealed partial class PvpService
@@ -6,6 +10,12 @@ namespace RevGame.Pvp
         private const double PreviewSeconds = .8;
         internal const float LandingSeconds = .24f;
         private GoTacticalSearch _tacticalSearch;
+#if UNITY_EDITOR || (UNITY_ANDROID && UNITY_5_3_OR_NEWER && (DEVELOPMENT_BUILD || REV_AUTOMATION))
+        /// <summary>本局安卓试验档位。仅开发态隔离入口创建，换局释放。</summary>
+        internal PvpAndroidTacticalTrial AndroidTacticalTrial { get; private set; }
+        /// <summary>最近一次实战搜索墙钟时间，毫秒。零表示本局试验尚未搜索。</summary>
+        internal double AndroidTacticalSearchMs { get; private set; }
+#endif
         private readonly GoBoardAnalysis _computerAnalysis = new GoBoardAnalysis();
         private GoCore _previewPosition, _landingPosition;
         private int _previewPoint = -1, _landingPoint = -1;
@@ -43,6 +53,17 @@ namespace RevGame.Pvp
         /// <summary>本局共用搜索工作区。等待全部候选分数后才交给预告或提示，实盘提交仍走原入口。</summary>
         private int RankComputerMoves(GoHint[] destination, out GoHint bait)
         {
+#if UNITY_EDITOR || (UNITY_ANDROID && UNITY_5_3_OR_NEWER && (DEVELOPMENT_BUILD || REV_AUTOMATION))
+            if (AndroidTacticalTrial is { } trial)
+            {
+                int limit = trial.Limit(trial.RequestedGroups);
+                _tacticalSearch ??= new GoTacticalSearch(Core, maxPartitions: 4);
+                long start = Stopwatch.GetTimestamp();
+                int count = _tacticalSearch.Rank(Core, destination, out bait, partitionLimit: limit);
+                AndroidTacticalSearchMs = (Stopwatch.GetTimestamp() - start) * 1000.0 / Stopwatch.Frequency;
+                return count;
+            }
+#endif
             _tacticalSearch ??= new GoTacticalSearch(Core);
             return _tacticalSearch.Rank(Core, destination, out bait);
         }
@@ -108,12 +129,46 @@ namespace RevGame.Pvp
             _computerAt = _clock.Elapsed.TotalSeconds + .35;
         }
 
-        /// <summary>释放上一局的预告、落子表现和战术搜索快照。</summary>
+#if UNITY_EDITOR || (UNITY_ANDROID && UNITY_5_3_OR_NEWER && (DEVELOPMENT_BUILD || REV_AUTOMATION))
+        /// <summary>隔离调试入口为本局指定组数。零归还试验资源，后续搜索恢复平台默认。</summary>
+        internal void SetAndroidTacticalGroups(int groups)
+        {
+            if (groups == 0)
+            {
+                ClearAndroidTacticalTrial();
+                return;
+            }
+            if (AndroidTacticalTrial == null)
+            {
+                _tacticalSearch = null;
+                AndroidTacticalTrial = new PvpAndroidTacticalTrial();
+            }
+            AndroidTacticalTrial.RequestedGroups = groups;
+            AndroidTacticalTrial.Refresh(beforeSearch: true);
+        }
+
+        /// <summary>退场、重开或撤销试验时释放工作区、热状态和上次计时。</summary>
+        private void ClearAndroidTacticalTrial()
+        {
+            if (AndroidTacticalTrial != null)
+            {
+                AndroidTacticalTrial.Dispose();
+                AndroidTacticalTrial = null;
+                _tacticalSearch = null;
+            }
+            AndroidTacticalSearchMs = 0;
+        }
+#endif
+
+        /// <summary>释放上一局的预告、落子表现和战术搜索工作区及试验状态。</summary>
         private void ResetComputerPresentation()
         {
             _previewPosition = _landingPosition = null;
             _previewPoint = _landingPoint = -1;
             _tacticalSearch = null;
+#if UNITY_EDITOR || (UNITY_ANDROID && UNITY_5_3_OR_NEWER && (DEVELOPMENT_BUILD || REV_AUTOMATION))
+            ClearAndroidTacticalTrial();
+#endif
         }
     }
 }

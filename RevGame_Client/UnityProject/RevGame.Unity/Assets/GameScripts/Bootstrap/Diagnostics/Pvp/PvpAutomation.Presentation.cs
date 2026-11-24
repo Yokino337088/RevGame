@@ -11,6 +11,9 @@ namespace RevGame.Pvp
         /// <summary>登记围棋画面和本地策略验收能力，由 PvP 自动化所有者统一撤销。</summary>
         private static void RegisterPresentation()
         {
+#if UNITY_EDITOR || (UNITY_ANDROID && UNITY_5_3_OR_NEWER && (DEVELOPMENT_BUILD || REV_AUTOMATION))
+            RegisterAndroidTacticalTrial();
+#endif
             RevRuntimeAutomation.Register("pvp.presentation", "读取围棋实际可见弹幕、立绘、气泡、Shader、计分面板与已播完音效", Empty,
                 _ => PresentationState(), readOnly: true, owner: Owner);
 #if UNITY_EDITOR
