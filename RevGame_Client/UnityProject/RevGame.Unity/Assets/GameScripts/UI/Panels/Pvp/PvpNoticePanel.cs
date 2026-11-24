@@ -20,6 +20,7 @@ namespace RevGame.Pvp
         private Tween _motion;
         private bool _queueMode;
         internal string VisibleMessage => isActiveAndEnabled && _banner.anchoredPosition.y < 145f ? _text.text : "";
+        /// <summary>更新匹配中的等待提示。切走页面导致打开取消时，不再登记动画或计时器。</summary>
         public static void ShowQueue(int seconds)
         {
             string text = "正在匹配棋友  ·  已等待 " + (seconds / 60).ToString("00") + ":" + (seconds % 60).ToString("00");
@@ -31,14 +32,25 @@ namespace RevGame.Pvp
             }
             RevUI.Open<PvpNoticePanel>(panel =>
             {
+                if (panel == null)
+                {
+                    return;
+                }
                 panel.ShowMessageNow(text);
                 panel._queueMode = true;
                 RevTimer.CancelAllOf(panel);
             });
         }
+        /// <summary>提示条打开后才展示消息。退场关闭作用域时，框架以空面板通知取消。</summary>
         public static void ShowMessage(string message, float seconds = 3f)
         {
-            RevUI.Open<PvpNoticePanel>(panel => panel.ShowMessageNow(message, seconds));
+            RevUI.Open<PvpNoticePanel>(panel =>
+            {
+                if (panel != null)
+                {
+                    panel.ShowMessageNow(message, seconds);
+                }
+            });
         }
         private void ShowMessageNow(string message, float seconds = 3f)
         {

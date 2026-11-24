@@ -11,6 +11,8 @@ namespace RevGame.Pvp
         private int _previewPoint = -1, _landingPoint = -1;
         private double _previewDue, _landedAt;
         public int ComputerPreviewPoint => ReferenceEquals(_previewPosition, Core) ? _previewPoint : -1;
+        /// <summary>本局最近一次本地试算使用的组数，零表示本局尚未调用或已退出。</summary>
+        internal int TacticalSearchPartitions => _tacticalSearch?.LastPartitionCount ?? 0;
         public int ComputerLandingPoint => ReferenceEquals(_landingPosition, Core) ? _landingPoint : -1;
         public float ComputerLandingAge => (float)(_clock.Elapsed.TotalSeconds - _landedAt);
 
@@ -38,6 +40,7 @@ namespace RevGame.Pvp
             QueueBestComputerMove();
         }
 
+        /// <summary>本局共用搜索工作区。等待全部候选分数后才交给预告或提示，实盘提交仍走原入口。</summary>
         private int RankComputerMoves(GoHint[] destination, out GoHint bait)
         {
             _tacticalSearch ??= new GoTacticalSearch(Core);

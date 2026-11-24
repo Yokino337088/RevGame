@@ -5,13 +5,25 @@ using Fantasy;
 using RevGame.Pvp;
 using RevGame.Pvp.Networking;
 
+/// <summary>命令行回归入口，链接正式九路围棋服务和规则；各项检查使用自己的隔离棋局。</summary>
 internal static class Program
 {
     private static int _checks;
     private static readonly BindingFlags Private = BindingFlags.Instance | BindingFlags.NonPublic;
 
+    /// <summary>按命令运行指定的隔离检查，未指定时运行常规服务回归。断言失败时以非零退出。</summary>
     private static void Main(string[] options)
     {
+        if (options.Length == 1 && options[0] == "--tactical-benchmark")
+        {
+            TacticalSearchChecks.Benchmark();
+            return;
+        }
+        if (options.Length == 1 && options[0] == "--tactical")
+        {
+            TacticalSearchChecks.Run();
+            return;
+        }
         if (options.Length == 1 && options[0] == "--identity")
         {
             CheckMatchIdentity();
@@ -31,6 +43,7 @@ internal static class Program
             return;
         }
         AgentChecks.Run();
+        TacticalSearchChecks.Run();
         PvpService service = Local();
         ExpireTurn(service);
         Check(service.Submit(GoAction.Play, 4, 4), "expired click accepted as terminal action");

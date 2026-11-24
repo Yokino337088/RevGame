@@ -53,11 +53,15 @@ namespace UnityEngine
         internal static int frameCount => 0;
     }
 
-    // 运行于离线 Windows 夹具。Android 文本存档从不落到玩家目录。
+    /// <summary>列出正式代码比较的平台。夹具始终在 Windows 路径运行，其他值只用于编译真实分支。</summary>
     internal enum RuntimePlatform
     {
+        /// <summary>离线服务回归实际选择的平台。</summary>
         WindowsPlayer,
-        Android
+        /// <summary>供正式 Android 存档分支判断的平台值。</summary>
+        Android,
+        /// <summary>供正式 WebGL 设置存储分支判断的平台值。</summary>
+        WebGLPlayer
     }
 
     internal static class Application
