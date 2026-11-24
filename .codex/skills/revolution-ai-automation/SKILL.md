@@ -80,4 +80,6 @@ python Revolution.RevCLI/rev.py gif a.png b.png c.png --out "<本次项目文档
 
 ## 独立Player、IL2CPP与真机性能面板
 
+Android 真机通过 USB 连接 Editor 和 RevMCP 时用 [Android 真机测试 Skill](../revolution-android-testing/SKILL.md)。先用同一设备的串号和测试包验证运行时身份，再按实际注册表测业务和性能。
+
 涉及CLI打包到指定路径、Player启动/连接/退出、运行时GM/MCP、非开发自动化包或性能面板时，先读 [独立Player测试](references/player-testing.md)。复用现有RevRuntimeAutomation与RevMCP，项目负责隔离/业务负载，框架提供通用采样与构建；不要另造通信系统。

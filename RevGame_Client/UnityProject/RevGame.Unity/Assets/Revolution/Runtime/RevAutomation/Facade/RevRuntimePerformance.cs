@@ -33,6 +33,8 @@ namespace Revolution
         public string runId, status = "idle", error, startedUtc, endedUtc;
         public bool success, cancelled;
         public int frames, gpuSamples, unfocusedFrames, errors;
+        /// <summary>驱动返回非有限值、超过进程寿命或跨出整段计时窗的 GPU 样本数，不计入分位数。</summary>
+        public int gpuRejectedSamples;
         public double requestedSeconds, warmupSeconds, seconds, fps, p50Ms, p95Ms, p99Ms, maxMs;
         public double gpuP50Ms = -1, gpuP95Ms = -1, over125Ratio, over167Ratio, over333Ratio;
         public RevPerformanceSnapshot environment;
@@ -62,6 +64,7 @@ namespace Revolution
             RevRuntimePerformanceSampler.Disable();
         }
 
+        /// <summary>注册采样生命周期和只读设备查询；安卓额外在测量边界读取游戏进程的系统指标。</summary>
         internal static void RegisterPerformance()
         {
             const string empty = "{\"type\":\"object\",\"properties\":{},\"additionalProperties\":false}";
@@ -85,6 +88,11 @@ namespace Revolution
                 return PerformanceSnapshot();
             });
             Register("runtime.identity", "只读Player构建/设备身份", empty, _ => RevRuntimePerformanceSampler.Identity(), true);
+#if UNITY_ANDROID && !UNITY_EDITOR
+            // 系统服务查询由 Agent 在计时窗前后调用，避免逐帧 JNI 和内存统计干扰压测。
+            Register("runtime.android.device", "只读安卓游戏进程 PSS、系统热状态和电池温度", empty,
+                _ => RevAndroidDeviceMetrics.Read(), readOnly: true);
+#endif
             Register("runtime.quit", "延迟退出当前Player以便先返回响应；Editor中拒绝", empty, _ =>
             {
                 if (Application.isEditor)

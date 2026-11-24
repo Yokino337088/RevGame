@@ -48,6 +48,17 @@ namespace Revolution
         private volatile bool _stopping;
         private int _connections;
         public static bool HasPendingWork => _instance != null && (_instance._active != null || !_instance._queue.IsEmpty);
+        /// <summary>在 Unity 主线程捕获当前退出工单的收件确认；非 HTTP 退出保留原有延迟。</summary>
+        internal static Func<bool> CurrentQuitReceipt()
+        {
+            var host = _instance;
+            if (host == null || host._active?.Action != "runtime.quit")
+            {
+                return null;
+            }
+            string id = host._active.Id;
+            return () => host._memory.IsAcknowledged(id);
+        }
         /// <summary>启动只绑定回环地址的测试监听。安卓 Intent 会话由电脑持有凭据，其他入口返回本机端点文件。</summary>
         public static string StartServer(int port, string token, string androidLaunchId = null, int androidPid = 0)
         {

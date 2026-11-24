@@ -88,6 +88,15 @@ namespace Revolution
                 job.response = null; job.acknowledged = true; return true;
             }
         }
+        /// <summary>在同一把锁下查询指定结果是否已由客户端确认，用于延迟关闭该 Player 的连接。</summary>
+        internal bool IsAcknowledged(string id)
+        {
+            lock (_gate)
+            {
+                return _jobs.TryGetValue(id, out Job job) && job.acknowledged;
+            }
+        }
+
         public string Response(string id, string session)
         {
             lock (_gate)

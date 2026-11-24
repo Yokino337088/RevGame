@@ -45,20 +45,25 @@ py -3 -c "import sys;print(sys.executable)"         找到 3.10+ 解释器，不
 | 搭场景、摆物体、一次建很多对象 | `scene.compose`（一份 JSON，失败全回滚），`scene.capture` 看结果 |
 | 写脚本、挂脚本 | `script.create` → `editor wait` → `script.attach`，或写进 compose 的 `components` |
 | UI 面板、Prefab、材质、动画 | `ui.create` / `prefab.*` / `material.*` / `clip.*` `animator.*` |
+| 从 JSON 新建 Prefab | `prefab.compose` → `prefab.inspect`，无需在业务场景搭临时物体 |
 | 导表、打 AB、出包 | `excel.*` / `ab.*`，整包用 `ship` |
-| 增量构建与替换 AB | 按 [增量 AB 配方](references/incremental-ab.md) 依次构建、检查映射和发布，并显式传同一平台 |
+| 增量构建与替换 AB | `ab build-incremental` → `ab check-map` → `ab publish-incremental`，显式指定同一平台 |
 | Play 中调 GM、点 UI、看状态 | `editor play` → `runtime start` → `game gms` 查 → `game gm <名称> 参数...` → `editor stop` |
 | 不知道有没有某能力 | `commands --query <关键词>`，不要读 `commands.json` 全文 |
 
 多步互不依赖的同步动作用 `call batch.call`，有顺序依赖用 `pipeline`。
 
+## 增量构建与发布 AB
+
+执行 [增量 AB 配方](references/incremental-ab.md)。先在目标工程发现 `ab.build-incremental` 和 `ab.publish-incremental`。RevCLI 和 Codex 插件共用同一组 Unity 动作，可以构建后检查再发布，也可以单独重试发布。
+
 ## 使用当前编辑器出包
 
-使用用户当前打开的 RevGame 工程和 RevCLI `--mode live`。先核对 `editor status` 返回的绝对路径与编辑态，再依次切平台、等待导入、核对资源和打 Player。交付构建禁止另起后台 Unity、batch 和临时工程副本。遇到工具链或路径限制时，保留当前窗口的实际报错。
+项目交付包一律用用户当前打开的目标工程和 RevCLI `--mode live`。先用 `editor status` 核对实际工程路径，确认编辑态，检查已加载场景的保存状态。平台切换、资源包发布和 Player 构建顺序提交，通过 `editor wait` 与 `build settings` 核对切换后的状态。这个流程禁止另起后台 Unity、使用 batch 或转到临时工程副本。当前工程或工具链卡住时，保留真实报错和当前进度给用户。
 
 ## Android 构建、签名与手机预览
 
-出 Android 包或排查 ASCII 路径、D8/Gradle/NDK、ARM64、16 KB、签名、AB 串包与横屏启动配置时，先读 [Android 构建与验包](references/android-build-and-verification.md)。宽屏和触点用 Game、Device Simulator 与真机分层验收。
+出 Android 包或排查路径、D8/Gradle/NDK、ARM64、16 KB、签名、AB 串包与横屏启动配置时，先读 [Android 构建与验包](references/android-build-and-verification.md)。本次 APK 只带 Android 的平台 AB。打包时可逆隔离其他平台的 AB 与同名 `.meta`，Unity 完成或确认退出构建后恢复。宽屏和触点用 Game、Device Simulator 与真机分层验收。
 
 ## WebGL 构建与网页交付
 

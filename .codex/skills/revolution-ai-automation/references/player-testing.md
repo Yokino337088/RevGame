@@ -8,7 +8,7 @@
 - 项目GM和调试面板若只允许UNITY_EDITOR/DEVELOPMENT_BUILD，非开发自动化包必须补REV_AUTOMATION条件。框架已有宏不代表项目已接通。测试隔离必须在业务初始化/存档写入前完成。
 - 采样：runtime.performance.begin(seconds=1..600,warmup=0..60) → state（readOnly） → completed/success/errors/seconds/runId/负载断言。finally先cancel再disable，再项目业务收尾。采样本身不改变画质/帧率/玩法，也不证明达到预算。
 - RevRuntimeAutomation.EnablePerformance/PerformanceSnapshot/DisablePerformance供项目面板共用。显示FPS、帧时分位、Draw Calls/Batches/SetPass与有效计数。Release缺少详细动态/静态/实例化计数时显示N/A；GPU无新有效样本=-1，不能解释为0ms。面板低频刷新，基准窗口隐藏，截图/汇总在窗口外。
-- 首版launcher限Windows。Android端口转发和WebGL传输不是已验证能力。脚本测试、编译、Editor、IL2CPP开发包/非开发包分别报告；温度、后台/最小化、VSync/分辨率和负载不可混作前后收益。
+- 桌面 `player launch` 面向 Windows。Android USB 测试看 [Android 真机测试 Skill](../../revolution-android-testing/SKILL.md)，WebGL 看 [浏览器页内开发桥](../../revolution-framework/references/webgl-delivery.md#浏览器页内开发桥)。分开记录脚本、编译、Editor、实包和实际设备，保持温度、焦点、VSync、分辨率和负载的对照口径。
 - 不导出Profiler录制、不生成ZIP（RevGame约定）；HTML与必要截图/GIF交付，原始JSON和凭据只进忽略目录。
 
 完整手册：源仓库 `Revolution.Document/自动化工具/独立Player构建与性能自动化.md`（同名HTML）。

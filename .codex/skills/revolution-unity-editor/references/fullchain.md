@@ -58,6 +58,21 @@ AI 从一句话需求做到可运行包的完整路径。所有命令都是 `<py
 - 单次最多 512 个节点，深 32 层，整批一次 Undo。
 - 向量字段用 `.x/.y` 子路径，或写成 `{"x":1,"y":2}` 字符串。
 
+## 从 JSON 直接创建新 Prefab
+
+与 scene.compose 共用节点规则。指定 Assets 下尚未存在的 .prefab 路径和一个根节点。也可引用已有 Prefab 作为子节点。适用于可留档、可复跑的通用结构。
+
+~~~json
+{
+  "path": "Assets/Prefabs/Notice.prefab",
+  "nodes": [{"name":"Notice","ui":"Canvas","children":[
+    {"name":"Title","ui":"Text","components":[{"type":"UnityEngine.UI.Text","properties":{"m_Text":"Notice"}}]}
+  ]}]
+}
+~~~
+
+运行：call prefab.compose --json <文件>，再用 prefab.inspect 读回字段。动作仅在编辑模式运行，临时场景回收后恢复原场景和选择。失败可检查报错后重试。目标已存在时拒绝覆盖，要微调既有资产用 prefab.modify，项目自动生成器则按自身写盘约定处理。已有场景对象要转成资产时用 prefab.create。
+
 ## 写脚本并挂上去
 
 ```text
@@ -141,7 +156,7 @@ clip.create → clip.curve → animator.create → animator.parameter → animat
 
 ## 一键打整包
 
-只连接用户当前打开的 Unity 工程。先核对 `editor status`，Android 出包前按 [Android 构建与验包](android-build-and-verification.md) 隔离其他平台 AB。
+从用户当前打开的目标工程运行。先用 `editor status` 核对同一工程，Android 出包前按 [Android 构建与验包](android-build-and-verification.md) 隔离其他平台 AB。
 
 ```text
 rev.py --project <当前工程绝对路径> --mode live ship --target StandaloneWindows64 --excel full --player <空目录>/Game.exe --backend il2cpp

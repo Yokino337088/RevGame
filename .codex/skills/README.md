@@ -1,6 +1,18 @@
 # Revolution 官方Skills
+
+[Revolution-TA](revolution-ta/SKILL.md) 用于 Unity Shader、材质和技术美术，涵盖制作、图集与 AB、兼容排错和实拍验收。包含 RevGame 的 65 个 Shader 与 5 个共享 include 的 [索引](revolution-ta/references/revgame-catalog.md)，以及 [GitHub 项目实践](revolution-ta/references/open-source-patterns.md)。随完整 Skill 目录和 Revolution 插件发布。
+
+[revolution-gal](revolution-gal/SKILL.md) 支持 Gal 剧情 SO、节点图、RevCLI 自动化、自定义宿主接入与默认面板主题。对应 Unity 扩展随独立的 [gal 分支](https://github.com/Yokino337088/Revolution/tree/gal) 发布。
+
+[revolution-ai-automation](revolution-ai-automation/SKILL.md) 支持功能完整性审查和缺陷闭环。Coding Agent 按需求设计正反例、执行真实测试、结合源码确认根因，并在修复授权内落实改动、复跑原失败用例和相关回归。用例、`code_refs` 和修前修后证据格式见 [缺陷闭环](revolution-ai-automation/references/defect-closure.md)。
+
+2026-10-31 新增 [revolution-unity-editor](revolution-unity-editor/SKILL.md)：通过常驻 RevMCP / RevCLI 搭建场景、修改对象/组件、检查资产/Prefab，按需发现、同步批量、读回断言与 Undo/清理；配套 [提速与活动窗口教程](https://github.com/Yokino337088/Revolution/blob/main/Revolution.Document/自动化工具/RevMCP提速与活动窗口优化使用说明.html) 和 [通用 Unity 扩展](https://github.com/Yokino337088/Revolution/blob/main/Revolution.Document/自动化工具/RevCLI与RevMCP通用Unity扩展使用说明.html)。安装完整目录到项目 Agent skills，不额外安装参考 CLI 的第三方技能。
+
+2026-10-31 新增 [MCP 与 CLI 的 token 成本](revolution-ai-automation/references/token-cost.md)：框架本体工程实测全量 MCP 每轮 17,255、紧凑 MCP 325、CLI 无固定开销且结果约为 MCP 一半。
+
 2026-11-01 通道规则：**按轻重选**：编辑器操作和轻量运行时操作（`game gm`）走 RevCLI；长自动化测试、要带截图和 GIF 的 HTML 报告走 RevMCP `rev_run`（[判定规则](revolution-ai-automation/references/channel-choice.md)），选择依据见 [RevCLI 与 RevMCP 怎么选](https://github.com/Yokino337088/Revolution/blob/main/Revolution.Document/自动化工具/RevCLI与RevMCP怎么选.md)。[revolution-unity-editor](revolution-unity-editor/SKILL.md) 新增 [重启后重新连接](revolution-unity-editor/references/reconnect.md) 与 [全链路开发](revolution-unity-editor/references/fullchain.md)，覆盖写脚本挂载、一份 JSON 搭场景、动画、烘焙、导表、打 AB 和一键打整包。
 
+编写、修改或审查战斗、密集 UI/特效及其他性能敏感代码时，使用 [revolution-performance](revolution-performance/SKILL.md)。检查 CPU、GPU、内存、缓存与资源寿命，从 RevGame 的逻辑与表现分离、网格和图集实践中选同类参考，按固定负载验证。安装时使用完整 `revolution-performance/` 目录，业务门面和实际测试分别配合框架与自动化技能。
 
 2026-10-28：加入 [RevGame真实工程架构/编程参考](revolution-framework/references/revgame-engineering.md)、[Unity编辑器实践](revolution-framework/references/revgame-editor-practice.md)、[AI开发闭环](revolution-framework/references/revgame-ai-workflow.md) 和 [自动化测试实践](revolution-ai-automation/references/revgame-testing.md)。AI写Revolution业务前须按职责读取 [RevGame工程](https://github.com/Yokino337088/RevGame) 的同类源码，记录参考版本与契约，再适配目标项目；Demo补模块用法，项目样本不替代当前API/用户规则。
 
@@ -37,7 +49,7 @@
 
 ```text
 revolution-framework/
-├── SKILL.md                     ← 主入口：21 个 Runtime 目录总览、分诊表、反幻觉协议、技术铁律与规范
+├── SKILL.md                     ← 主入口：任务分诊、公开门面与验收
 ├── REFERENCE_GUIDELINES.md      ← 代码审查入口：逐条清单（清理/资源/UI/异步/事件/时间/服务/热更/启动与真机/规范）+ 8 组正反例
 ├── references/
 │   ├── playbooks.md             ← 21 个任务配方（R1~R21），含游戏域 × FSM、横竖屏、GM/AI 自动测试接线

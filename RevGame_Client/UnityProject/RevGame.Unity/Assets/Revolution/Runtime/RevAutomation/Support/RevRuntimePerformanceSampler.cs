@@ -6,6 +6,7 @@ using UnityEngine;
 
 namespace Revolution
 {
+    /// <summary>在游戏帧内写入预分配采样窗口，测量结束后才统计分位数并释放本次缓冲。</summary>
     internal sealed class RevRuntimePerformanceSampler : MonoBehaviour
     {
         private static RevRuntimePerformanceSampler _instance;
@@ -28,7 +29,10 @@ namespace Revolution
         private double[] _frames, _gpu, _sums;
         private int[] _valid;
         private bool _collecting;
+        // 退出的墙钟期限，负值表示尚未收到退出请求。
         private double _quitAt = -1;
+        // 仅在等待 Android 客户端领取退出结果时存在，收到 ACK 后立即释放。
+        private Func<bool> _quitReceipt;
         private static readonly string[] Names =
         {
             "Draw Calls Count", "Total Batches Count", "SetPass Calls Count", "Triangles Count", "Vertices Count",
@@ -66,9 +70,16 @@ namespace Revolution
             _previous = Time.realtimeSinceStartupAsDouble;
         }
 
+        /// <summary>用单调墙钟累计真实帧间隔，并独立检查 GPU 驱动读数；退出、预热和正式测量按顺序推进。</summary>
         private void Update()
         {
             double now = Time.realtimeSinceStartupAsDouble;
+            if (_quitReceipt != null && _quitReceipt())
+            {
+                // 电脑已取得最终工单，仍给手机回环 HTTP 留出发送 ACK 回执的时间。
+                _quitReceipt = null;
+                _quitAt = Math.Min(_quitAt, now + .25);
+            }
             if (_quitAt >= 0 && now >= _quitAt)
             {
                 Application.Quit();
@@ -80,15 +91,19 @@ namespace Revolution
             _cursor = (_cursor + 1) % _rolling.Length;
             _count = Math.Min(_count + 1, _rolling.Length);
             FrameTimingManager.CaptureFrameTimings();
-            bool freshGpu = FrameTimingManager.GetLatestTimings(1, _timings) > 0 && _timings[0].frameStartTimestamp != _stamp && _timings[0].gpuFrameTime > 0;
-            if (freshGpu)
+            bool newTiming = FrameTimingManager.GetLatestTimings(1, _timings) > 0 && _timings[0].frameStartTimestamp != _stamp;
+            bool invalidGpu = false;
+            _lastGpu = -1;
+            if (newTiming)
             {
                 _stamp = _timings[0].frameStartTimestamp;
-                _lastGpu = _timings[0].gpuFrameTime;
-            }
-            else
-            {
-                _lastGpu = -1;
+                // GPU 帧不可能比游戏自启动以来经过的毫秒数更长。部分安卓虚拟驱动返回了时间戳量级的正数。
+                double gpuMs = _timings[0].gpuFrameTime;
+                invalidGpu = double.IsNaN(gpuMs) || double.IsInfinity(gpuMs) || gpuMs > now * 1000;
+                if (!invalidGpu && gpuMs > 0)
+                {
+                    _lastGpu = gpuMs;
+                }
             }
             if (_report.status != "running")
             {
@@ -110,9 +125,13 @@ namespace Revolution
                 return;
             }
             _frames[_report.frames++] = ms;
-            if (freshGpu)
+            if (_lastGpu > 0)
             {
                 _gpu[_report.gpuSamples++] = _lastGpu;
+            }
+            else if (invalidGpu)
+            {
+                _report.gpuRejectedSamples++;
             }
             if (!Application.isFocused)
             {
@@ -160,6 +179,7 @@ namespace Revolution
             return _report;
         }
 
+        /// <summary>封存本次测量，可归属于整个采样窗的 GPU 数据才参与分位数；缺样保留默认 -1。</summary>
         private void Finish(string status, string error)
         {
             _report.status = status;
@@ -209,8 +229,17 @@ namespace Revolution
             if (_report.gpuSamples > 0)
             {
                 Array.Sort(_gpu, 0, _report.gpuSamples);
-                _report.gpuP50Ms = Percentile(_gpu, _report.gpuSamples, .5);
-                _report.gpuP95Ms = Percentile(_gpu, _report.gpuSamples, .95);
+                // 已运行很久的游戏也可能收到异常正数。比整个计时窗还长的单帧无法归入本轮，单独计数。
+                while (_report.gpuSamples > 0 && _gpu[_report.gpuSamples - 1] > _report.seconds * 1000)
+                {
+                    _report.gpuSamples--;
+                    _report.gpuRejectedSamples++;
+                }
+                if (_report.gpuSamples > 0)
+                {
+                    _report.gpuP50Ms = Percentile(_gpu, _report.gpuSamples, .5);
+                    _report.gpuP95Ms = Percentile(_gpu, _report.gpuSamples, .95);
+                }
             }
             _report.averages = Metrics(true);
             _frames = null;
@@ -312,9 +341,13 @@ namespace Revolution
             }
         }
 
+        /// <summary>安卓 HTTP 等待本次退出工单被认领；电脑断线时最多等待十秒，其它入口沿用原有延迟。</summary>
         internal void ScheduleQuit()
         {
-            _quitAt = Time.realtimeSinceStartupAsDouble + .75;
+#if UNITY_ANDROID && !UNITY_EDITOR && !(UNITY_WEIXINMINIGAME || UNITY_BYTEDANCE_MINIGAME || UNITY_BYTEDANCEMINIGAME)
+            _quitReceipt = RevRuntimeAutomationHost.CurrentQuitReceipt();
+#endif
+            _quitAt = Time.realtimeSinceStartupAsDouble + (_quitReceipt == null ? .75 : 10);
         }
 
         private void OnDestroy()
