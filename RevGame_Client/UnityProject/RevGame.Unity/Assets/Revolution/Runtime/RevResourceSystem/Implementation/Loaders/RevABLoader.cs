@@ -27,8 +27,21 @@ using UnityEngine.Networking;
 namespace Revolution
 {
     
+    /// <summary>负责原生 AB 的读取、请求合并和包引用归还。</summary>
     public class RevABLoader : IRevResLoader
     {
+        /// <summary>可选后端每次装配提供一代只读快照。</summary>
+        private readonly IRevBundleSource _source;
+
+        /// <summary>创建使用框架自带来源的加载器。</summary>
+        public RevABLoader() { }
+
+        /// <summary>创建仅从本代快照读取的加载器。</summary>
+        internal RevABLoader(IRevBundleSource source)
+        {
+            _source = source;
+        }
+
         /// <summary>
         /// 一个已加载 AB 包的登记记录（_bundles 的 value）。
         /// 把「包本体」和「引用计数」捆成一个对象 —— 两者永远同步，
@@ -134,8 +147,12 @@ namespace Revolution
         public static Func<string, string> BundlePathResolver { get; set; }
 
         /// <summary>解析一个包的读取位置：先问钩子，钩子不接（返回 null/空）再走默认的 StreamingAssets 路径。</summary>
-        private static string ResolveBundlePath(string abName)
+        private string ResolveBundlePath(string abName)
         {
+            if (_source != null)
+            {
+                return _source.GetPath(abName);
+            }
             Func<string, string> resolver = BundlePathResolver;          // 先取快照：属性可能在别的线程被清空
             string custom = resolver == null ? null : resolver(abName);
             return string.IsNullOrEmpty(custom) ? StreamingRoot + abName : custom;
@@ -166,6 +183,10 @@ namespace Revolution
         /// </summary>
         private string[] ResolveDependencies(string abName)
         {
+            if (_source != null)
+            {
+                return _source.GetDependencies(abName);
+            }
             Func<string, string[]> source = DependenciesOverride;        // 先取快照：属性可能在别的时机被清空
             string[] custom = source == null ? null : source(abName);
             if (custom != null) return custom;
@@ -200,6 +221,7 @@ namespace Revolution
         /// <summary>确保主包 + Manifest 已加载</summary>
         private bool EnsureManifest()
         {
+            if (_source != null) return true;
             if (_manifest != null) return true;
             // 同步请求不能和异步首次初始化并行再加载一个主包。
             if (_manifestSource != null) return false;
@@ -220,8 +242,8 @@ namespace Revolution
         }
 
 
-        /// <summary>从 StreamingAssets 同步加载指定 AB 包（WebGL 走不通，见下方注释</summary>
-        private static AssetBundle LoadBundle(string abName)
+        /// <summary>从本代指定的位置同步加载原生包。异步平台由下面的分支处理。</summary>
+        private AssetBundle LoadBundle(string abName)
         {
 #if (UNITY_WEBGL || UNITY_WEIXINMINIGAME || UNITY_BYTEDANCE_MINIGAME || UNITY_BYTEDANCEMINIGAME) && !UNITY_EDITOR
             // WebGL（含小游戏）：单线程、不能阻塞，File.Exists / LoadFromFile 都不可用 → 同步加载无解。
@@ -668,6 +690,7 @@ namespace Revolution
         /// </summary>
         private async RevTask<bool> EnsureManifestAsync()
         {
+            if (_source != null) return true;
             if (_manifest != null) return true;
             if (_manifestSource != null) return await _manifestSource.Task;
 
@@ -755,6 +778,19 @@ namespace Revolution
         private async RevTask<AssetBundle> LoadBundleOnceAsync(string abName, int generation)
         {
 #if (UNITY_WEBGL || UNITY_WEIXINMINIGAME || UNITY_BYTEDANCE_MINIGAME || UNITY_BYTEDANCEMINIGAME) && !UNITY_EDITOR
+#if UNITY_WEBGL && !UNITY_WEIXINMINIGAME && !UNITY_BYTEDANCE_MINIGAME && !UNITY_BYTEDANCEMINIGAME
+            // 浏览器后端也可能提供已安装的虚拟文件系统对象。内置 URL 仍走引擎 HTTP 缓存。
+            if (_source != null)
+            {
+                string local = _source.GetPath(abName);
+                if (!local.Contains("://") && File.Exists(local))
+                {
+                    AssetBundleCreateRequest request = AssetBundle.LoadFromFileAsync(local);
+                    await request;
+                    return request.assetBundle;
+                }
+            }
+#endif
 #if REV_AB_BROWSER_PARALLEL
             while (generation == _generation && _browserRequests >= BrowserRequestLimit)
             {
@@ -815,12 +851,12 @@ namespace Revolution
         ///   浏览器仍可通过 HTTP 缓存头复用稳定 URL。引擎缓存标识则来自清单里的 hash 和 CRC，
         ///   热更包通过 BundleCacheKeyResolver 把它交过来。
         /// </summary>
-        private static UnityWebRequest CreateBundleRequest(string abName)
+        private UnityWebRequest CreateBundleRequest(string abName)
         {
             string url = ResolveBundlePath(abName);
 
             Func<string, RevBundleCacheKey> resolver = BundleCacheKeyResolver;   // 先取快照（与路径钩子同一条纪律）
-            RevBundleCacheKey key = resolver == null ? default : resolver(abName);
+            RevBundleCacheKey key = _source != null ? _source.GetCacheKey(abName) : resolver == null ? default : resolver(abName);
 
             if (key.IsValid)
             {

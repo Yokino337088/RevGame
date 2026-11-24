@@ -14,9 +14,9 @@
 #     · PACKAGE_VERSION.txt（本文件）
 # ============================================================
 
-commit      = d6df67a64e99c8773f831bc4451d9ad79ea97027
-short       = d6df67a
-date        = 2026-11-24 11:33
+commit      = 5135167057b3d1b1e71de36e0d35ec0e3b78cd83
+short       = 5135167
+date        = 2026-11-24 12:31
 source      = upstream/package（Revolution 仓库 package 分支）
-previous    = 552df4c8c393f0cfbdeb76b181bc4c73c74233fb
+previous    = d6df67a64e99c8773f831bc4451d9ad79ea97027
 updated_by  = tools/sync-framework.ps1

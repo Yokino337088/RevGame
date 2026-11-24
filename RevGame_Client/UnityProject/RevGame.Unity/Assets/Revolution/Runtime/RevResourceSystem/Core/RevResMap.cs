@@ -39,6 +39,31 @@ namespace Revolution
             return new RevResMap(entries);
         }
 
+        /// <summary>由结构化清单直接建立索引。地址规则与文本映射相同，避免转换成文本再拆分。</summary>
+        public static RevResMap FromLocations(IEnumerable<(string path, string bundle, string asset)> locations)
+        {
+            if (locations == null)
+            {
+                throw new ArgumentNullException(nameof(locations));
+            }
+            var entries = new Dictionary<string, RevABAddress>(StringComparer.Ordinal);
+            var bundles = new Dictionary<string, string>(StringComparer.Ordinal);
+            foreach (var location in locations)
+            {
+                if (!RevResMapCodec.IsRelativeName(location.path) || !RevResMapCodec.IsRelativeName(location.bundle)
+                    || !RevResMapCodec.IsRelativeName(location.asset))
+                {
+                    throw new System.IO.InvalidDataException("映射地址含非法路径：" + location.path);
+                }
+                var address = new RevABAddress(ShareBundleName(bundles, location.bundle), location.asset);
+                if (!entries.TryAdd(location.path, address))
+                {
+                    throw new System.IO.InvalidDataException("重复资源逻辑路径：" + location.path);
+                }
+            }
+            return new RevResMap(entries);
+        }
+
         /// <summary>按现有逻辑路径返回包名与包内资源名。缺失时返回 false，两个输出都为空。</summary>
         public bool TryGetLocation(string logicalPath, out string bundleName, out string assetName)
         {

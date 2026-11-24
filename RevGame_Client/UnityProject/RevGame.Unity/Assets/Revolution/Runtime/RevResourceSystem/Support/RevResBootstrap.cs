@@ -99,6 +99,7 @@ namespace Revolution
         {
             RevAsyncLoadPump.ResetForNewSession();
             RevResManager.ResetForNewSession();
+            RevResourceBackends.Reset();
 
             // 委托可能捕获旧场景对象。当前会话可以在 RevInitialize 的资源装配回调中重新安装自己的解析器。
             ResMapOverride = null;
@@ -112,47 +113,54 @@ namespace Revolution
         /// <summary>验证目标映射后重建资源策略。非法映射会在释放当前策略前中断。</summary>
         public void Init()
         {
-            // 映射是策略的前置条件。失败时不要把当前资源缓存和依赖图清掉。
+            // 先准备扩展与映射。失败时让原策略继续服务。
+            RevResourceBackend backend = RevResourceBackends.CreateSelected(out string backendId);
+            RevABLoader loader = backend?.Loader;
+            IRevResPolicy policy = backend?.Policy;
+            if (backend == null)
+            {
 #if UNITY_EDITOR
-            RevABLoader loader = UseABInEditor ? new RevABLoader() : null;
+                loader = UseABInEditor ? new RevABLoader() : null;
+                policy = loader == null ? (IRevResPolicy)new RevEditorResPolicy() : CreateBundlePolicy(loader);
 #else
-            RevABLoader loader = new RevABLoader();
+                loader = new RevABLoader();
+                policy = CreateBundlePolicy(loader);
 #endif
-            RevABResPolicy bundlePolicy = loader == null ? null : CreateBundlePolicy(loader);
+            }
 
-            // Init 可能是编辑器 AB 开关触发的热切换，也可能在关闭 Domain Reload 后重复执行；
-            // 先终止旧请求并用旧策略释放缓存，再替换策略，避免缓存继续返回旧来源资源。
+            // 先终止旧代、归还包与预热租约，再发布新策略。
             RevAsyncLoadPump.CancelAll();
             RevResPreloader.ReleaseAll();
             RevResManager.UnloadAll();
             _abLoader?.ReleaseAll();
-            _abLoader = null;
             RevResManager.ClearAllPolicies();
 
-            // 启动"自动卸载门卫"（开发模式 / AB 模式都需要，所以放在策略注册之前）
-            if (RevResAutoUnloader.AutoStart) RevResAutoUnloader.EnsureRunning();
-
-#if UNITY_EDITOR
-            // ================== 开发模式（默认）==================
-            // 只注册编辑器策略 → 所有资源一律 AssetDatabase 直读；
-            // 直接 return，AB / Resources 策略根本不注册。
-            if (loader == null)
+            if (RevResAutoUnloader.AutoStart)
             {
-                RevResManager.RegisterPolicy(new RevEditorResPolicy());
-                return;
+                RevResAutoUnloader.EnsureRunning();
             }
-            // 开启 AB 模式后不注册 RevEditorResPolicy，继续走下面的运行时注册
-#endif
-
-            // ================== AB 模式（运行时 / 编辑器手动开启）==================
-            // ① AB 策略（主方案）：除 "Res/" 前缀外全部接管；失败可兜底
             _abLoader = loader;
-            RevResManager.RegisterPolicy(bundlePolicy);
+            RevResManager.RegisterPolicy(policy);
+            // 自带直读沿用原规则。扩展与真实 AB 也支持 Res/ 显式入口。
+            if (loader != null || backend != null)
+            {
+                RevResManager.RegisterPolicy(new RevResourcesResPolicy());
+            }
+            RevResourceBackends.ActiveId = backendId;
+        }
 
-            // ② Resources 策略（链尾兜底）：接住 "Res/" 特殊资源 + AB 加载失败兜底
-            RevResManager.RegisterPolicy(new RevResourcesResPolicy());
-
-            // 注册顺序 = 优先级 → AB > Resources
+        /// <summary>在没有活跃资源租约或在途读取的交接点刷新后端。</summary>
+        public bool TryRefreshBackend()
+        {
+            foreach (var entry in RevResManager.CachedHandles)
+            {
+                if (entry.Value.RefCount > 0 || entry.Value.IsLoading)
+                {
+                    return false;
+                }
+            }
+            Init();
+            return true;
         }
 
         /// <summary>选择本次 AB 映射来源。内置与类型化扩展直接持有地址索引，旧钩子沿用原来字典。</summary>

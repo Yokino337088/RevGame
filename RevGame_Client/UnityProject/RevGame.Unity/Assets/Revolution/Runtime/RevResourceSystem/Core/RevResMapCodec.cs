@@ -223,9 +223,9 @@ namespace Revolution
         }
 
         /// <summary>只接受非空的相对路径。允许多级目录与 Unicode 名称。</summary>
-        private static bool IsRelativeName(string value)
+        internal static bool IsRelativeName(string value)
         {
-            if (char.IsWhiteSpace(value[0]) || char.IsWhiteSpace(value[value.Length - 1]))
+            if (string.IsNullOrEmpty(value) || char.IsWhiteSpace(value[0]) || char.IsWhiteSpace(value[value.Length - 1]))
             {
                 return false;
             }
@@ -246,7 +246,7 @@ namespace Revolution
                 }
 
                 char c = value[i];
-                if (char.IsControl(c) || c == '\\' || c == ':' || c == '%' || c == '?' || c == '#' || c == '\uFEFF')
+                if (char.IsControl(c) || c == '\\' || c == ':' || c == '%' || c == '?' || c == '#' || c == '|' || c == '\uFEFF')
                 {
                     return false;
                 }
