@@ -17,34 +17,15 @@ namespace RevGame.Editor
         private const string DuelScenePath = "Assets/Scenes/PvpDuelScene.unity";
         // 编辑器查找角色帧和背景的资产目录。
         private const string DuelArt = "Assets/GameRes/Art/Pvp/Duel/";
-        // 新街机角色和特效只从此目录装配。旧场景的素材归档仍可由编辑器查阅。
+        // 决斗当前的角色、招式特效和场景背景从此目录装配。
         private const string ArcadeArt = DuelArt + "Arcade/";
-        // 黑方固定使用绯焰。同一场景的白方资源在鸦鸦配方中设置。
-        private const string EmberPrefix = "Ember";
-        // 绯焰动作取样表。每个数字指向该角色的一张原画，图集只存一份。
-        private static readonly int[][] ArcadePoseFrames =
-        {
-            // 待机单独按文件名和时间表装配，保留此槽以便和其它姿态对齐。
-            Array.Empty<int>(),
-            // 跑步按落脚、压重、蹬地、腾空各四张，换另一只脚后重复同一节拍。
-            new[] { 32, 33, 34, 35, 36, 37, 38, 39 },
-            new[] { 12, 4, 16, 4 }, new[] { 5, 20, 21, 6, 19 },
-            new[] { 24, 25, 26, 27, 19 }, new[] { 13, 9, 26, 23, 10, 19 }, new[] { 18, 11 },
-            new[] { 28, 29, 30, 31, 19 }, new[] { 13, 14, 22, 7, 19 }, new[] { 12, 8, 15, 23, 9, 19 },
-            new[] { 17, 18, 19 }
-        };
-        // 每个姿态的接触关键帧下标。非攻击姿态填 0，普通移动仍按渲染时间播放。
-        private static readonly int[] ArcadeContactKeys = { 0, 0, 0, 2, 2, 3, 0, 3, 3, 3, 0 };
-        // 动作按原生顺序装配。起手图形区分六招，命中序列按普攻、技能和大招复用。
-        private static readonly string[] EmberCastArt = { "Jab", "Rush", "Ultimate", "Plunge", "Hook", "Finisher" };
+        // 鸦鸦按原生动作号复用普攻、技能和大招的三种命中序列。
         private static readonly string[] ImpactArt = { "Light", "Skill", "Ultimate", "Skill", "Light", "Light" };
-        // 三段普攻、两种技能和大招各用不同的起手音色。
-        private static readonly string[] ArcadeCastSounds = { "Jab", "Rush", "Ultimate", "Sweep", "Hook", "Finisher" };
         // 与 DuelActorAnimator 的 Pose 顺序对应。制作片段和绑定图片都使用同一张表。
         private static readonly string[] DuelPoses = { "Idle", "Run", "Jump", "Attack1", "Attack2", "Attack3", "Down",
             "Attack4", "Attack5", "Attack6", "Hit" };
 
-        // 导入素材、构建场景和 HUD、保存并登记构建列表；最后恢复用户原活动场景。
+        // 导入素材并构建双鸦鸦场景和 HUD。保存后登记构建列表，最后恢复原活动场景。
         public static object BuildDuel()
         {
             if (SceneManager.GetSceneByPath(DuelScenePath).isLoaded)
@@ -117,7 +98,7 @@ namespace RevGame.Editor
                 }
                 return new Dictionary<string, object>
                 {
-                    ["scene"] = DuelScenePath, ["fighters"] = 2, ["legacyClips"] = DuelPoses.Length * 2,
+                    ["scene"] = DuelScenePath, ["fighters"] = 2, ["legacyClips"] = DuelPoses.Length,
                     ["hudPrefab"] = DuelHudPrefabPath, ["backdrop"] = view.CameraRig.Backdrop.sprite.name
                 };
             }
@@ -152,17 +133,6 @@ namespace RevGame.Editor
             }
         }
 
-        // 以编辑器动作表读取切片。重复关键帧引用同一 Sprite，避免在图集中保存重复原画。
-        private static Sprite[] LoadDuelSequence(string pose)
-        {
-            if (pose == "Idle")
-            {
-                return EmberIdleFrames.Select(LoadArcadeSprite).ToArray();
-            }
-            return ArcadePoseFrames[Array.IndexOf(DuelPoses, pose)]
-                .Select(index => LoadArcadeSprite($"{EmberPrefix}_{index:D2}")).ToArray();
-        }
-
         // 在构建场景时检查纹理已经导入为 Sprite，运行时从场景引用取用。
         private static Sprite LoadArcadeSprite(string name)
         {
@@ -188,22 +158,9 @@ namespace RevGame.Editor
             return new DuelStrikeEffects.FrameSequence { Frames = frames };
         }
 
-        // 查找场景持有的原声音效，缺失时中止生成。
-        private static AudioClip LoadArcadeSound(string name)
-        {
-            return AssetDatabase.LoadAssetAtPath<AudioClip>(ArcadeArt + "Audio/" + name + ".wav") ??
-                throw new InvalidOperationException("决斗音效未导入：" + name);
-        }
-
-        // 新建和升级走同一个入口，音效与五帧序列必须都装配后才保存场景。
+        // 新建和升级共用同一入口，两席共享鸦鸦的出招素材，背景仍由擂台配置装配。
         private static void BindDuelPresentation(PvpDuelView view)
         {
-            var effects = view.Effects;
-            effects.CastSequences = EmberCastArt.Select(name => LoadDuelEffectSequence(EmberPrefix, "Cast", name)).ToArray();
-            effects.ImpactSequences = ImpactArt.Select(name => LoadDuelEffectSequence(EmberPrefix, "Hit", name)).ToArray();
-            effects.CastSounds = ArcadeCastSounds.Select(LoadArcadeSound).ToArray();
-            effects.ImpactSounds = new[] { "LightHit", "SkillHit", "UltimateHit" }.Select(LoadArcadeSound).ToArray();
-            BindDuelEmberEffects(view);
             BindDuelYayaPresentation(view);
             ApplyDuelBackdrop(view.CameraRig.Backdrop);
         }
@@ -230,8 +187,8 @@ namespace RevGame.Editor
             return image;
         }
 
-        // 每个角色保存自己的 Legacy Clip。已有片段保留 GUID。
-        private static AnimationClip[] BuildDuelClips(Sprite[][] sequences, string role)
+        // 每个鸦鸦姿态只写一份 Legacy Clip，两席引用已有 GUID 对应的同一组片段。
+        private static AnimationClip[] BuildDuelClips(Sprite[][] sequences)
         {
             string folder = DuelAnimationFolder;
             var clips = new AnimationClip[DuelPoses.Length];
@@ -239,7 +196,7 @@ namespace RevGame.Editor
             {
                 string pose = DuelPoses[index];
                 Sprite[] frames = sequences[index];
-                string path = $"{folder}/{role}_{pose}.anim";
+                string path = $"{folder}/{YayaPrefix}_{pose}.anim";
                 var clip = AssetDatabase.LoadAssetAtPath<AnimationClip>(path);
                 if (clip == null)
                 {
@@ -248,9 +205,9 @@ namespace RevGame.Editor
                 }
                 clip.legacy = true;
                 clip.name = pose;
-                clip.frameRate = DuelClipFrameRate(role, pose);
+                clip.frameRate = DuelClipFrameRate(pose);
                 clip.wrapMode = pose == "Idle" || pose == "Run" ? WrapMode.Loop : WrapMode.ClampForever;
-                ObjectReferenceKeyframe[] keys = BuildDuelClipKeys(role, pose, frames, clip.frameRate);
+                ObjectReferenceKeyframe[] keys = BuildDuelClipKeys(pose, frames, clip.frameRate);
                 AnimationUtility.SetObjectReferenceCurve(clip, EditorCurveBinding.PPtrCurve("", typeof(Image), "m_Sprite"), keys);
                 EditorUtility.SetDirty(clip);
                 clips[index] = clip;
@@ -259,68 +216,43 @@ namespace RevGame.Editor
             return clips;
         }
 
-        // 生成 Legacy Sprite 曲线。绯焰待机用时间表，其余片段保留原有的等间隔采样。
-        private static ObjectReferenceKeyframe[] BuildDuelClipKeys(string role, string pose, Sprite[] frames, float frameRate)
+        // 生成等间隔的鸦鸦曲线。待机和跑步直接回环，其余姿态重复末帧一次用于收招。
+        private static ObjectReferenceKeyframe[] BuildDuelClipKeys(string pose, Sprite[] frames, float frameRate)
         {
-            float[] ends = pose == "Idle" ? DuelIdleFrameEnds(role) : Array.Empty<float>();
-            bool timedIdle = ends.Length > 0;
-            if (timedIdle && ends.Length != frames.Length)
-            {
-                throw new InvalidOperationException("待机时间表与图片张数不一致：" + role);
-            }
-            var keys = new ObjectReferenceKeyframe[frames.Length + (timedIdle || !DuelLoopsWithoutPadding(role, pose) ? 1 : 0)];
+            bool loop = pose == "Idle" || pose == "Run";
+            var keys = new ObjectReferenceKeyframe[frames.Length + (loop ? 0 : 1)];
             for (int i = 0; i < keys.Length; i++)
             {
-                float time = i / frameRate;
-                if (timedIdle && i > 0)
-                {
-                    time = ends[i - 1];
-                    // Unity 会在末键之后再补一个采样间隔。末键重复最后一张图，补齐后正好回到循环起点。
-                    if (i == frames.Length)
-                    {
-                        time -= 1f / frameRate;
-                    }
-                    if (time <= keys[i - 1].time)
-                    {
-                        throw new InvalidOperationException("待机关键帧时间必须递增：" + role);
-                    }
-                }
-                keys[i] = new ObjectReferenceKeyframe { time = time, value = frames[Math.Min(i, frames.Length - 1)] };
+                keys[i] = new ObjectReferenceKeyframe { time = i / frameRate, value = frames[Math.Min(i, frames.Length - 1)] };
             }
             return keys;
         }
 
-        // 现有场景和重建场景都用同一个绑定入口。Legacy 提供普通姿态的采样率，待机时间表单独保存。
-        private static void ConfigureDuelActor(Image actor, DuelActorAnimator presenter, Sprite[][] sequences, string role, int[] contactKeys, bool animateIdle)
+        // 为一个席位写入共用片段和序列。实际播放由该席自己的决斗动画器推进。
+        private static void ConfigureDuelActor(Image actor, DuelActorAnimator presenter, Sprite[][] sequences, AnimationClip[] clips)
         {
-            AnimationClip[] clips = BuildDuelClips(sequences, role);
             var animation = presenter.GetComponent<Animation>();
             animation.playAutomatically = false;
             animation.enabled = false;
             actor.sprite = sequences[0][0];
             AnimationUtility.SetAnimationClips(animation, clips);
             animation.clip = clips[0];
-            BindDuelSpriteSequences(presenter, sequences, contactKeys, animateIdle, DuelIdleFrameEnds(role));
+            BindDuelSpriteSequences(presenter, sequences);
         }
 
-        // 把图片按姿态写进场景，运行时无需查找资产或解析编辑器动画曲线。
-        private static void BindDuelSpriteSequences(DuelActorAnimator presenter, Sprite[][] shared, int[] contactKeys, bool animateIdle, float[] idleFrameEnds)
+        // 写入鸦鸦的姿态与接触帧，清除旧场景的非等长待机表后按片段采样率播放。
+        private static void BindDuelSpriteSequences(DuelActorAnimator presenter, Sprite[][] shared)
         {
             using var data = new SerializedObject(presenter);
-            data.FindProperty("animateIdle").boolValue = animateIdle;
-            SerializedProperty ends = data.FindProperty("idleFrameEndSeconds");
-            ends.arraySize = idleFrameEnds.Length;
-            for (int i = 0; i < idleFrameEnds.Length; i++)
-            {
-                ends.GetArrayElementAtIndex(i).floatValue = idleFrameEnds[i];
-            }
+            data.FindProperty("animateIdle").boolValue = true;
+            data.FindProperty("idleFrameEndSeconds").arraySize = 0;
             SerializedProperty sequences = data.FindProperty("spriteSequences");
             sequences.arraySize = DuelPoses.Length;
             for (int i = 0; i < DuelPoses.Length; i++)
             {
                 Sprite[] images = shared[i];
                 SerializedProperty pose = sequences.GetArrayElementAtIndex(i);
-                pose.FindPropertyRelative("contactIndex").intValue = contactKeys[i];
+                pose.FindPropertyRelative("contactIndex").intValue = YayaContactKeys[i];
                 SerializedProperty frames = pose.FindPropertyRelative("frames");
                 frames.arraySize = images.Length;
                 for (int frame = 0; frame < images.Length; frame++)

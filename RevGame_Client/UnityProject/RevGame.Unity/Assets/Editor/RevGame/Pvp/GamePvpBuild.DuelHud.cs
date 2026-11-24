@@ -42,7 +42,7 @@ namespace RevGame.Editor
             }
         }
 
-        // 保存全屏 RevUI 预制体。节点绑定由面板特性读取，场景不复制这些控件。
+        // 保存全屏 RevUI 预制体并装配两席共用的鸦鸦头像差分。
         private static void BuildDuelHud()
         {
             PrepareDuelHudBorders();
@@ -55,7 +55,6 @@ namespace RevGame.Editor
             {
                 var panel = root.gameObject.AddComponent<DuelHudPanel>();
                 using var data = new SerializedObject(panel);
-                data.FindProperty("EmberPortrait").objectReferenceValue = LoadHudSprite("EmberPortrait");
                 SerializedProperty portraits = data.FindProperty("YayaPortraits");
                 portraits.arraySize = YayaPortraitExpressions.Length;
                 for (int index = 0; index < YayaPortraitExpressions.Length; index++)
@@ -188,40 +187,38 @@ namespace RevGame.Editor
             HudImage(movement.Knob, "StickKnob");
 
             MakeRoundAction(hud, "Jump", "Jump", "跳跃", "↑", 325, 257, 104, WhiteHud);
-            MakeRoundAction(hud, "Jab", "Jab", "普攻", "J", 1748, 156, 164, BlackHud);
-            MakeRoundAction(hud, "Skill", "Thrust", "贯枪", "K", 1555, 125, 124, EnergyHud);
-            MakeRoundAction(hud, "SkillTwo", "Plunge", "坠枪", "L", 1573, 280, 124, WhiteHud);
-            MakeRoundAction(hud, "Ultimate", "Crimson", "赤阵", "I", 1739, 354, 136, new Color(1f, .44f, .65f));
+            MakeRoundAction(hud, "Jab", "YayaFx_Toe", "普攻", "J", 1748, 156, 164, BlackHud);
+            MakeRoundAction(hud, "Skill", "YayaFx_Raven", "鸦袭", "K", 1555, 125, 124, EnergyHud);
+            MakeRoundAction(hud, "SkillTwo", "YayaFx_Talon", "掠羽", "L", 1573, 280, 124, WhiteHud);
+            MakeRoundAction(hud, "Ultimate", "YayaFx_Flock", "鸦宴", "I", 1739, 354, 136, new Color(1f, .44f, .65f));
             MakeHudLink(hud, "Back", "返回大厅", 51);
             MakeHudLink(hud, "Reconnect", "重连", 220).gameObject.SetActive(false);
 
             // 单独的桌面键盘图例在缩小的 Game View 中仍有足够字号。
             RectTransform guide = HudBox("KeyboardGuide", hud, 408, 26, 1040, 52);
             HudImage(guide, "HealthFrame");
-            Label("Keys", guide, "A/D 移动    SPACE 跳跃    J 普攻    K 贯枪    L 坠枪    I 赤阵",
+            Label("Keys", guide, "A/D 移动    SPACE 跳跃    J 普攻    K 鸦袭    L 掠羽    I 鸦宴",
                 .025f, 0, .975f, 1, 28);
             HudText("InputFeedback", hud, "", 460, 82, 960, 58, 30);
         }
 
-        // 先建立双席的头像框与朝向，角色装配阶段把白方图像绑定到鸦鸦差分。
+        // 两席头像使用同一张鸦鸦待机图，按席位方向镜像并添加各自的编号。
         private static void MakePortrait(Transform hud, string name, string seat, float x, Color tint, bool mirror)
         {
             HudImage(HudBox(name + "Frame", hud, x, 939, 96, 96), "PortraitFrame").color = tint;
-            Image art = HudImage(HudBox(name, hud, x + 5, 944, 86, 86), "EmberPortrait");
-            if (mirror)
-            {
-                art.sprite = LoadYayaDuelPortrait(YayaPortraitExpressions[0]);
-            }
+            Image art = HudBox(name, hud, x + 5, 944, 86, 86).gameObject.AddComponent<Image>();
+            art.sprite = LoadYayaDuelPortrait(YayaPortraitExpressions[0]);
+            art.raycastTarget = false;
             art.rectTransform.localScale = new Vector3(mirror ? -1 : 1, 1, 1);
             RectTransform badge = HudBox(name + "Badge", hud, x + 24, 923, 48, 27);
             HudImage(badge, "SmallFrame").color = tint;
             Label("Seat", badge, seat, 0, 0, 1, 1, 18);
         }
 
-        // 字体的行高由实际字形决定。使用单行缩放来适配长昵称和中文字体，避免整行被裁掉。
+        // 两席先显示鸦鸦，进局后补上玩家昵称，按单行缩放适配可用宽度。
         private static Text MakePlayerName(Transform hud, string name, float x, TextAnchor alignment, Color tint)
         {
-            Text label = HudText(name, hud, "绯焰", x, 1018, 701, 50, 28, alignment);
+            Text label = HudText(name, hud, "鸦鸦", x, 1018, 701, 50, 28, alignment);
             label.resizeTextForBestFit = true;
             label.resizeTextMinSize = 17;
             label.resizeTextMaxSize = 28;
@@ -254,7 +251,7 @@ namespace RevGame.Editor
             Image disc = HudImage(rect, "Disc", true);
             rect.gameObject.AddComponent<DuelCircleHitArea>();
             HudImage(Rect("Ring", rect, 0, 0, 1, 1), "Ring").color = tint;
-            HudImage(Rect("Icon", rect, .29f, .41f, .71f, .83f), glyph);
+            HudImage(Rect("Icon", rect, .29f, .41f, .71f, .83f), glyph).preserveAspect = true;
             Label("Caption", rect, caption, .10f, .20f, .90f, .45f, diameter > 140 ? 27 : 21);
             Label("Key", rect, key, .25f, .075f, .75f, .25f, 24).color = tint;
             Button button = rect.gameObject.AddComponent<DuelPressButton>();

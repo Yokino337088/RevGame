@@ -348,12 +348,15 @@ internal static class Program
         prediction.Rebase(replica, reply, reply.frames.Length > 0 ? reply.frames[^1] : 0);
     }
 
-    // 复用选角、加载和就绪协议。两个副本的初始角色与各自测试的默认阵容一致。
+    // 先确认旧角色无法锁席，再走双鸦鸦的正式确认、加载和就绪协议。
     private static void ReadyBoth(DuelAuthority authority, bool networked = true)
     {
         Exchange(authority, 1, DuelAuthority.PrepVisible, 0, networked: networked);
         Exchange(authority, 2, DuelAuthority.PrepVisible, 0, networked: networked);
-        Exchange(authority, 1, DuelAuthority.PrepLock, 0, packed: (int)DuelRole.Ember, networked: networked);
+        DuelReply retiredRole = Exchange(authority, 1, DuelAuthority.PrepLock, 0, packed: (int)DuelRole.Ember, networked: networked);
+        Check(retiredRole.preparation is { phase: DuelPrepPhase.Choosing, locked: 0, black: DuelRole.Yaya, white: DuelRole.Yaya },
+            "旧角色编号不能改变默认阵容或锁定席位");
+        Exchange(authority, 1, DuelAuthority.PrepLock, 0, packed: (int)DuelRole.Yaya, networked: networked);
         Exchange(authority, 2, DuelAuthority.PrepLock, 0, packed: (int)DuelRole.Yaya, networked: networked);
         Exchange(authority, 1, DuelAuthority.PrepLoad, 0, packed: 100, networked: networked);
         Exchange(authority, 2, DuelAuthority.PrepLoad, 0, packed: 100, networked: networked);

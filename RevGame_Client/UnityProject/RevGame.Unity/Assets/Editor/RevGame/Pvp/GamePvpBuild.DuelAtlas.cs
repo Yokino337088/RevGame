@@ -44,7 +44,7 @@ namespace RevGame.Editor
             public Vector2 normalizedPivot;
         }
 
-        /// <summary>确认原来的切片和动画引用，生成内置决斗角色图集并实际打包读回。</summary>
+        /// <summary>核对两席共用鸦鸦序列后，保存并实打图集，确认每张切片都可绑定。</summary>
         public static DuelFighterAtlasResult BuildDuelFighterAtlas()
         {
             if (EditorApplication.isPlayingOrWillChangePlaymode)
@@ -52,15 +52,13 @@ namespace RevGame.Editor
                 throw new InvalidOperationException("请在编辑模式构建决斗角色图集。");
             }
 
-            Sprite[][] ember = DuelPoses.Select(LoadDuelSequence).ToArray();
             Sprite[][] yaya = DuelPoses.Select(LoadYayaDuelSequence).ToArray();
-            var groups = new List<DuelAnimationSequenceResult>(DuelPoses.Length * 2);
-            ValidateDuelRoleClips(EmberClipPrefix, EmberPrefix, ember, groups);
-            ValidateDuelRoleClips(YayaPrefix, YayaPrefix, yaya, groups);
-            Sprite[] strikes = ValidateDuelSceneAnimationSlices(ember, yaya);
+            var groups = new List<DuelAnimationSequenceResult>(DuelPoses.Length);
+            ValidateDuelRoleClips(yaya, groups);
+            Sprite[] strikes = ValidateDuelSceneAnimationSlices(yaya);
 
             // 内置图集只收角色和出招图片。小镇是独立长图，HUD 另走按局加载的专用图集。
-            Sprite[] sprites = ember.Concat(yaya).SelectMany(frames => frames)
+            Sprite[] sprites = yaya.SelectMany(frames => frames)
                 .Concat(strikes)
                 .Distinct().ToArray();
             string[] paths = sprites.Select(AssetDatabase.GetAssetPath).OrderBy(path => path, StringComparer.Ordinal).ToArray();
@@ -85,8 +83,8 @@ namespace RevGame.Editor
             };
         }
 
-        // 原始图片是一图一帧。核对角色归属、居中轴心和同角色画布尺寸。
-        private static void ValidateDuelRoleClips(string role, string prefix, Sprite[][] sequences, List<DuelAnimationSequenceResult> groups)
+        // 核对鸦鸦切片的画布、轴心和内置归属，每个姿态记录一份动画结果。
+        private static void ValidateDuelRoleClips(Sprite[][] sequences, List<DuelAnimationSequenceResult> groups)
         {
             Vector2 size = sequences[0][0].rect.size;
             float pixelsPerUnit = sequences[0][0].pixelsPerUnit;
@@ -99,7 +97,7 @@ namespace RevGame.Editor
                     Sprite sprite = frames[frame];
                     string path = AssetDatabase.GetAssetPath(sprite);
                     var importer = AssetImporter.GetAtPath(path) as TextureImporter;
-                    if (!sprite.name.StartsWith(prefix + "_", StringComparison.Ordinal) ||
+                    if (!sprite.name.StartsWith(YayaPrefix + "_", StringComparison.Ordinal) ||
                         sprite.rect.size != size || sprite.pivot != size * .5f || !Mathf.Approximately(sprite.pixelsPerUnit, pixelsPerUnit) ||
                         importer == null || importer.textureType != TextureImporterType.Sprite ||
                         importer.spriteImportMode != SpriteImportMode.Single || importer.mipmapEnabled ||
@@ -108,12 +106,12 @@ namespace RevGame.Editor
                         throw new InvalidOperationException("决斗切片的顺序、画布、轴心或归属异常：" + path);
                     }
                 }
-                string clipPath = $"{DuelAnimationFolder}/{role}_{pose}.anim";
+                string clipPath = $"{DuelAnimationFolder}/{YayaPrefix}_{pose}.anim";
                 AnimationClip clip = AssetDatabase.LoadAssetAtPath<AnimationClip>(clipPath);
-                ValidateDuelClipFrames(clip, frames, clipPath, role, pose);
+                ValidateDuelClipFrames(clip, frames, clipPath, pose);
                 groups.Add(new DuelAnimationSequenceResult
                 {
-                    role = role, pose = pose, clipPath = clipPath, frameCount = frames.Length,
+                    role = YayaPrefix, pose = pose, clipPath = clipPath, frameCount = frames.Length,
                     durationSeconds = clip.length,
                     firstSprite = frames[0].name, lastSprite = frames[frames.Length - 1].name,
                     frameSize = size, normalizedPivot = new Vector2(.5f, .5f)
@@ -121,21 +119,22 @@ namespace RevGame.Editor
             }
         }
 
-        // 校验资源曲线、循环帧数和落屏表同序。循环末尾只留一个正常采样间隔。
-        private static void ValidateDuelClipFrames(AnimationClip clip, Sprite[] frames, string clipPath, string role, string pose)
+        // 校验鸦鸦片段的采样率和关键帧，确保落屏顺序与制作配方一致。
+        private static void ValidateDuelClipFrames(AnimationClip clip, Sprite[] frames, string clipPath, string pose)
         {
             var binding = EditorCurveBinding.PPtrCurve("", typeof(Image), "m_Sprite");
             ObjectReferenceKeyframe[] keys = clip == null ? null : AnimationUtility.GetObjectReferenceCurve(clip, binding);
-            int frameRate = DuelClipFrameRate(role, pose);
-            ObjectReferenceKeyframe[] expected = BuildDuelClipKeys(role, pose, frames, frameRate);
+            int frameRate = DuelClipFrameRate(pose);
+            ObjectReferenceKeyframe[] expected = BuildDuelClipKeys(pose, frames, frameRate);
             if (keys == null || keys.Length != expected.Length || !clip.legacy || !Mathf.Approximately(clip.frameRate, frameRate))
             {
                 throw new InvalidOperationException("决斗动画帧表或采样率异常：" + clipPath);
             }
-            float[] ends = pose == "Idle" ? DuelIdleFrameEnds(role) : Array.Empty<float>();
-            if (ends.Length > 0 && (clip.wrapMode != WrapMode.Loop || !Mathf.Approximately(clip.length, ends[ends.Length - 1])))
+            bool loop = pose == "Idle" || pose == "Run";
+            if (clip.wrapMode != (loop ? WrapMode.Loop : WrapMode.ClampForever) ||
+                (loop && !Mathf.Approximately(clip.length, frames.Length / (float)frameRate)))
             {
-                throw new InvalidOperationException("决斗待机循环长度异常：" + clipPath);
+                throw new InvalidOperationException("鸦鸦片段循环设置或长度异常：" + clipPath);
             }
             for (int i = 0; i < keys.Length; i++)
             {
@@ -146,8 +145,8 @@ namespace RevGame.Editor
             }
         }
 
-        // 只读打开目标场景，核对真正上屏的换帧表，不重建场景或覆盖原资产。
-        private static Sprite[] ValidateDuelSceneAnimationSlices(Sprite[][] ember, Sprite[][] yaya)
+        // 只读打开决斗场景，核对两席绑定相同的鸦鸦换帧表、材质和音效，结束后恢复原场景。
+        private static Sprite[] ValidateDuelSceneAnimationSlices(Sprite[][] yaya)
         {
             Scene prior = SceneManager.GetActiveScene();
             Scene scene = SceneManager.GetSceneByPath(DuelScenePath);
@@ -163,28 +162,22 @@ namespace RevGame.Editor
             try
             {
                 PvpDuelView view = scene.GetRootGameObjects().SelectMany(root => root.GetComponentsInChildren<PvpDuelView>(true)).Single();
-                ValidateDuelActorAnimationSlices(view.FirstAnimator, ember, ArcadeContactKeys, EmberClipPrefix);
-                ValidateDuelActorAnimationSlices(view.SecondAnimator, yaya, YayaContactKeys, YayaPrefix);
+                ValidateDuelActorAnimationSlices(view.FirstAnimator, yaya);
+                ValidateDuelActorAnimationSlices(view.SecondAnimator, yaya);
                 DuelStrikeEffects effects = view.Effects;
-                if (AssetDatabase.GetAssetPath(effects.First.material) != EmberDuelMaterial ||
-                    effects.FirstImpact.material != effects.First.material || !effects.First.material.shader.isSupported)
-                {
-                    throw new InvalidOperationException("黑方红枪 Shader 与共用材质绑定异常。");
-                }
+                Material material = effects.First.material;
                 if (!effects.YayaCastSounds.SequenceEqual(YayaCastAudio.Select(LoadYayaDuelAudio)) ||
                     !effects.YayaImpactSounds.SequenceEqual(YayaImpactAudio.Select(LoadYayaDuelAudio)) ||
-                    AssetDatabase.GetAssetPath(effects.Second.material) != YayaDuelMaterial ||
-                    effects.SecondImpact.material != effects.Second.material ||
-                    !effects.Second.material.shader.isSupported ||
+                    AssetDatabase.GetAssetPath(material) != YayaDuelMaterial || !material.shader.isSupported ||
+                    effects.FirstImpact.material != material || effects.Second.material != material ||
+                    effects.SecondImpact.material != material ||
                     view.CameraRig.Backdrop.sprite != LoadArcadeSprite("SunlitTownArena") ||
                     !effects.ParticlePrefab.material.shader.isSupported ||
                     view.GetComponentsInChildren<Button>(true).Length != 0)
                 {
                     throw new InvalidOperationException("决斗场景中的特效、背景或 HUD 分层绑定异常。");
                 }
-                return ValidateStrikeTable(effects.CastSequences, EmberPrefix, "Cast", EmberCastArt)
-                    .Concat(ValidateStrikeTable(effects.ImpactSequences, EmberPrefix, "Hit", ImpactArt))
-                    .Concat(ValidateStrikeTable(effects.YayaCastSequences, YayaPrefix, "Cast", YayaCastArt))
+                return ValidateStrikeTable(effects.YayaCastSequences, YayaPrefix, "Cast", YayaCastArt)
                     .Concat(ValidateStrikeTable(effects.YayaImpactSequences, YayaPrefix, "Hit", ImpactArt)).ToArray();
             }
             finally
@@ -218,8 +211,8 @@ namespace RevGame.Editor
             return table.SelectMany(sequence => sequence.Frames).ToArray();
         }
 
-        // 读回两席的待机节奏、序列帧和接触关键帧，避免编辑器配方与场景绑定不一致。
-        private static void ValidateDuelActorAnimationSlices(DuelActorAnimator actor, Sprite[][] sequences, int[] contactKeys, string role)
+        // 逐席核对鸦鸦的 Legacy 片段、序列和接触帧，避免黑白场景引用在重建后分叉。
+        private static void ValidateDuelActorAnimationSlices(DuelActorAnimator actor, Sprite[][] sequences)
         {
             using var data = new SerializedObject(actor);
             SerializedProperty poses = data.FindProperty("spriteSequences");
@@ -227,23 +220,19 @@ namespace RevGame.Editor
             {
                 throw new InvalidOperationException("决斗场景角色缺少切片换帧表：" + actor.name);
             }
-            float[] expectedEnds = DuelIdleFrameEnds(role);
-            SerializedProperty idleEnds = data.FindProperty("idleFrameEndSeconds");
-            if (idleEnds == null || idleEnds.arraySize != expectedEnds.Length)
+            if (data.FindProperty("idleFrameEndSeconds").arraySize != 0)
             {
-                throw new InvalidOperationException("决斗场景待机时间表数量异常：" + actor.name);
+                throw new InvalidOperationException("鸦鸦待机应沿用片段的固定采样率：" + actor.name);
             }
-            for (int i = 0; i < expectedEnds.Length; i++)
-            {
-                if (!Mathf.Approximately(idleEnds.GetArrayElementAtIndex(i).floatValue, expectedEnds[i]))
-                {
-                    throw new InvalidOperationException("决斗场景待机时间异常：" + actor.name + " 第 " + i + " 帧");
-                }
-            }
+            var clips = AnimationUtility.GetAnimationClips(actor.gameObject).Select(AssetDatabase.GetAssetPath).ToHashSet();
             for (int i = 0; i < sequences.Length; i++)
             {
+                if (!clips.Contains($"{DuelAnimationFolder}/{YayaPrefix}_{DuelPoses[i]}.anim"))
+                {
+                    throw new InvalidOperationException("决斗场景角色片段绑定异常：" + actor.name + "/" + DuelPoses[i]);
+                }
                 SerializedProperty pose = poses.GetArrayElementAtIndex(i);
-                if (pose.FindPropertyRelative("contactIndex").intValue != contactKeys[i])
+                if (pose.FindPropertyRelative("contactIndex").intValue != YayaContactKeys[i])
                 {
                     throw new InvalidOperationException("决斗接触关键帧异常：" + actor.name + "/" + DuelPoses[i]);
                 }

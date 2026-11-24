@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 94661106
+CRC: 875149559
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 79a94454a9852f2b2be0cfc0c675b8e4
+    Hash: 6a9df99baf564bdda5dea4a7e0f36ded
   TypeTreeHash:
     serializedVersion: 2
     Hash: 033fafe2c9f6c610c3a734393882fd4c
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 79a94454a9852f2b2be0cfc0c675b8e4
+    Hash: 6a9df99baf564bdda5dea4a7e0f36ded
 HashAppended: 0
 ClassTypes:
 - Class: 28
@@ -20,7 +20,6 @@ ClassTypes:
   Script: {instanceID: 0}
 SerializeReferenceClassIdentifiers: []
 Assets:
-- Assets/GameRes/Art/UI/PvpDuelPrep/DuelEmber.png
 - Assets/GameRes/Art/UI/PvpDuelPrep/DuelAtrium.png
 - Assets/GameRes/Art/UI/PvpDuelPrep/DuelMeter.png
 - Assets/GameRes/Art/UI/PvpDuelPrep/DuelYaya.png

@@ -2,10 +2,12 @@ using System;
 
 namespace RevGame.Pvp.Duel
 {
-    /// <summary>角色是独立于黑白座位的开局配置。编号同时供 LAN、Fantasy 与录像使用。</summary>
+    /// <summary>决斗角色编号供 LAN、Fantasy 与录像使用。可上场的阵容由准备流程校验。</summary>
     public enum DuelRole
     {
+        // 旧录像及原生模拟仍用这个编号还原历史规则。
         Ember = 1,
+        // 新决斗两席共用的角色。
         Yaya = 2
     }
 
@@ -27,8 +29,9 @@ namespace RevGame.Pvp.Duel
         public int revision;
         // 当前阶段，客户端不得自行推进。
         public DuelPrepPhase phase;
-        // 两席独立角色，可以相同。
+        // 黑方的权威角色编号，新局固定为鸦鸦。
         public DuelRole black;
+        // 白方的权威角色编号，新局固定为鸦鸦。
         public DuelRole white;
         // 低两位按黑白顺序表示已经锁定。
         public int locked;
@@ -61,7 +64,7 @@ namespace RevGame.Pvp.Duel
         // 这局的可见状态。返回快照时复制，网络不得持有可变原件。
         private readonly DuelPrepState _state = new DuelPrepState
         {
-            revision = 1, phase = DuelPrepPhase.Waiting, black = DuelRole.Ember, white = DuelRole.Yaya
+            revision = 1, phase = DuelPrepPhase.Waiting, black = DuelRole.Yaya, white = DuelRole.Yaya
         };
         // 本地电脑席为 1 或 2；网络局没有虚拟席。
         private readonly int _computer;
@@ -81,7 +84,7 @@ namespace RevGame.Pvp.Duel
             }
         }
 
-        // 只有在当前两份面板就绪后才开始完整的选择窗口，超时保留各席最后一次有效预选。
+        // 两份面板就绪后开始确认倒计时，超时由权威以鸦鸦锁定仍未确认的席位。
         internal void Tick(long now)
         {
             if (_state.phase == DuelPrepPhase.Waiting && _present == BothSeats)
@@ -111,7 +114,7 @@ namespace RevGame.Pvp.Duel
             }
         }
 
-        // 接收认证席位的操作。晚到的预选、重复锁定、退步的进度均不改变权威结果。
+        // 接收认证席位的操作。只有确认鸦鸦可以锁席，重复确认和退步的加载进度均不写入。
         internal void Apply(int side, int operation, int value, long now)
         {
             Tick(now);
@@ -124,26 +127,11 @@ namespace RevGame.Pvp.Duel
             {
                 _present |= bit;
             }
-            else if ((operation == DuelAuthority.PrepPick || operation == DuelAuthority.PrepLock) &&
-                _state.phase == DuelPrepPhase.Choosing && (_state.locked & bit) == 0 && ValidRole((DuelRole)value))
+            else if (operation == DuelAuthority.PrepLock && _state.phase == DuelPrepPhase.Choosing &&
+                (_state.locked & bit) == 0 && CanSelectRole((DuelRole)value))
             {
-                bool changed = _state.Role(side) != (DuelRole)value || operation == DuelAuthority.PrepLock;
-                if (changed)
-                {
-                    if (side == 1)
-                    {
-                        _state.black = (DuelRole)value;
-                    }
-                    else
-                    {
-                        _state.white = (DuelRole)value;
-                    }
-                    if (operation == DuelAuthority.PrepLock)
-                    {
-                        _state.locked |= bit;
-                    }
-                    _state.revision++;
-                }
+                _state.locked |= bit;
+                _state.revision++;
             }
             else if (operation == DuelAuthority.PrepLoad && _state.phase == DuelPrepPhase.Loading &&
                 value <= 100 && value > _state.Progress(side))
@@ -180,7 +168,13 @@ namespace RevGame.Pvp.Duel
             _deadline = deadline;
         }
 
-        // 协议、录像和开局配置都只允许已制作的两个角色。
+        // 当前阵容只允许鸦鸦确认参战。旧客户端发送的其它编号不会锁席。
+        internal static bool CanSelectRole(DuelRole role)
+        {
+            return role == DuelRole.Yaya;
+        }
+
+        // 录像解码和原生模拟仍识别历史角色编号，以原有规则重放旧数据。
         internal static bool ValidRole(DuelRole role)
         {
             return role == DuelRole.Ember || role == DuelRole.Yaya;

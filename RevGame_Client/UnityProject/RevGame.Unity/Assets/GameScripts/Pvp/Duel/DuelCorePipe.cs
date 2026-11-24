@@ -139,7 +139,8 @@ namespace RevGame.Pvp.Duel
         public DuelSnapshot Snapshot { get; private set; }
 
         // 创建句柄、提交版本化开局配置并准备初始显示值；配置失败时释放句柄。
-        public DuelCorePipe(string duelId, DuelRole firstRole = DuelRole.Ember, DuelRole secondRole = DuelRole.Yaya)
+        /// <summary>为新局建立双鸦鸦原生世界。恢复历史录像时传入录像里的两个角色编号。</summary>
+        public DuelCorePipe(string duelId, DuelRole firstRole = DuelRole.Yaya, DuelRole secondRole = DuelRole.Yaya)
         {
             if (string.IsNullOrEmpty(duelId))
             {

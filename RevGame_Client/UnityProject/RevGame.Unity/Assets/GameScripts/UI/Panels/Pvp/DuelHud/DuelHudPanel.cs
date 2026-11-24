@@ -15,11 +15,9 @@ namespace RevGame.UI
         internal DuelSnapshot Frame;
         // 本机座位决定按键名称及胜负提示。
         internal GoSide Seat;
-        // 选角在入场时锁定，镜像局可让两席共用同一角色素材。
-        internal bool BlackYaya, WhiteYaya;
         // 鸦鸦表情由角色当前姿态计算，值域为立绘差分表的 0 至 4。
         internal int BlackExpression, WhiteExpression;
-        // 权威座位名，面板只有名称或选角变化时才拼接文字。
+        // 权威座位名，面板只有名称变化时才拼接文字。
         internal string BlackName, WhiteName;
         // 提示文字由视图根据已确认的连接、胜负和输入回执生成。
         internal string Banner, Feedback;
@@ -31,9 +29,7 @@ namespace RevGame.UI
     [RevUIPanel("UI/Panel/Pvp/DuelHud", RevUILayer.Normal, InBackStack = false, CacheMode = RevUICacheMode.DestroyOnClose)]
     public sealed class DuelHudPanel : RevUIPanel<DuelHudData>
     {
-        // 预制体直接引用专用图集中的立绘，面板开着期间由 GameFlow 持有图集租约。
-        [SerializeField] internal Sprite EmberPortrait;
-        // 按待机、专注、微笑、受击、倒地排列。
+        // 两席共用专用图集中的待机、专注、微笑、受击、倒地差分，GameFlow 持有图集租约。
         [SerializeField] internal Sprite[] YayaPortraits;
         // 两侧仪表分别填充；美术层级由预制体定义。
         [RevBind("BlackHealth/Fill")] private Image _firstHealth;
@@ -50,15 +46,11 @@ namespace RevGame.UI
         [RevBind("Clock")] internal Text Clock;
         [RevBind("Banner")] private Text _banner;
         [RevBind("InputFeedback")] internal Text InputFeedback;
-        // 两席头像使用固定朝向，选角只替换 Sprite。
+        // 两席头像使用固定朝向，战斗按当前表情替换 Sprite。
         [RevBind("BlackPortrait")] internal Image FirstPortrait;
         [RevBind("WhitePortrait")] internal Image SecondPortrait;
-        // 技能名跟随本席选角，同一个按钮始终发送同一输入槽。
-        [RevBind("Skill/Caption")] private Text _skill;
-        [RevBind("SkillTwo/Caption")] private Text _skillTwo;
-        [RevBind("Ultimate/Caption")] private Text _ultimate;
+        // 桌面显示键位说明，移动端隐藏。
         [RevBind("KeyboardGuide")] internal GameObject KeyboardGuide;
-        [RevBind("KeyboardGuide/Keys")] private Text _keyboardLegend;
         // UI 测试复用实际控件发送指针，玩家回调由特性注册。
         [RevBind("MoveStick")] internal DuelMoveStick MoveStick;
         [RevBind("Jump")] internal Button Jump;
@@ -78,10 +70,8 @@ namespace RevGame.UI
         private DuelSnapshot _painted;
         private bool _hasPainted;
         internal bool ResultVisible => _result != null && _result.gameObject.activeSelf;
-        // 本席控制说明在选角或座位变化时更新。
-        private (GoSide seat, bool yaya) _legend;
         // 首次确认名称或名称改变时更新对应标签。
-        private (string black, string white, bool blackYaya, bool whiteYaya) _names;
+        private (string black, string white) _names;
 
         /// <summary>绑定横屏安全框和本平台的键盘图例，控件布局来自预制体。</summary>
         protected override void OnBindView()
@@ -142,16 +132,15 @@ namespace RevGame.UI
             }
             _painted = frame;
             _hasPainted = true;
-            var names = (Data.BlackName, Data.WhiteName, Data.BlackYaya, Data.WhiteYaya);
+            var names = (Data.BlackName, Data.WhiteName);
             if (_names != names)
             {
                 _names = names;
-                FirstName.text = (Data.BlackYaya ? "鸦鸦" : "绯焰") + "  /  " + Data.BlackName;
-                SecondName.text = Data.WhiteName + "  /  " + (Data.WhiteYaya ? "鸦鸦" : "绯焰");
+                FirstName.text = "鸦鸦  /  " + Data.BlackName;
+                SecondName.text = Data.WhiteName + "  /  鸦鸦";
             }
-            PaintPortrait(FirstPortrait, Data.BlackYaya, Data.BlackExpression);
-            PaintPortrait(SecondPortrait, Data.WhiteYaya, Data.WhiteExpression);
-            PaintLegend();
+            PaintPortrait(FirstPortrait, Data.BlackExpression);
+            PaintPortrait(SecondPortrait, Data.WhiteExpression);
             _reconnect.gameObject.SetActive(Data.CanReconnect);
             if (_banner.text != Data.Banner)
             {
@@ -188,9 +177,9 @@ namespace RevGame.UI
         }
 
         // 只有差分变化才替换图片，角色落屏帧率不会反复触发 HUD 的图形重建。
-        private void PaintPortrait(Image image, bool yaya, int expression)
+        private void PaintPortrait(Image image, int expression)
         {
-            Sprite sprite = yaya ? YayaPortraits[expression] : EmberPortrait;
+            Sprite sprite = YayaPortraits[expression];
             if (image.sprite != sprite)
             {
                 image.sprite = sprite;
@@ -206,33 +195,15 @@ namespace RevGame.UI
             }
         }
 
-        // 本席阵容改变时才更新按钮和桌面图例。
-        private void PaintLegend()
-        {
-            bool yaya = Data.Seat == GoSide.White ? Data.WhiteYaya : Data.BlackYaya;
-            var legend = (Data.Seat, yaya);
-            if (Data.Seat == GoSide.Empty || _legend == legend)
-            {
-                return;
-            }
-            _legend = legend;
-            _skill.text = ActionCaption(2, yaya);
-            _skillTwo.text = ActionCaption(4, yaya);
-            _ultimate.text = ActionCaption(3, yaya);
-            _keyboardLegend.text = yaya
-                ? "A/D 移动    SPACE 跳跃    J 普攻    K 鸦袭    L 掠羽    I 鸦宴"
-                : "A/D 移动    SPACE 跳跃    J 普攻    K 贯枪    L 坠枪    I 赤阵";
-        }
-
-        // 按钮说明和输入反馈使用同一组动作名称。
-        internal static string ActionCaption(int action, bool yaya)
+        // 将原生输入槽翻译为鸦鸦的按钮名称。动作 0 是独立的跳跃输入。
+        internal static string ActionCaption(int action)
         {
             return action switch
             {
                 1 => "普攻",
-                2 => yaya ? "鸦袭" : "贯枪",
-                3 => yaya ? "鸦宴" : "赤阵",
-                4 => yaya ? "掠羽" : "坠枪",
+                2 => "鸦袭",
+                3 => "鸦宴",
+                4 => "掠羽",
                 _ => "跳跃"
             };
         }

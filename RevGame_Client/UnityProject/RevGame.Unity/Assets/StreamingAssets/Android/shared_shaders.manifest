@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 1264502189
+CRC: 1946653618
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 3310d0bd6fcc351a77d7e6baf9e0b86d
+    Hash: c4b1428d7d15630aeb97a0d5f6cdd79f
   TypeTreeHash:
     serializedVersion: 2
     Hash: 0df1dec30b5d061d422d3e6493d27647
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 3310d0bd6fcc351a77d7e6baf9e0b86d
+    Hash: c4b1428d7d15630aeb97a0d5f6cdd79f
 HashAppended: 0
 ClassTypes:
 - Class: 48
@@ -19,7 +19,6 @@ Assets:
 - Assets/GameShader/Endless/EndlessGrid.shader
 - Assets/GameShader/Endless/EndlessThrust.shader
 - Assets/GameShader/Endless/EndlessShieldBubble.shader
-- Assets/GameShader/UI/EmberDuelSpear.shader
 - Assets/GameShader/Pvp/PvpGoBoard.shader
 - Assets/GameShader/Pvp/PvpDuelArenaEnergy.shader
 - Assets/GameShader/UI/ArcanePanel.shader

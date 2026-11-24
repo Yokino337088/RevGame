@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 1450112436
+CRC: 279560841
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 6298a77ec4dedf8e078f8a0055ae662f
+    Hash: 420387da26d39a983cda4c429db1c4b2
   TypeTreeHash:
     serializedVersion: 2
     Hash: 033fafe2c9f6c610c3a734393882fd4c
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 6298a77ec4dedf8e078f8a0055ae662f
+    Hash: 420387da26d39a983cda4c429db1c4b2
 HashAppended: 0
 ClassTypes:
 - Class: 28
@@ -21,27 +21,26 @@ ClassTypes:
 SerializeReferenceClassIdentifiers: []
 Assets:
 - Assets/GameRes/Art/UI/PvpDuelHud/Controls/MeterFill.png
-- Assets/GameRes/Art/UI/PvpDuelHud/Controls/Thrust.png
 - Assets/GameRes/Art/UI/PvpDuelHud/Controls/Disc.png
 - Assets/GameRes/Art/UI/PvpDuelHud/Portrait/Yaya_Portrait_28.png
-- Assets/GameRes/Art/UI/PvpDuelHud/Controls/Plunge.png
-- Assets/GameRes/Art/UI/PvpDuelHud/Controls/Jab.png
 - Assets/GameRes/Art/UI/PvpDuelHud/Controls/HealthFrame.png
 - Assets/GameRes/Art/UI/PvpDuelHud/Portrait/Yaya_Portrait_02.png
 - Assets/GameRes/Art/UI/PvpDuelHud/Controls/ClockFrame.png
 - Assets/GameRes/Art/UI/PvpDuelHud/Portrait/Yaya_Portrait_22.png
 - Assets/GameRes/Art/UI/PvpDuelHud/Controls/EnergyFrame.png
-- Assets/GameRes/Art/UI/PvpDuelHud/Controls/Crimson.png
+- Assets/GameRes/Art/UI/PvpDuelHud/Controls/YayaFx_Raven.png
 - Assets/GameRes/Art/UI/PvpDuelHud/Portrait/Yaya_Portrait_19.png
-- Assets/GameRes/Art/UI/PvpDuelHud/Controls/EmberPortrait.png
+- Assets/GameRes/Art/UI/PvpDuelHud/Controls/YayaFx_Flock.png
 - Assets/GameRes/Art/UI/PvpDuelHud/Portrait/Yaya_Portrait_23.png
 - Assets/GameRes/Art/UI/PvpDuelHud/DuelVictoryArt.png
 - Assets/GameRes/Art/UI/PvpDuelHud/Controls/SmallFrame.png
 - Assets/GameRes/Atlases/DuelHud.spriteatlasv2
 - Assets/GameRes/Art/UI/PvpDuelHud/Controls/Ring.png
 - Assets/GameRes/Art/UI/PvpDuelHud/Controls/PortraitFrame.png
+- Assets/GameRes/Art/UI/PvpDuelHud/Controls/YayaFx_Talon.png
 - Assets/GameRes/Art/UI/PvpDuelHud/Controls/Dividers.png
 - Assets/GameRes/Art/UI/PvpDuelHud/Controls/StickKnob.png
 - Assets/GameRes/Art/UI/PvpDuelHud/Controls/StickBase.png
+- Assets/GameRes/Art/UI/PvpDuelHud/Controls/YayaFx_Toe.png
 - Assets/GameRes/Art/UI/PvpDuelHud/Controls/Jump.png
 Dependencies: []

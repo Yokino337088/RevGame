@@ -73,7 +73,6 @@ namespace Revolution
         public const string Art_Pvp_Duel = "Art/Pvp/Duel/";
         public const string Art_Pvp_Duel_Animations = "Art/Pvp/Duel/Animations/";
         public const string Art_Pvp_Duel_Arcade = "Art/Pvp/Duel/Arcade/";
-        public const string Art_Pvp_Duel_Arcade_Audio = "Art/Pvp/Duel/Arcade/Audio/";
         public const string Art_Pvp_Duel_Arcade_StrikeFrames = "Art/Pvp/Duel/Arcade/StrikeFrames/";
         public const string Art_Pvp_Duel_Arcade_Yaya = "Art/Pvp/Duel/Arcade/Yaya/";
         public const string Art_Pvp_Duel_Arcade_Yaya_Audio = "Art/Pvp/Duel/Arcade/Yaya/Audio/";

@@ -101,7 +101,7 @@ namespace RevGame.Pvp
             return !releaseLoad && _guest.SelectDuelRole((DuelRole)role, confirm);
         }
 
-        // 无界面端没有 Unity 场景；仅在隔离测试里模拟它的加载进度，现场宿主仍需真实预加载。
+        // 隔离夹具默认确认两席鸦鸦。无界面端由夹具上报进度，可见宿主仍需真实预加载。
         private void DriveFixturePreparation()
         {
             _guest.ShowDuelSelection();
@@ -111,7 +111,7 @@ namespace RevGame.Pvp
             }
             if (!_manualPreparation)
             {
-                _host.SelectDuelRole(DuelRole.Ember, true);
+                _host.SelectDuelRole(DuelRole.Yaya, true);
                 _guest.SelectDuelRole(DuelRole.Yaya, true);
             }
             if (_visibleHost == null)

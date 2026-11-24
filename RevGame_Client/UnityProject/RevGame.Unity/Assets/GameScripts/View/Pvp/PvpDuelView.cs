@@ -79,12 +79,12 @@ namespace RevGame.View
         internal int LastHudActionForCheck { get; private set; }
 #endif
 
-        // 场景激活后先绑定角色资源和 RevUI，GameFlow 确认可画后才提交 Ready。
+        // 场景激活后绑定 HUD、生成席位徽记并预热特效，GameFlow 确认可画后才提交 Ready。
         internal void AttachHud(DuelHudPanel hud)
         {
             HudPanel = hud;
             hud.Attach(this);
-            BindDuelRoster();
+            BuildMirrorBadges();
             Effects.Prepare();
         }
 
@@ -187,7 +187,7 @@ namespace RevGame.View
         {
             DuelSnapshot state = service.DuelSnapshot;
             bool black = service.MySide == GoSide.Black;
-            string name = DuelHudPanel.ActionCaption(action, black ? _blackYaya : _whiteYaya);
+            string name = DuelHudPanel.ActionCaption(action);
             int energy = black ? state.FirstEnergy : state.SecondEnergy;
             int cost = action == 2 ? DuelConfig.SkillCost : action == 3 ? DuelConfig.UltimateCost : action == 4 ? DuelConfig.SkillTwoCost : 0;
             int stun = black ? state.FirstStun : state.SecondStun;
@@ -284,9 +284,9 @@ namespace RevGame.View
             PaintMirrorBadges();
             CameraRig.Paint(confirmedFirstX, confirmedSecondX, Time.unscaledDeltaTime);
             FirstAnimator.Paint(view.FirstHealth, firstAltitude, view.FirstAction, view.FirstStun, firstMove != 0, view.Frame, view.FirstAge, fraction,
-                _blackYaya ? SampleYayaJumpPose(0, firstAltitude) : -1);
+                SampleYayaJumpPose(0, firstAltitude));
             SecondAnimator.Paint(view.SecondHealth, secondAltitude, view.SecondAction, view.SecondStun, secondMove != 0, view.Frame, view.SecondAge, fraction,
-                _whiteYaya ? SampleYayaJumpPose(1, secondAltitude) : -1);
+                SampleYayaJumpPose(1, secondAltitude));
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
             FirstAnimator.ObserveSprite(First.sprite);
             SecondAnimator.ObserveSprite(Second.sprite);
@@ -307,7 +307,7 @@ namespace RevGame.View
             }
         }
 
-        // 只在权威播放帧或可见反馈改变时提交，避免渲染频率驱动 HUD 重建。
+        // 两席用同一张鸦鸦表情表。只在权威播放帧或可见反馈改变时提交 HUD。
         private void PaintHud(PvpService service, DuelSnapshot frame, bool newFrame, int firstMove, int secondMove)
         {
             bool disconnected = service.Mode != PvpConnectionMode.Local && !service.Connected;
@@ -317,8 +317,8 @@ namespace RevGame.View
                 !service.DuelBothReady ? "等待双方进入决斗场" :
                 frame.Result == 0 ? (frame.Frame < 18 ? "开打！" : "") :
                 frame.Result == 3 ? "平局" : (frame.Result == (int)service.MySide ? "决斗胜利" : "决斗落败");
-            int black = _blackYaya ? YayaExpression(frame.FirstAction, frame.FirstHealth, frame.FirstStun, frame.FirstY, firstMove != 0, FirstAnimator) : 0;
-            int white = _whiteYaya ? YayaExpression(frame.SecondAction, frame.SecondHealth, frame.SecondStun, frame.SecondY, secondMove != 0, SecondAnimator) : 0;
+            int black = YayaExpression(frame.FirstAction, frame.FirstHealth, frame.FirstStun, frame.FirstY, firstMove != 0, FirstAnimator);
+            int white = YayaExpression(frame.SecondAction, frame.SecondHealth, frame.SecondStun, frame.SecondY, secondMove != 0, SecondAnimator);
             if (!newFrame && _hudData.Banner == banner && _hudData.Feedback == _inputFeedback &&
                 _hudData.Seat == service.MySide && _hudData.CanReconnect == reconnect &&
                 _hudData.BlackName == service.BlackName && _hudData.WhiteName == service.WhiteName &&
@@ -328,8 +328,6 @@ namespace RevGame.View
             }
             _hudData.Frame = frame;
             _hudData.Seat = service.MySide;
-            _hudData.BlackYaya = _blackYaya;
-            _hudData.WhiteYaya = _whiteYaya;
             _hudData.BlackName = service.BlackName;
             _hudData.WhiteName = service.WhiteName;
             _hudData.BlackExpression = black;
@@ -406,16 +404,16 @@ namespace RevGame.View
 #endif
         }
 
-        // 命中特效和受击闪光读取同一逻辑帧，且与渲染频率无关。
+        // 两席特效使用鸦鸦的判定距离。命中和闪光都取自同一个权威逻辑帧。
         private void PaintDuelEvents(DuelSnapshot view, DuelSnapshot previous)
         {
             CameraRig.ObserveBounds(view.FirstX, view.SecondX);
             Vector2 first = new Vector2(view.FirstX * ArenaScale, view.FirstY * HeightScale);
             Vector2 second = new Vector2(view.SecondX * ArenaScale, view.SecondY * HeightScale);
             Effects.Observe(0, view.FirstAction, view.Frame - view.FirstAge, view.FirstFacing, first, second,
-                DuelConfig.ActionRange(_blackYaya, view.FirstAction) * ArenaScale);
+                DuelConfig.ActionRange(true, view.FirstAction) * ArenaScale);
             Effects.Observe(1, view.SecondAction, view.Frame - view.SecondAge, view.SecondFacing, second, first,
-                DuelConfig.ActionRange(_whiteYaya, view.SecondAction) * ArenaScale);
+                DuelConfig.ActionRange(true, view.SecondAction) * ArenaScale);
             float impact = 0;
             if (view.FirstHit != 0)
             {

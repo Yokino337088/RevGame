@@ -16,17 +16,13 @@ namespace RevGame.View
         public Image FirstImpact;
         // 白方打出的命中特效，定位到黑方的位置。
         public Image SecondImpact;
-        // 由内置图集直接绑定的起手和命中序列。两张动作表都以原生动作号减一索引。
-        public FrameSequence[] CastSequences, ImpactSequences;
-        // 动作 1～6 的不同原声音效。由内置决斗场景持有。
-        public AudioClip[] CastSounds;
-        // 普攻、技能、大招的三种命中音色。
-        public AudioClip[] ImpactSounds;
-        // 鸦鸦对应的两张动作表，镜像对局也按角色选用。
-        public FrameSequence[] YayaCastSequences, YayaImpactSequences;
-        // 白方每一段普攻和每种法术的短音效。
+        // 两席共用的起手序列，由内置图集绑定，以原生动作号减一索引。
+        public FrameSequence[] YayaCastSequences;
+        // 两席共用的命中序列，索引与起手表一致。
+        public FrameSequence[] YayaImpactSequences;
+        // 鸦鸦每段普攻和每种法术的起手短音效，按动作顺序排列。
         public AudioClip[] YayaCastSounds;
-        // 白方普攻、技能和大招命中时的不同音色。
+        // 两席共用的三种命中音色，按普攻、技能和大招排列。
         public AudioClip[] YayaImpactSounds;
         // 场景唯一的二维声源。退出场景即释放，音量读取 Revolution 门面。
         public AudioSource Speaker;
@@ -40,8 +36,7 @@ namespace RevGame.View
         private int _particleCount;
         // 上一次预热使用的模板存在时，离场才销毁对应池。
         private bool _poolReady;
-        // 两套技能粒子沿用红枪和夜羽的原画色系。
-        private static readonly Color EmberTint = new Color(1, .38f, .12f);
+        // 两席技能粒子共用鸦鸦的夜羽色系。
         private static readonly Color YayaTint = new Color(.58f, .89f, .26f);
         // 每个序列的首尾都留在同一透明画布；角色、技能和受击使用各自的美术节拍。
         public const int SequenceFrameCount = 5;
@@ -51,21 +46,6 @@ namespace RevGame.View
         public struct FrameSequence
         {
             public Sprite[] Frames;
-        }
-
-        // 角色配置在第 0 帧决定；默认值仍匹配原场景和编辑器预览。
-        private bool _firstYaya;
-        private bool _secondYaya = true;
-
-        // 收集两种原有共享材质后才覆盖图层，镜像对局仍不需要克隆材质。
-        internal void SetRoles(bool firstYaya, bool secondYaya)
-        {
-            Material ember = First.material;
-            Material yaya = Second.material;
-            _firstYaya = firstYaya;
-            _secondYaya = secondYaya;
-            First.material = FirstImpact.material = firstYaya ? yaya : ember;
-            Second.material = SecondImpact.material = secondYaya ? yaya : ember;
         }
 
         // 按座位存上一次已播放的动作起始帧。每席每帧最多开始一次动作。
@@ -81,10 +61,12 @@ namespace RevGame.View
         internal int SoundMaskForCheck { get; private set; }
         // 已展示的命中数量。
         internal int ImpactsForCheck { get; private set; }
-        // 白方实际落屏的动作、声音和命中单独计数，黑方同时出招不会污染验收。
-        internal int YayaCastMaskForCheck { get; private set; }
-        internal int YayaSoundMaskForCheck { get; private set; }
-        internal int YayaImpactsForCheck { get; private set; }
+        // 白方实际落屏的动作类型位，用于验证同角色对局的第二席。
+        internal int SecondCastMaskForCheck { get; private set; }
+        // 白方实际播放的动作音效类型位。
+        internal int SecondSoundMaskForCheck { get; private set; }
+        // 白方实际打出的命中特效次数。
+        internal int SecondImpactsForCheck { get; private set; }
         // 已借出的拖尾、碎光及冲击环数量，读取此值可确认真实短效产生。
         internal int SpawnedParticlesForCheck { get; private set; }
         // 在实际落屏时累计帧编号和成功提交给声源的命中级别。
@@ -101,9 +83,9 @@ namespace RevGame.View
             public float Duration;
             // 放大前的宽高，单位为擂台画布局部像素。
             public Vector2 Size;
-            // 出招锚点。坠枪拖尾从此处开始向地面拉出。
+            // 技能图层起点，拖尾沿出招方向从这里展开。
             public Vector2 Origin;
-            // 乌鸦或坠枪从起点到终点的画布偏移，单位像素。只改变渲染轨迹。
+            // 招式从起点到终点的画布偏移，单位像素。只改变渲染轨迹。
             public Vector2 Travel;
             // 乌鸦飞到终点所需秒数，以已确认的命中年龄对齐。
             public float TravelSeconds;
@@ -112,7 +94,7 @@ namespace RevGame.View
             // 播放开始后复用这份 Sprite 引用，序列进度与扫光均由同一时钟驱动。
             public Sprite[] Frames;
             public bool Impact;
-            // 以横向枪芒或扩张羽环展开，中心移动的招式同步生成短拖尾。
+            // 羽环径向展开，中心移动的招式同步生成短拖尾。
             public bool Radial, Trails;
             // 开始飞行前的蓄力时间和下一次拖尾释放时间，单位表现秒。
             public float LaunchDelay, NextTrail;
@@ -156,7 +138,7 @@ namespace RevGame.View
             }
         }
 
-        // 消费一次权威起手。角色在恢复期切入新动作时，起始帧自然区分前后两次攻击。
+        // 每席按起始帧消费一次权威起手。同角色共用素材，播放状态和去重各自独立。
         public void Observe(int seat, int action, int startFrame, int facing, Vector2 position, Vector2 target, float reach)
         {
             if (action <= 0 || startFrame <= _lastStart[seat])
@@ -164,61 +146,24 @@ namespace RevGame.View
                 return;
             }
             _lastStart[seat] = startFrame;
-            bool yaya = seat == 0 ? _firstYaya : _secondYaya;
-            if (yaya)
-            {
-                CastYaya(seat, action, facing, position, target, reach);
-            }
-            else
-            {
-                CastEmber(seat, action, facing, position, reach);
-            }
-            bool audible = Play((yaya ? YayaCastSounds : CastSounds)[action - 1], .57f);
+            CastYaya(seat, action, facing, position, target, reach);
+            bool audible = Play(YayaCastSounds[action - 1], .57f);
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
             int bit = 1 << (action - 1);
             CastMaskForCheck |= bit;
-            if (yaya)
+            if (seat == 1)
             {
-                YayaCastMaskForCheck |= bit;
+                SecondCastMaskForCheck |= bit;
             }
             if (audible)
             {
                 SoundMaskForCheck |= bit;
-                if (yaya)
+                if (seat == 1)
                 {
-                    YayaSoundMaskForCheck |= bit;
+                    SecondSoundMaskForCheck |= bit;
                 }
             }
 #endif
-        }
-
-        // 绯焰贯枪沿出手方向冲出，赤阵在地面展开，坠枪从高处落到同一个判定轨迹。
-        private void CastEmber(int seat, int action, int facing, Vector2 position, float reach)
-        {
-            float contact = ContactSeconds(action);
-            bool plunge = action == 4;
-            bool radial = action == 3;
-            Vector2 origin = position + new Vector2(facing * (radial ? reach * .48f : 65), plunge ? 180 : 6);
-            Vector2 size = action switch
-            {
-                2 => new Vector2(reach * .78f, 205),
-                3 => new Vector2(reach * 1.14f, 420),
-                4 => new Vector2(reach * .89f, 410),
-                _ => new Vector2(reach * .87f, action == 6 ? 212 : 156)
-            };
-            ref Effect effect = ref _casts[seat];
-            Begin(seat == 0 ? First : Second, _reveal[seat], ref effect, CastSequences[action - 1].Frames,
-                origin, size, contact + (radial ? .34f : .16f), facing, radial, EmberTint);
-            effect.Travel = radial ? Vector2.zero : plunge
-                ? new Vector2(facing * reach * .38f, -142 - origin.y)
-                : new Vector2(facing * Mathf.Max(0, reach * (action == 2 ? .69f : .56f) - 65), action == 6 ? 31 : 0);
-            effect.LaunchDelay = contact * .19f;
-            effect.TravelSeconds = contact;
-            effect.Trails = !radial;
-            if (radial)
-            {
-                SpawnRing(origin - new Vector2(0, 100), new Vector2(reach * 1.13f, 185), EmberTint, .47f);
-            }
         }
 
         // 鸦袭和掠羽沿不同高度的弧线飞行，射程外也飞到配置上限；鸦宴按环形向外释放。
@@ -265,38 +210,36 @@ namespace RevGame.View
             return DuelConfig.ActionHitFrame(action) * DuelConfig.FrameMs / 1000f;
         }
 
-        // 命中发生在逻辑命中帧，特效落在受击角色身上，伤害已经由原生结算。
+        // 命中由原生结算后落屏。两席用鸦鸦的高度、序列和音色，各自播放到对手身上。
         public void Hit(int seat, int action, int facing, Vector2 target)
         {
             int tier = Tier(action);
-            bool yaya = seat == 0 ? _firstYaya : _secondYaya;
             Vector2 shape = action == 4 ? new Vector2(630, 360) : Vector2.one * (tier == 2 ? 740 : tier == 1 ? 458 : 294);
-            // 白方低踢的受击闪光贴近小腿，其它命中仍从权威受击者取锚点。
-            float impactHeight = yaya && action == 1 ? -90 : action == 4 ? -145 : 18;
+            // 低踢的受击闪光贴近小腿，各招式仍以权威受击者的位置为基准。
+            float impactHeight = action == 1 ? -90 : action == 4 ? -145 : 18;
             Vector2 origin = target + new Vector2(0, impactHeight);
-            Color tint = yaya ? YayaTint : EmberTint;
             Begin(seat == 0 ? FirstImpact : SecondImpact, _reveal[seat + 2], ref _impacts[seat],
-                (yaya ? YayaImpactSequences : ImpactSequences)[action - 1].Frames, origin, shape, tier == 2 ? .47f : .25f, facing, true, tint, impact: true);
-            SpawnRing(origin, Vector2.one * (tier == 2 ? 620 : 330), tint, tier == 2 ? .39f : .25f);
+                YayaImpactSequences[action - 1].Frames, origin, shape, tier == 2 ? .47f : .25f, facing, true, YayaTint, impact: true);
+            SpawnRing(origin, Vector2.one * (tier == 2 ? 620 : 330), YayaTint, tier == 2 ? .39f : .25f);
             // 碎光沿离开角色的方向散开，不读取随机数或碰撞组件。
             int count = tier == 2 ? 9 : tier == 1 ? 7 : 4;
             for (int index = 0; index < count; index++)
             {
                 float angle = Mathf.Lerp(-.88f, .95f, index / (float)(count - 1));
                 Vector2 direction = new Vector2(facing * Mathf.Cos(angle), Mathf.Sin(angle));
-                SpawnParticle(origin, direction * (440 + index * 39), new Vector2(54 + index * 6, 24), tint,
+                SpawnParticle(origin, direction * (440 + index * 39), new Vector2(54 + index * 6, 24), YayaTint,
                     .19f + .017f * index, DuelArenaFxGraphic.Shape.Streak);
             }
-            bool audible = Play((yaya ? YayaImpactSounds : ImpactSounds)[tier], tier == 2 ? .93f : tier == 1 ? .84f : .75f);
+            bool audible = Play(YayaImpactSounds[tier], tier == 2 ? .93f : tier == 1 ? .84f : .75f);
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
             ImpactsForCheck++;
             if (audible)
             {
                 ImpactSoundMaskForCheck |= 1 << tier;
             }
-            if (yaya)
+            if (seat == 1)
             {
-                YayaImpactsForCheck++;
+                SecondImpactsForCheck++;
             }
 #endif
         }

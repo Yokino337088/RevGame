@@ -17,9 +17,10 @@
     "directory": "Revolution",
     "anchor": "PACKAGE_VERSION.txt",
     "generated": [
+      "Editor/RevResourceSystem/ResMap.txt",
       "Generation/RevResPath.cs",
-      "Runtime/RevSoundSystem/Generated/RevSoundPath.cs",
-      "Resources/ResourceSystem/ResMap.txt"
+      "Resources/ResourceSystem/ResMapPacked.bytes",
+      "Runtime/RevSoundSystem/Generated/RevSoundPath.cs"
     ]
   },
   "code": {

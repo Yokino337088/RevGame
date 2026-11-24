@@ -1,45 +1,23 @@
-using RevGame.Pvp;
-using RevGame.Pvp.Duel;
-using Revolution;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace RevGame.View
 {
-    // 选角结果只重绑表现，席位、输入、胜负和镜头仍读取正式决斗快照。
+    // 决斗双方共用鸦鸦美术，此处只建立和更新两席的辨认标记。
     public sealed partial class PvpDuelView
     {
-        // 原有两套角色资源可独立使用，两个座位都能选鸦鸦或绯焰。
-        private bool _blackYaya;
-        private bool _whiteYaya = true;
-        // 仅镜像局存在的席位徽记，和角色同场景同生命周期。
+        // 黑方席位徽记，随决斗场景销毁。
         private RectTransform _blackBadge;
+        // 白方席位徽记，随决斗场景销毁。
         private RectTransform _whiteBadge;
         // 跟随角色上方的设计像素偏移，与美术画布绑定。
         private static readonly Vector2 BadgeOffset = new Vector2(0, 190);
 
-        // 以锁定阵容配置换帧、头像、特效和声音。先捕获源素材再覆盖，两个相同选择不会互相抢引用。
-        private void BindDuelRoster()
+        // HUD 字体就绪后建立席位徽记。两席的角色和特效已由场景装配。
+        private void BuildMirrorBadges()
         {
-            var service = RevServices.Get<PvpService>();
-            _blackYaya = service?.DuelRoleFor(1) == DuelRole.Yaya;
-            _whiteYaya = service == null || service.DuelRoleFor(2) == DuelRole.Yaya;
-            var ember = FirstAnimator.CaptureRoster();
-            var yaya = SecondAnimator.CaptureRoster();
-            if (_blackYaya)
-            {
-                FirstAnimator.UseRoster(yaya);
-            }
-            if (!_whiteYaya)
-            {
-                SecondAnimator.UseRoster(ember);
-            }
-            Effects.SetRoles(_blackYaya, _whiteYaya);
-            if (_blackYaya == _whiteYaya)
-            {
-                _blackBadge = BuildMirrorBadge(First, "◆ 1P 黑方", new Color(1f, .53f, .36f));
-                _whiteBadge = BuildMirrorBadge(Second, "◇ 2P 白方", new Color(.44f, .92f, 1f));
-            }
+            _blackBadge = BuildMirrorBadge(First, "◆ 1P 黑方", new Color(1f, .53f, .36f));
+            _whiteBadge = BuildMirrorBadge(Second, "◇ 2P 白方", new Color(.44f, .92f, 1f));
         }
 
         // 徽记用场景既有字体。颜色加轮廓、实心/空心符号和文字三重区别，不要求玩家辨认颜色。
@@ -66,7 +44,7 @@ namespace RevGame.View
             return badge;
         }
 
-        // 徽记跟随绘制坐标但不继承角色镜像。非镜像局没有额外控件或每帧分配。
+        // 徽记直接跟随角色绘制坐标，文字保持正向，绑定前跳过更新。
         private void PaintMirrorBadges()
         {
             if (_blackBadge == null)

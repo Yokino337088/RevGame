@@ -51,8 +51,6 @@ namespace RevGame.View
         [SerializeField] private bool animateIdle;
         // 可选的待机帧结束时间，单位为从循环起点累计的秒数。为空时用动画片段的均匀采样率。
         [SerializeField] private float[] idleFrameEndSeconds;
-        // 角色被重新分配时沿用其原有片段采样率。Legacy Animation 本身仍禁止自动写图。
-        private AnimationClip[] _roleClips;
         // 屏幕上的角色图片。由本组件按片段时钟显式换帧。
         private Image _image;
         // 旧姿态的最后一张图只在过渡期间保留。两个图层复用整局，不逐帧创建对象。
@@ -236,7 +234,8 @@ namespace RevGame.View
         private void PlayPose(Pose pose, string clip)
         {
             BeginPoseFade(pose);
-            AnimationClip asset = _roleClips == null ? _animation.GetClip(clip) : _roleClips[(int)pose];
+            // 两席共享预绑定的片段引用，采样时钟和当前姿态仍由各自的动画器持有。
+            AnimationClip asset = _animation.GetClip(clip);
             _sampleRate = asset == null ? 0 : asset.frameRate;
             if (_playingPose == Pose.Idle)
             {
@@ -249,28 +248,6 @@ namespace RevGame.View
             _playingFrames = sequence?.frames;
             _contactIndex = sequence?.contactIndex ?? 0;
             _loop = pose == Pose.Run || (pose == Pose.Idle && animateIdle);
-        }
-
-        // 一次性抓取场景中预先序列化好的角色资源。先抓两席再换角色，镜像局共用只读帧表。
-        internal (SpriteSequence[] sequences, AnimationClip[] clips, bool idle, float[] ends) CaptureRoster()
-        {
-            var clips = new AnimationClip[spriteSequences.Length];
-            foreach (Pose pose in System.Enum.GetValues(typeof(Pose)))
-            {
-                clips[(int)pose] = _animation.GetClip(pose.ToString());
-            }
-            return (spriteSequences, clips, animateIdle, idleFrameEndSeconds);
-        }
-
-        // 只在场景开始绑定一次。不替换 Animator 实例，也不改整局的 FSM 或资源归属。
-        internal void UseRoster((SpriteSequence[] sequences, AnimationClip[] clips, bool idle, float[] ends) roster)
-        {
-            spriteSequences = roster.sequences;
-            _roleClips = roster.clips;
-            animateIdle = roster.idle;
-            idleFrameEndSeconds = roster.ends;
-            PlayPose(Pose.Idle, "Idle");
-            _image.sprite = spriteSequences[0].frames[0];
         }
 
         // 旧图层是当前角色的表现子节点，随场景一起退出；关闭射线检测，避免覆盖 HUD 的触屏输入。

@@ -35,9 +35,9 @@ namespace RevGame.Pvp
         private static string _arcadeError = "";
         // 从开局默认位置到接近后测得的镜头移动量，单位为画布局部像素。
         private static float _arcadePan;
-        // 坠枪起手是否由原生快照确认离地。
+        // 掠羽起手是否由原生快照确认离地。
         private static bool _arcadePlungeAirborne;
-        // 坠枪命中年龄是否由原生快照确认已经落地。
+        // 掠羽到达命中年龄时，原生快照是否确认已经落地。
         private static bool _arcadePlungeLanded;
 
         // 20 Hz 下等至少一秒再取检查点，之后至少执行 16 个真实逻辑帧。
@@ -105,8 +105,6 @@ namespace RevGame.Pvp
                     ["eligible"] = Service.CanChallengeDuel, ["ready"] = Service.DuelBothReady, ["frame"] = state.Frame,
                     ["fighting"] = state.Frame >= 5, ["result"] = state.Result, ["hash"] = state.Hash, ["error"] = Service.DuelError,
                     ["airborne"] = state.FirstY > 0, ["firstY"] = state.FirstY,
-                    ["emberShaderSupported"] = view != null && view.Effects.First.material.shader.name == "RevGame/UI/Ember Duel Spear" &&
-                        view.Effects.First.material.shader.isSupported && view.Effects.FirstImpact.material == view.Effects.First.material,
                     ["bothPlaying"] = view != null && view.FirstAnimator.IsPlaying && view.SecondAnimator.IsPlaying,
                     ["bothAnimated"] = view != null && view.FirstAnimator.HasSpriteMotion && view.SecondAnimator.HasSpriteMotion,
                     ["fightersPacked"] = view != null && view.First.sprite != null && view.Second.sprite != null &&
@@ -117,14 +115,17 @@ namespace RevGame.Pvp
                     ["mirrorBadges"] = view != null && view.HasMirrorBadges,
                     ["firstSprite"] = view?.First.sprite?.name ?? "",
                     ["yayaSprite"] = view?.Second.sprite?.name ?? "",
+                    ["firstPortrait"] = view?.HudPanel?.FirstPortrait?.sprite?.name ?? "",
                     ["yayaPortrait"] = view?.HudPanel?.SecondPortrait?.sprite?.name ?? "",
+                    // 四层实际共享鸦鸦材质，不能只看一席 Shader 就把镜像局算作通过。
                     ["yayaShaderSupported"] = view != null && view.Effects.Second.material.shader.name == "RevGame/UI/Yaya Duel Feather" &&
-                        view.Effects.Second.material.shader.isSupported,
+                        view.Effects.Second.material.shader.isSupported && view.Effects.First.material == view.Effects.Second.material &&
+                        view.Effects.FirstImpact.material == view.Effects.Second.material && view.Effects.SecondImpact.material == view.Effects.Second.material,
                     ["yayaIdleAnimated"] = view != null && view.SecondAnimator.IdleSpriteMotion,
                     ["yayaRunAnimated"] = view != null && view.SecondAnimator.RunSpriteMotion,
-                    ["yayaCastMask"] = view != null ? view.Effects.YayaCastMaskForCheck : 0,
-                    ["yayaSoundMask"] = view != null ? view.Effects.YayaSoundMaskForCheck : 0,
-                    ["yayaImpacts"] = view != null ? view.Effects.YayaImpactsForCheck : 0,
+                    ["yayaCastMask"] = view != null ? view.Effects.SecondCastMaskForCheck : 0,
+                    ["yayaSoundMask"] = view != null ? view.Effects.SecondSoundMaskForCheck : 0,
+                    ["yayaImpacts"] = view != null ? view.Effects.SecondImpactsForCheck : 0,
                     ["yayaCastSprite"] = view != null && view.Effects.Second.enabled ? view.Effects.Second.sprite.name : "",
                     ["firstAction"] = state.FirstAction, ["firstCombo"] = state.FirstCombo, ["firstEnergy"] = state.FirstEnergy,
                     ["computerAiPaused"] = Service.DuelComputerAiPaused, ["computerInput"] = Service.DuelComputerInputForCheck,
@@ -205,7 +206,7 @@ namespace RevGame.Pvp
                     if (action == 4)
                     {
                         await WaitForDuelControl(id, () => service.DuelSnapshot.FirstAction == 4 &&
-                            service.DuelSnapshot.FirstY > 0, "坠枪离地");
+                            service.DuelSnapshot.FirstY > 0, "掠羽离地");
                         _arcadePlungeAirborne = true;
                     }
                     await WaitForDuelControl(id, () => service.DuelSnapshot.FirstAction == action &&

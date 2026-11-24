@@ -3,13 +3,13 @@ CRC: 583021407
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 96a29a9306aa1a506bb239216b43e050
+    Hash: e943424012caa16c670f5a7e6c553384
   TypeTreeHash:
     serializedVersion: 2
     Hash: 5e762ccb57c4caaabbb5a4199ac82c23
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 96a29a9306aa1a506bb239216b43e050
+    Hash: e943424012caa16c670f5a7e6c553384
 HashAppended: 0
 ClassTypes:
 - Class: 21
@@ -21,4 +21,4 @@ Assets:
 - Assets/GameRes/Material/Board/PlacementMagic.mat
 - Assets/GameRes/Material/Board/BackgroundDepthMask.mat
 Dependencies:
-- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/shared_shaders"
+- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/shared_shaders

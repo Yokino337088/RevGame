@@ -23,7 +23,7 @@ namespace RevGame.Flow
         // 围棋面板关掉后提前持有同一张败北立绘，终局无需现取素材。
         private GameSpriteAtlasService.ScopedAtlasLease _duelDefeatAtlas;
         // 只在可见状态变化时传新数据，进度补间不会被网络轮询反复重启。
-        private (int revision, int seconds, DuelRole black, DuelRole white, bool canPick, int side, string blackName, string whiteName) _duelPainted;
+        private (int revision, int seconds, bool canPick, int side, string blackName, string whiteName) _duelPainted;
 
         /// <summary>接受请求和实际完成分开；所有UI/GM只走此入口，防止连点创建两条连接或场景加载链。</summary>
         public string PvpDestination { get; private set; } = "Entry";
@@ -223,12 +223,12 @@ namespace RevGame.Flow
             return service.DuelId == duelId && !service.DuelPreparationFailed;
         }
 
-        // 生成当前面板快照；本席预选可立即反馈，对端选择只读权威回包。
+        // 生成准备页快照。两席共用固定阵容，面板只读取确认许可和当前业务状态。
         private static DuelPrepViewData DuelViewData(PvpService service)
         {
             return new DuelPrepViewData
             {
-                State = service.DuelPrep, Black = service.DuelPreviewFor(1), White = service.DuelPreviewFor(2),
+                State = service.DuelPrep,
                 BlackName = string.IsNullOrWhiteSpace(service.BlackName) ? "黑方棋友" : service.BlackName,
                 WhiteName = string.IsNullOrWhiteSpace(service.WhiteName) ? "白方棋友" : service.WhiteName,
                 LocalSeat = (int)service.MySide,
@@ -236,15 +236,14 @@ namespace RevGame.Flow
             };
         }
 
-        // PvP Logic 每帧先处理通信再调此入口。只在数据有变化时刷新 RevUI。
+        // PvP Logic 每帧先处理通信，再按快照版本、倒计时和确认许可的变化刷新 RevUI。
         private void RefreshDuelPreparation(PvpService service)
         {
             if (_duelPreparationPanel == null)
             {
                 return;
             }
-            var stamp = (service.DuelPrep?.revision ?? 0, service.DuelPickSeconds,
-                service.DuelPreviewFor(1), service.DuelPreviewFor(2), service.DuelCanPick,
+            var stamp = (service.DuelPrep?.revision ?? 0, service.DuelPickSeconds, service.DuelCanPick,
                 (int)service.MySide, service.BlackName, service.WhiteName);
             if (_duelPainted != stamp)
             {

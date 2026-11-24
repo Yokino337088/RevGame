@@ -63,7 +63,8 @@ namespace RevGame.Pvp.Duel
         public int AnchorFrame => _checkpointBytes == 0 ? 0 : _anchor.Frame;
 
         // 用相同局号初始化独立原生世界。只有联机客户端创建，离开决斗时释放。
-        public DuelPrediction(string id, bool black, DuelRole firstRole = DuelRole.Ember, DuelRole secondRole = DuelRole.Yaya)
+        /// <summary>以权威锁定的角色创建独立预测沙盒，新局的缺省阵容是双鸦鸦。</summary>
+        public DuelPrediction(string id, bool black, DuelRole firstRole = DuelRole.Yaya, DuelRole secondRole = DuelRole.Yaya)
         {
             _sandbox = new DuelCorePipe(id, firstRole, secondRole);
             _black = black;

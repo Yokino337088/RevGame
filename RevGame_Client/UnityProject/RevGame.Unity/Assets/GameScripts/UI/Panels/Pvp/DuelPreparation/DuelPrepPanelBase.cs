@@ -10,10 +10,8 @@ namespace RevGame.Pvp
     /// <summary>业务单向交给两张面板的画面数据，倒计时与百分比来自权威而非 Tween。</summary>
     public sealed class DuelPrepViewData
     {
-        // 当前权威阶段和两席身份。
+        // 当前权威阶段，含两席的锁定状态和实际加载进度。
         public DuelPrepState State;
-        public DuelRole Black;
-        public DuelRole White;
         public string BlackName;
         public string WhiteName;
         // 黑为 1、白为 2，所有客户端使用同样的左右站位。
@@ -26,47 +24,24 @@ namespace RevGame.Pvp
     [Serializable]
     public sealed class DuelPrepSeatView
     {
-        // 立绘、席位和状态由预制体装配；进度控件只存在于加载页。
-        public Image Portrait;
-        public Image Echo;
-        public RectTransform Portal;
-        public Text RoleName;
+        // 席位所属玩家，由权威席位信息刷新。
         public Text Player;
+        // 准备或加载状态，跟随同一份权威快照。
         public Text Status;
+        // 加载页的填充条，准备页留空。
         public Image Meter;
+        // 加载页的百分比文字，与填充条共用补间值。
         public Text Percent;
-        // 选角立绘的正方形设计尺寸。加载页留为 0，沿用各自的固定构图。
-        public float EmberPortraitSize;
-        public float YayaPortraitSize;
         // 这些值仅驱动画面，不参与锁定或进度放行。
         private bool _locked;
         private int _target = -1;
         private Tween _fill;
 
-        // 立绘在换人时短促弹入；席位保持固定冷暖色，镜像局同时可看徽记。
-        internal void Paint(DuelRole role, Sprite sprite, string player, string seat, bool locked, int progress, bool own)
+        // 将本席的权威锁定与加载进度写到席位卡，立绘和角色名由预制体固定装配。
+        internal void Paint(string player, string seat, bool locked, int progress, bool own)
         {
             Player.text = seat + "  /  " + (own ? "你" : ShortPlayerName(player));
-            RoleName.text = DuelPrepPanelBase.RoleName(role);
-            if (Portrait.sprite != sprite)
-            {
-                Portrait.sprite = sprite;
-                Echo.sprite = sprite;
-                RectTransform portraitRect = Portrait.rectTransform;
-                float size = role == DuelRole.Yaya ? YayaPortraitSize : EmberPortraitSize;
-                if (size > 0)
-                {
-                    // 先匹配新角色的透明留白，再从脚下播放缩放。倒计时刷新时不会重复装配。
-                    portraitRect.sizeDelta = new Vector2(size, size);
-                }
-                portraitRect.DOKill();
-                portraitRect.localScale = Vector3.one * .94f;
-                portraitRect.DOScale(1f, .32f).SetEase(Ease.OutBack).SetUpdate(true);
-                Portal.DOKill();
-                Portal.localScale = Vector3.one;
-                Portal.DOPunchScale(Vector3.one * .20f, .45f, 1, .6f).SetUpdate(true);
-            }
-            Status.text = Meter != null ? (progress == 100 ? "加载完成" : "正在准备") : (locked ? "已锁定" : "预选中");
+            Status.text = Meter != null ? (progress == 100 ? "加载完成" : "正在准备") : (locked ? "已锁定" : "待确认");
             if (!_locked && locked)
             {
                 Status.rectTransform.DOKill();
@@ -105,8 +80,6 @@ namespace RevGame.Pvp
         internal void Stop()
         {
             _fill?.Kill(false);
-            Portrait.rectTransform.DOKill();
-            Portal.DOKill();
             Status.rectTransform.DOKill();
         }
     }
@@ -114,10 +87,9 @@ namespace RevGame.Pvp
     /// <summary>选角和加载页共用席位结构与开关动效，子类只负责各自的中部内容。</summary>
     public abstract class DuelPrepPanelBase : RevUIPanel<DuelPrepViewData>
     {
-        // 两席立绘和头像使用同一图集，但不跟随角色换色。
-        public Sprite Ember;
-        public Sprite Yaya;
+        // 黑方席位按预制体布局显示在左侧。
         public DuelPrepSeatView BlackSeat;
+        // 白方席位按预制体布局显示在右侧。
         public DuelPrepSeatView WhiteSeat;
         // 全屏遮挡与装饰脉冲只活在本次面板期间。
         public RectTransform Accent;
@@ -157,7 +129,7 @@ namespace RevGame.Pvp
             WhiteSeat.Stop();
         }
 
-        // 只把两席快照落屏，互斥与同角规则由服务决定。
+        // 将同一份快照里的席位锁定与加载进度落屏，准备与加载页共用此更新入口。
         protected override void OnRefreshView()
         {
             if (Data == null)
@@ -165,24 +137,13 @@ namespace RevGame.Pvp
                 return;
             }
             int locks = Data.State?.locked ?? 0;
-            BlackSeat.Paint(Data.Black, SpriteFor(Data.Black), Data.BlackName, "1P · 黑方", (locks & 1) != 0, Data.State?.blackLoad ?? 0, Data.LocalSeat == 1);
-            WhiteSeat.Paint(Data.White, SpriteFor(Data.White), Data.WhiteName, "2P · 白方", (locks & 2) != 0, Data.State?.whiteLoad ?? 0, Data.LocalSeat == 2);
+            BlackSeat.Paint(Data.BlackName, "1P · 黑方", (locks & 1) != 0, Data.State?.blackLoad ?? 0, Data.LocalSeat == 1);
+            WhiteSeat.Paint(Data.WhiteName, "2P · 白方", (locks & 2) != 0, Data.State?.whiteLoad ?? 0, Data.LocalSeat == 2);
             PaintCenter();
         }
 
         // 中部倒计时或加载提示由具体面板显示。
         protected abstract void PaintCenter();
 
-        // 返回面板已有的角色立绘，不额外查找或加载散图。
-        private Sprite SpriteFor(DuelRole role)
-        {
-            return role == DuelRole.Yaya ? Yaya : Ember;
-        }
-
-        // 角色名称不因黑白席位或镜像配色改变。
-        internal static string RoleName(DuelRole role)
-        {
-            return role == DuelRole.Yaya ? "鸦鸦" : "绯焰";
-        }
     }
 }
