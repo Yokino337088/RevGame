@@ -23,6 +23,11 @@ namespace RevGame.Pvp
         /// <summary>面积优势半目数与获胜把握的换算尺度，避免小幅领先被显示为绝对胜势。</summary>
         private const int DuelForecastScaleHalfPoints = 16;
 
+        /// <summary>按格号存储左、右、下、上的四邻索引。-1 表示出界，全部九路棋局共用这一份只读表。</summary>
+        private static readonly sbyte[] Neighbors = BuildNeighbors();
+        /// <summary>按格号存储黑、白两种落子的固定指纹贡献，沿用已有种子和混合公式。</summary>
+        private static readonly ulong[] StoneHashKeys = BuildStoneHashKeys();
+
         private readonly byte[] _board = new byte[PointCount];
         private readonly byte[] _working = new byte[PointCount];
         private readonly int[] _group = new int[PointCount];
@@ -234,6 +239,7 @@ namespace RevGame.Pvp
             return TryPlay(Turn, x, y, out result);
         }
 
+        /// <summary>在草稿盘完成提子、自杀和超级劫检查。合法时一起提交棋面、增量指纹和轮次，拒绝时保留实盘。</summary>
         public bool TryPlay(GoSide side, int x, int y, out GoPlayResult result)
         {
             if (!CanTakeTurn(side, out string error))
@@ -252,13 +258,17 @@ namespace RevGame.Pvp
 
             Array.Copy(_board, _working, PointCount);
             _working[index] = (byte)side;
+            byte enemy = (byte)Opponent(side);
+            // 从已提交指纹出发。新棋贡献加入一次，被提棋的贡献再异或一次就会抵消。
+            // 暂存在局部变量，后续若判定自杀或全局同形，实盘指纹不会提前变化。
+            ulong candidateHash = PositionHash ^ StoneHash(index, (byte)side);
             GoPointSet captured = new GoPointSet();
             int captureCount = 0;
             // 先提敌子再检查自己是否有气：看似无气但能提走敌人的落子是合法着法。
             for (int direction = 0; direction < 4; direction++)
             {
                 int next = Neighbor(index, direction);
-                if (next < 0 || _working[next] != (byte)Opponent(side))
+                if (next < 0 || _working[next] != enemy)
                 {
                     continue;
                 }
@@ -271,6 +281,7 @@ namespace RevGame.Pvp
                 {
                     int removed = _group[member];
                     _working[removed] = 0;
+                    candidateHash ^= StoneHash(removed, enemy);
                     captured.Add(removed);
                     captureCount++;
                 }
@@ -289,7 +300,7 @@ namespace RevGame.Pvp
             }
             Array.Copy(_working, _board, PointCount);
             _positions.Add(candidate);
-            PositionHash = ComputePositionHash(_board);
+            PositionHash = candidateHash;
             _historyHash = Mix(_historyHash ^ PositionHash);
             if (side == GoSide.Black)
             {
@@ -583,22 +594,29 @@ namespace RevGame.Pvp
             return x >= 0 && x < BoardSize && y >= 0 && y < BoardSize;
         }
 
-        /// <summary>只取上下左右；对角相连不属于同一块。越界返回 -1，边角不会“绕行”到另一边。</summary>
+        /// <summary>查合法格号的第 0 至第 3 个正交邻居。出界返回 -1，边角不会连到另一行。</summary>
         private static int Neighbor(int index, int direction)
         {
-            int x = index % BoardSize;
-            int y = index / BoardSize;
-            switch (direction)
+            return Neighbors[index * 4 + direction];
+        }
+
+        /// <summary>九路尺寸固定，启动时算完所有边界。保留原来左、右、下、上的遍历顺序。</summary>
+        private static sbyte[] BuildNeighbors()
+        {
+            var neighbors = new sbyte[PointCount * 4];
+            for (int y = 0; y < BoardSize; y++)
             {
-                case 0:
-                    return x > 0 ? index - 1 : -1;
-                case 1:
-                    return x + 1 < BoardSize ? index + 1 : -1;
-                case 2:
-                    return y > 0 ? index - BoardSize : -1;
-                default:
-                    return y + 1 < BoardSize ? index + BoardSize : -1;
+                for (int x = 0; x < BoardSize; x++)
+                {
+                    int index = y * BoardSize + x;
+                    int offset = index * 4;
+                    neighbors[offset] = (sbyte)(x > 0 ? index - 1 : -1);
+                    neighbors[offset + 1] = (sbyte)(x + 1 < BoardSize ? index + 1 : -1);
+                    neighbors[offset + 2] = (sbyte)(y > 0 ? index - BoardSize : -1);
+                    neighbors[offset + 3] = (sbyte)(y + 1 < BoardSize ? index + BoardSize : -1);
+                }
             }
+            return neighbors;
         }
 
         /// <summary>广度优先找棋块，同时按交叉点去重其气；同一口气邻接多个己子仍只算一次。</summary>
@@ -638,18 +656,23 @@ namespace RevGame.Pvp
             return count;
         }
 
-        /// <summary>固定整数混合生成 Zobrist 键；不依赖系统 Random、进程种子或容器枚举顺序。</summary>
-        private static ulong ComputePositionHash(byte[] board)
+        /// <summary>读取非空棋子的固定 Zobrist 指纹贡献。颜色 1 和 2 分别对应同一格的首项和次项。</summary>
+        private static ulong StoneHash(int index, byte color)
         {
-            ulong hash = 0;
+            return StoneHashKeys[index * 2 + (color - 1)];
+        }
+
+        /// <summary>一次生成每格黑白键，完全沿用联机原混合公式。空格贡献为零，无需占一个键位。</summary>
+        private static ulong[] BuildStoneHashKeys()
+        {
+            var keys = new ulong[PointCount * 2];
             for (int i = 0; i < PointCount; i++)
             {
-                if (board[i] != 0)
-                {
-                    hash ^= Mix((ulong)(i * 2 + board[i]) + 0x72657667616D6500UL);
-                }
+                int offset = i * 2;
+                keys[offset] = Mix(0x72657667616D6500UL + (ulong)offset + (byte)GoSide.Black);
+                keys[offset + 1] = Mix(0x72657667616D6500UL + (ulong)offset + (byte)GoSide.White);
             }
-            return hash;
+            return keys;
         }
 
         private static ulong Mix(ulong value)

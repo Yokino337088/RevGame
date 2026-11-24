@@ -13,6 +13,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using RevGame.Core;
 using Revolution;
 
 namespace RevGame.Data
@@ -201,9 +202,14 @@ namespace RevGame.Data
         /// <summary>帮手伤害/频率成长传给远程棋的比例，上限防高分跨章成长失控。</summary>
         public float HelperRangedAttackLink, HelperRangedSpeedLink, HelperRangedAttackCap, HelperRangedSpeedCap;
 
-        /// <summary>超过正常编队规模后火力递减，单位为活棋数和无量纲指数；不删棋、不限制落子。</summary>
-        public int PlayerFirepowerSoftCount;
-        public float PlayerFirepowerExponent, PlayerFirepowerMinScale;
+        /// <summary>远征同时存活的玩家棋超过此整数时，单位普攻火力开始递减。</summary>
+        public int PlayerFirepowerSoftCount { get; private set; }
+        /// <summary>火力递减公式的指数，来自本次配置装配。</summary>
+        public float PlayerFirepowerExponent { get; private set; }
+        /// <summary>单位普攻火力倍率的下限，无量纲。</summary>
+        public float PlayerFirepowerMinScale { get; private set; }
+        /// <summary>按活棋数保存旧公式的单精度结果，随整份数值配置一起发布。</summary>
+        private float[] _playerFirepowerByCount;
         public float BattleDurationSeconds;
         public float BattleTickSeconds;
         public int BattleStepsPerTick;
@@ -302,6 +308,7 @@ namespace RevGame.Data
         public int UpgradePairsPerStar;
         public int RewardOutnumberedFactor;
 
+        /// <summary>装配表中常量及派生值，只有完整快照经配置验证后才供战斗使用。</summary>
         public static BalanceValues Read(BalanceRuleTable table, List<string> problems)
         {
             var r = new BalanceReader(table, problems);
@@ -481,6 +488,7 @@ namespace RevGame.Data
             v.PlayerFirepowerSoftCount = r.Int("Player.FirepowerSoftCount", 1, 81);
             v.PlayerFirepowerExponent = r.Float("Player.FirepowerExponent", 0f, 3f);
             v.PlayerFirepowerMinScale = r.Float("Player.FirepowerMinScale", .01f, 1f);
+            v.BuildPlayerFirepowerTable();
             v.PieceAttacks = PieceAttackProfile.Read(r);
             r.ReportUnused();
 
@@ -508,6 +516,34 @@ namespace RevGame.Data
             Rule(v.RegionWarningSeconds + (v.RegionSize * v.RegionSize - 1) * v.RegionCellDelaySeconds < v.RegionIntervalSeconds, "区域预警与逐格命中总时长必须小于波动间隔");
             Rule(v.BombWarningSeconds < v.BombIntervalSeconds, "炸弹蓄力必须小于施放间隔");
             return v;
+        }
+
+        /// <summary>装配时穷举从空盘到满盘的活棋数。调用原精度和取整顺序，运行中只需读出对应下标。</summary>
+        private void BuildPlayerFirepowerTable()
+        {
+            _playerFirepowerByCount = new float[Consts.BoardSize * Consts.BoardSize + 1];
+            for (int alive = 0; alive < _playerFirepowerByCount.Length; alive++)
+            {
+                _playerFirepowerByCount[alive] = EvaluatePlayerFirepower(alive);
+            }
+        }
+
+        /// <summary>按真实活棋数取普攻倍率。超出棋盘表范围时也沿用原公式，避免默默夹成人数上限。</summary>
+        internal float PlayerFirepowerAt(int alive)
+        {
+            return (uint)alive < (uint)_playerFirepowerByCount.Length
+                ? _playerFirepowerByCount[alive] : EvaluatePlayerFirepower(alive);
+        }
+
+        /// <summary>人数超过软上限后执行原幂次递减，再取最低值。先用双精度计算，最后只转换成一次浮点数。</summary>
+        private float EvaluatePlayerFirepower(int alive)
+        {
+            if (alive <= PlayerFirepowerSoftCount)
+            {
+                return 1f;
+            }
+            double ratio = PlayerFirepowerSoftCount / (double)alive;
+            return (float)Math.Max(PlayerFirepowerMinScale, Math.Pow(ratio, PlayerFirepowerExponent));
         }
     }
     /// <summary>
@@ -711,6 +747,8 @@ namespace RevGame.Data
         public static int PlayerFirepowerSoftCount => V.PlayerFirepowerSoftCount;
         public static float PlayerFirepowerExponent => V.PlayerFirepowerExponent;
         public static float PlayerFirepowerMinScale => V.PlayerFirepowerMinScale;
+        /// <summary>从当前装配结果查玩家普攻倍率。切换配置时连同整张表换成新结果。</summary>
+        public static float PlayerFirepowerAt(int alive) => V.PlayerFirepowerAt(alive);
         public static float BattleEventChance => V.EventScheduleChance;
         public static float RareEventChance => V.EventRareChance;
         public static float BattleEventDelay => V.EventDelaySeconds;

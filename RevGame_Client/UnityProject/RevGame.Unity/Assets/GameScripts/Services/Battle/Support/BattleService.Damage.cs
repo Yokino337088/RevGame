@@ -10,8 +10,12 @@ namespace RevGame.Services
 {
     public sealed partial class BattleService
     {
-        /// <summary>棋盘占格版本改变时更新活棋计数。不能每颗棋每次攻击都复制名单或扫描整盘。</summary>
-        private int _firepowerTopology = -1, _firepowerAlive;
+        /// <summary>活棋计数来自这个棋盘拓扑版本。负一表示尚未统计。</summary>
+        private int _firepowerTopology = -1;
+        /// <summary>对应版本的玩家活棋数，每颗棋只数一次，多格棋也一样。</summary>
+        private int _firepowerAlive;
+
+        /// <summary>拓扑改变后先更新活棋数，再用当前配置的离散倍率表。同一阵容的连续攻击共用人数结果。</summary>
         private float PlayerFirepowerScale()
         {
             if (_firepowerTopology != _board.TopologyVersion)
@@ -26,13 +30,8 @@ namespace RevGame.Services
                     }
                 }
             }
-            if (_firepowerAlive <= Balance.PlayerFirepowerSoftCount)
-            {
-                return 1f;
-            }
             // 更多棋子仍提供占格、封气与生命；单位火力收益递减，防六十颗远程同时输出造成秒杀。
-            double ratio = Balance.PlayerFirepowerSoftCount / (double)_firepowerAlive;
-            return (float)Math.Max(Balance.PlayerFirepowerMinScale, Math.Pow(ratio, Balance.PlayerFirepowerExponent));
+            return Balance.PlayerFirepowerAt(_firepowerAlive);
         }
         /// <summary>基础来源不同，但最终减伤/护盾/扣血出口相同；百分比技能不能误套普攻加成。</summary>
         private enum DamageBasis

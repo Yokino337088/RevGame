@@ -223,6 +223,7 @@ internal static class Program
         Check(replay.Advance(GoSide.Black, double.MaxValue) && replay.IsTimedOut(GoSide.Black), "huge finite elapsed bounded calculation");
     }
 
+    /// <summary>固定种子逐手对照独立棋规，验证合法性、棋盘和按旧公式全量算出的联机指纹。</summary>
     private static void DeterministicGames(int games)
     {
         Random random = new Random(20261106);
@@ -252,6 +253,8 @@ internal static class Program
                 }
                 history.Add(command);
                 _accepted++;
+                Check(left.PositionHash == ReferencePositionHash(oracle.Board) && a.PositionHash == left.PositionHash,
+                    "incremental hash agrees with the original full-board computation");
                 left.Analyze(analysis);
                 for (int cell = 0; cell < 81; cell++)
                 {
@@ -276,6 +279,28 @@ internal static class Program
             history.Add(new GoCommand { Action = GoAction.Play, Side = GoSide.Black, X = 0, Y = 0 });
             Check(!GoCore.TryReplay(15, history, out GoCore invalid, out _) && invalid == null, "invalid replay never publishes partial board");
         }
+    }
+
+    /// <summary>直接遍历参考棋盘，复算优化前的 Zobrist 指纹，避免测试和生产代码共用增量更新。</summary>
+    private static ulong ReferencePositionHash(int[] board)
+    {
+        ulong hash = 0;
+        for (int point = 0; point < board.Length; point++)
+        {
+            if (board[point] == 0)
+            {
+                continue;
+            }
+            unchecked
+            {
+                ulong value = 0x72657667616D6500UL + (ulong)(point * 2 + board[point]);
+                value += 0x9E3779B97F4A7C15UL;
+                value = (value ^ (value >> 30)) * 0xBF58476D1CE4E5B9UL;
+                value = (value ^ (value >> 27)) * 0x94D049BB133111EBUL;
+                hash ^= value ^ (value >> 31);
+            }
+        }
+        return hash;
     }
 
     /// <summary>

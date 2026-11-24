@@ -32,6 +32,10 @@ namespace RevGame.Endless
         public const int ZoneCount = 6;
         /// <summary>评分里距离的相对权重：越大越倾向就近驻守。算法内部权重，不进表。</summary>
         private const float ZoneDistanceWeight = .15f;
+        /// <summary>九路棋盘中心坐标从 0 到 8，允许多格棋的半格中心，一轴共 17 个位置。</summary>
+        private const int ZoneHalfGridSide = 17;
+        /// <summary>每个半格中心到六个驻守点的原距离分母。只在启动时开方，之后由所有无尽对局只读复用。</summary>
+        private static readonly float[] ZoneDistanceFactors = BuildZoneDistanceFactors();
 
         /// <summary>盾战防御区的并集，下标 = y * 9 + x。每个模拟步重算，表现层读它画区域。</summary>
         public readonly bool[] ShieldZone = new bool[81];
@@ -49,7 +53,12 @@ namespace RevGame.Endless
             private set;
         }
         private readonly bool[] _zoneScratch = new bool[81];
-        private readonly float[] _zoneThreat = new float[ZoneCount], _zoneDefense = new float[ZoneCount];
+        /// <summary>本轮分区内的敌方总剩余血量，单位点。</summary>
+        private readonly float[] _zoneThreat = new float[ZoneCount];
+        /// <summary>本轮任一时刻已有守军的生命比例之和，满血一枚记 1。</summary>
+        private readonly float[] _zoneDefense = new float[ZoneCount];
+        /// <summary>本轮威胁除以（1 + 防守）的区压力；每次分配只更新新添守军的那一格。</summary>
+        private readonly float[] _zonePressure = new float[ZoneCount];
         private float _zonePlanAt;
 
         /// <summary>盾战防御区的左下角与边长（格）。4×4 时为 x-1…x+2，见文件头说明。</summary>
@@ -224,13 +233,56 @@ namespace RevGame.Endless
         {
             return new Vector2(zone < 3 ? 1 : 7, zone % 3 * 3 + 1);
         }
+
+        /// <summary>枚举半格网格，使用与旧评分相同的开方和乘加生成原值；不改变浮点舍入或远近权重。</summary>
+        private static float[] BuildZoneDistanceFactors()
+        {
+            var factors = new float[ZoneHalfGridSide * ZoneHalfGridSide * ZoneCount];
+            for (int y = 0; y < ZoneHalfGridSide; y++)
+            {
+                for (int x = 0; x < ZoneHalfGridSide; x++)
+                {
+                    int row = (y * ZoneHalfGridSide + x) * ZoneCount;
+                    var center = new Vector2(x * .5f, y * .5f);
+                    for (int zone = 0; zone < ZoneCount; zone++)
+                    {
+                        factors[row + zone] = 1 + ZoneDistanceWeight * Vector2.Distance(center, ZoneAnchor(zone));
+                    }
+                }
+            }
+            return factors;
+        }
+
+        /// <summary>把正好位于半格网格上的中心换成其六区表首项；越界或任意连续坐标用 -1 标记回退。</summary>
+        private static int ZoneDistanceRow(Vector2 center)
+        {
+            float halfX = center.x * 2f;
+            float halfY = center.y * 2f;
+            int x = (int)halfX;
+            int y = (int)halfY;
+            if ((uint)x < ZoneHalfGridSide && (uint)y < ZoneHalfGridSide && x == halfX && y == halfY)
+            {
+                return (y * ZoneHalfGridSide + x) * ZoneCount;
+            }
+            return -1;
+        }
+
+        /// <summary>同一棋子的六个评分复用表首项；特殊中心仍走原式，避免把正常的格外判断截成半格。</summary>
+        private static float ZoneDistanceFactor(Vector2 center, int row, int zone)
+        {
+            return row >= 0
+                ? ZoneDistanceFactors[row + zone]
+                : 1 + ZoneDistanceWeight * Vector2.Distance(center, ZoneAnchor(zone));
+        }
+
+        /// <summary>筛选参与驻守的活近战棋；石子、召唤物与敌人不进入候选。</summary>
         private static bool CanGuard(EndlessUnit u)
         {
             return u.Piece.Side == GameSide.Player && u.Piece.IsAlive && !u.Stone && !u.Summoned && IsMelee(u.Piece.Def.Kind);
         }
         /// <summary>
         /// 规划驻守区（每 MeleeMoveSeconds 秒最多一次）。先统计威胁，再把“暂时不能动”的棋子（手动保持/被锁）计入所在区防守，
-        /// 最后对可动的近战棋做贪心分配。全程只用预分配数组，不产生垃圾。
+        /// 最后按原顺序对可动近战做贪心分配，复用距离因子和各区压力，同分仍选先扫描到的组合。
         /// </summary>
         private void PlanZones()
         {
@@ -279,9 +331,13 @@ namespace RevGame.Endless
                     free++;
                 }
             }
-            if (!anyThreat)
+            if (!anyThreat || free == 0)
             {
                 return;
+            }
+            for (int z = 0; z < ZoneCount; z++)
+            {
+                _zonePressure[z] = _zoneThreat[z] / (1 + _zoneDefense[z]);
             }
             for (int round = 0; round < free; round++)
             {
@@ -296,13 +352,15 @@ namespace RevGame.Endless
                         continue;
                     }
                     Vector2 at = Position(u.Piece);
+                    int distanceRow = ZoneDistanceRow(at);
                     for (int z = 0; z < ZoneCount; z++)
                     {
                         if (_zoneThreat[z] <= 0)
                         {
                             continue;
                         }
-                        float score = _zoneThreat[z] / (1 + _zoneDefense[z]) / (1 + ZoneDistanceWeight * Vector2.Distance(at, ZoneAnchor(z)));
+                        // 原来先除防守，再除距离。保留同一顺序，避免近似倒数改变并列结果。
+                        float score = _zonePressure[z] / ZoneDistanceFactor(at, distanceRow, z);
                         if (score > bestScore)
                         {
                             bestScore = score;
@@ -317,6 +375,8 @@ namespace RevGame.Endless
                 }
                 bestUnit.Zone = bestZone;
                 _zoneDefense[bestZone] += bestUnit.Piece.HpRatio;
+                // 另外五区的敌情和已有防守都没变，下一轮继续读取现成压力。
+                _zonePressure[bestZone] = _zoneThreat[bestZone] / (1 + _zoneDefense[bestZone]);
             }
         }
         /// <summary>

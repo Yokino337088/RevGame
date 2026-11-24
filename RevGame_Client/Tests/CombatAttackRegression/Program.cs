@@ -17,6 +17,7 @@ internal static class Program
     /// <summary>完成的规则造局场景数；公平缓冲模拟单独报告，不冒充规则场景。</summary>
     private static int _scenarios;
 
+    /// <summary>装配正式数值后运行离线回归。明确传入单项时只执行该项，失败返回非零。</summary>
     private static int Main(string[] args)
     {
         try
@@ -24,6 +25,12 @@ internal static class Program
             string data = args.Length > 0 ? Path.GetFullPath(args[0]) : FindDataDirectory();
             GameConfigFileLoader.LoadFromDirectory(data);
             Console.WriteLine("真实配置目录：" + data);
+
+            if (args.Length > 1 && args[1] == "firepower-table")
+            {
+                FirepowerTableRegression.Run(data, benchmark: true);
+                return 0;
+            }
 
             if (args.Length > 1 && args[1] == "piece-patterns")
             {
@@ -111,6 +118,7 @@ internal static class Program
                     VerifyEyeAttack(kind, star, true);
                 }
             }
+            _assertions += FirepowerTableRegression.Run(data);
             VerifyFortyAttackersInOneStep();
             VerifyBurstRetargetsAfterKill();
             VerifyMeleeAdjacentPriority(PieceKind.Swordman, StarTier.One);

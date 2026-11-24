@@ -43,6 +43,12 @@ namespace RevGame.Services
             RefreshGoState();
         }
 
+        /// <summary>通过生产入口观测当前阵容的玩家普攻倍率，供离线检查人数版本失效。</summary>
+        public float ReadRegressionFirepower()
+        {
+            return PlayerFirepowerScale();
+        }
+
         /// <summary>离线走真实开战、死亡和结算。覆盖第一轮、普通轮与 Boss 轮败退。</summary>
         public static void VerifyRoundRetreat(System.Action<bool, string> check)
         {

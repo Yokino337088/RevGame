@@ -14,12 +14,14 @@ namespace RevGame.Endless
 {
     public sealed partial class EndlessService
     {
+        /// <summary>从隔离棋局运行守护、突刺、移动和输入验收，同时逐格核对驻守计分的距离查表。</summary>
         public static object CheckGuardRules()
         {
             var passed = new List<string>();
             string previousSave = _isolatedSave;
             try
             {
+                CheckGuardDistanceFactors(passed);
                 using (var s = new EndlessService())
                 {
                     // 炎环棋阵：盾战在 (1,4)，以自身为中心的 3×3 防御区应为 x0~2、y3~5 共 9 格。
@@ -162,6 +164,48 @@ namespace RevGame.Endless
                 _isolatedSave = previousSave;
             }
         }
+        /// <summary>逐项比较所有合法半格中心与连续或格外坐标，覆盖查表和原式回退的浮点边界。</summary>
+        private static void CheckGuardDistanceFactors(List<string> passed)
+        {
+            for (int y = 0; y < ZoneHalfGridSide; y++)
+            {
+                for (int x = 0; x < ZoneHalfGridSide; x++)
+                {
+                    var center = new Vector2(x * .5f, y * .5f);
+                    int index = ZoneDistanceRow(center);
+                    if (index < 0)
+                    {
+                        throw new InvalidOperationException("半格中心未命中驻守距离表：" + x + "," + y);
+                    }
+                    for (int zone = 0; zone < ZoneCount; zone++)
+                    {
+                        float expected = 1 + ZoneDistanceWeight * Vector2.Distance(center, ZoneAnchor(zone));
+                        if (ZoneDistanceFactor(center, index, zone) != expected)
+                        {
+                            throw new InvalidOperationException("驻守距离分母与原式不一致：" + x + "," + y + "/" + zone);
+                        }
+                    }
+                }
+            }
+            foreach (Vector2 center in new[] { new Vector2(.25f, 2), new Vector2(-.5f, 3), new Vector2(8, 8.5f) })
+            {
+                int index = ZoneDistanceRow(center);
+                if (index != -1)
+                {
+                    throw new InvalidOperationException("非标准中心未走驻守距离回退");
+                }
+                for (int zone = 0; zone < ZoneCount; zone++)
+                {
+                    float expected = 1 + ZoneDistanceWeight * Vector2.Distance(center, ZoneAnchor(zone));
+                    if (ZoneDistanceFactor(center, index, zone) != expected)
+                    {
+                        throw new InvalidOperationException("非标准中心驻守距离回退与原式不一致");
+                    }
+                }
+            }
+            Check(true, "驻守距离查表的 1734 个半格中心与区域组合及格外回退均与原式相同", passed);
+        }
+
         private static int ZoneCells(EndlessService s)
         {
             int count = 0;
