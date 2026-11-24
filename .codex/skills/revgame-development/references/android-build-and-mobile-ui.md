@@ -4,8 +4,14 @@
 
 ## 构建与交付
 
-- 源工程保留原路径。Unity 2022.3.15f1c1 遇非 ASCII 路径门禁，在纯 ASCII 副本构建，外部 APK 最后复制到用户指定的 RevGame/Android。测试与 Release 分开。Mono 决斗测试是 ARMv7、API 32 临时组合；正式版是 IL2CPP、ARM64、API 35，实测 JDK 17 / Gradle 8.9 / AGP 8.7.3 / NDK 23.1.7779620。D8 读 API 35 失败与 CXX1100 的 NDK 不匹配是两种错误。
-- 用项目 game.background.build 先发布目标 AB，真实 BuildManifest、主包和哈希对齐。构建副本与 APK 屏蔽 PC 目录及残留 PC.meta，归档已删除的 RevGameActivity.java 及其 meta。宽屏 Release 使用可调整大小的 UnityPlayerActivity。ExportAndroidReleaseBatch 在副本检查目标和 arm64-v8a 的 libRevGameCore.so，导出后再走 Gradle、zipalign、签名。固定已发布 package ID、递增版本号并验证证书与上一版一致。路径、签名口令、用户设置、缓存、外部 AB 和 APK 不入库。
+- 在原始 RevGame Git 工作区编写和修改 Unity 源码。Windows 英文目录联接可用于启动编辑器和打包。这两个入口共用工程文件和 `Library`。2026-11-24 的前台出包同时通过英文入口启动 Unity 安装和工程，随后用 RevCLI `--mode live` 核对编辑态与 Android 目标。RevMCP 可通过同一工程联接绑定，绑定后先发现实际能力。
+- 出包预检放在隔离 AB 和提交工单之前。2026-11-24 的再次构建中，SDK 33、Build Tools 34.0.0 和 Platform Tools 32.0.0 均已安装，Unity 仍在联网运行 `sdkmanager --list`。按 [SDK 清单和 Gradle 缓存预检](../../revolution-unity-editor/references/android-build-and-verification.md) 查实际工具和缓存。离线构建先验证本机 SDK 与 Gradle，再从英文安装及工程联接启动同一工程。最新一轮实际拿到 Unity `Succeeded`，0 错误、12 条警告。
+- 变更 Android 品牌时，使用 `productName` 设置显示名，再在 `applicationIdentifier` 中维护 Android 专属值。先用 `settings.get` 读取现有映射，再用 `settings.set` 改动对应字段。只替换包名前缀时保留用户未要求改动的后缀及其他平台标识。唐门测试包实测 `围棋大作战`、`com.Tangmen.RevGame.Unity`。以 APK 的 `application-label` 和 `package` 为最终验收证据。
+- 应用名称与 ID 是本次要保存的项目设置。先保存品牌设置，再备份本轮要临时改动的 ABI 和目标 SDK。退出临时构建后读回品牌，并验证恢复后的 `ProjectSettings.asset` 与品牌设置保存后、构建前的快照一致。PC、WebGL 目录及 `.meta` 原路恢复后刷新。
+- ARM64 测试包使用 IL2CPP。在现场注册支持时，用 `settings.get` 和 `settings.set` 临时配置 Android 架构和目标 SDK。提交 `build.player` 前读回设置。本次 Unity 版本的 `AndroidTargetArchitectures` 为 `2` 时仅启用 ARM64，构建后端传 `backend=il2cpp`。Unity 2022.3.15f1c1 以 Mono 为当前后端重启时曾重置这项设置。需要真机自动化或帧时采样时，按任务设置 `automation` 和 `frameTiming`。结束后恢复项目设置，APK 输出到用户指定位置下的独立子目录。
+- 2026-11-24 实测使用 Unity 2022.3.15f1c1、JDK 11、Gradle 7.2、AGP 7.1.2、NDK 23.1.7779620 和 SDK 33，最低 API 22。工程入口已是英文时，NDK 仍因 Unity 安装路径里的中文在链接 `libil2cpp.so` 时失败。从英文安装联接重开同一工程后通过链接。Gradle 随后因 `com.android.tools.external.com-intellij:kotlin-compiler:30.1.2` 下载超时失败。用校验过的同版本 JAR 和 POM 在本地解析此坐标，对临时生成的 Gradle 工程离线执行 `:launcher:assembleRelease`。最终结果以 Gradle 终态、APK 签名、ELF 架构和资源哈希为证据。 [RevGame Wiki 实测复盘](https://github.com/Yokino337088/RevGame/wiki/%E5%AE%89%E5%8D%9364%E4%BD%8D%E5%8C%85%E4%B8%BA%E4%BB%80%E4%B9%88%E5%8D%A1%E5%9C%A8%E6%9C%80%E5%90%8E%E4%B8%A4%E6%AD%A5)
+- 构建前核对 Android 主包、BuildManifest 和 `ab.check-map`。资源需要更新时用项目 `game.background.build` 发布目标 AB，核对主包、映射与哈希。只隔离确认为其他平台的目录和同名 `.meta`，结束后恢复并刷新。验包核对 `assets/Android/`、`arm64-v8a`、`libRevGameCore.so`，并检查 APK 中其他平台 AB 是否为零。
+- 历史组合分别归档。Mono 决斗测试曾用 ARMv7 与 API 32，另一轮用 SDK 33 避开旧 D8 读取 API 35 的错误。2026-11-08 的正式 ARM64 包沿用当时的英文构建副本，通过 `ExportAndroidReleaseBatch` 导出，实测 JDK 17、Gradle 8.9、AGP 8.7.3、API 35 和 NDK 23.1.7779620。那一轮归档了旧 `RevGameActivity.java` 和 `.meta`，宽屏 Release 用可调整大小的 `UnityPlayerActivity`。发行包核对已发布包名、版本号和证书。路径、签名口令、用户设置、缓存、外部 AB 和 APK 按仓库约定处理。
 - 复用缓存前核对后端、ABI、工具链与构建输入。Mono 与 IL2CPP 的产物不能互换，涉及运行时代码修复需重编 Player。仅有本机验包证据时，标明真机范围。检查所有 ELF 和 APK ZIP 对齐，自研库的 16 KB 结果不能代表其它 .so。
 - 联机开发包的内网默认地址随测试主机/网段变动。确认端口和设备可达性，把按钮触达、Android P/Invoke 与两设备帧哈希分别验收。
 - 贴图走 GameSpriteAtlasBuild 与 GameSpriteAtlasService。决斗帧按名字和顺序切片及唯一 V2 图集，验 Android 实际帧切换和 HUD 命中。鸦鸦剧情/战斗表情分包，源图保留较高分辨率，最终图集压缩一次，PC BC7、Android ASTC 6×6。清晰度按实际像素和分包字节报告。文案与 Excel 更新走真实导表和字体清单校验；输入变化时两端按同一版重建。
