@@ -42,7 +42,7 @@ if (result.Success == false)
 | `RevABLoader.BundlePathResolver` | `Func<string, string>`：包名 → 完整文件路径/URL；null/空返回值回退 `StreamingAssets/<平台>/<包名>` | `RevHotStore.ResolveBundlePath` |
 | `RevABLoader.BundleCacheKeyResolver` | `Func<string, RevBundleCacheKey>`：包名 → Unity Hash128/CRC 缓存键；无有效键走默认请求 | `RevHotStore.ResolveBundleCacheKey` |
 | `RevABLoader.DependenciesOverride` | `Func<string, string[]>`：包名 → 依赖；null 回退内置主包 Manifest，空数组表示明确无依赖 | `RevHotStore.ResolveDependencies` |
-| `RevResBootstrap.ResMapSnapshot` | `Func<Dictionary<string, string>>`：整版安装已验证的热更映射，空值使用首包 | `RevHotStore.LoadHotResMap` |
+| `RevResBootstrap.ResolvedResMapSnapshot` | `Func<RevResMap>`：整版装配已验证的地址索引，空值继续查旧宿主钩子或首包 | `RevHotStore.LoadHotResMap` |
 
 - 安装发生在 `RevResBootstrap.Init` 前；`InitializeAsync` 与 `CheckAsync→UpdateAsync` 正式路径均安装桥。实现见 `Assets/Revolution.HotUpdate/Runtime/Integration/RevHotResBridge.cs`，绑定用静态方法组。
 - 断开清理要与安装区分：当前 `RevHotResBridge.Reset()` 仅复位 `_installed`，未将四个静态委托置 null；`RevHotUpdateUnityHooks` 复位内存、不删磁盘。不要把“重置标志”宣称成完整卸载钩子。
@@ -76,6 +76,7 @@ if (result.Success == false)
 
 - 发布端用 `WriteOutputs(manifest, outputDir, signingKey)` 生成 RSA / SHA-256 签名。私钥由发布环境加载。客户端在可信包体内设置 `RevHotConfig.ManifestPublicKey`（`RevHotManifestSignature.ExportPublicKey` 格式）。配置后在线清单及恢复用的本地清单都必须验签。
 - 热更沿用 `ResMap.txt` 发布地址。校验按收到的原始字节计算 SHA-256，支持 CDN 传输压缩。候选映射使用与首包一致的严格解析器，并只允许指向候选清单内的包。同一资源版本有内容变更时发布新版本号。
+- URL 平台将验证后的地址索引直接交给 AB 策略，当前版本持有一份。切换前后索引按快照管理，旧句柄使用自己取得的地址和包租约。
 - 测试用隔离的发布密钥覆盖拒绝错公钥、损坏清单、重复键和坏摘要。另测重启读取已验活动版本、网络错误保留已验快照、首包与候选交接及平台策略。未配置公钥的旧项目以摘要校验内容。
 
 ## 5. 版本模型：大版本锚定（`@appVersion` = `Application.version`）

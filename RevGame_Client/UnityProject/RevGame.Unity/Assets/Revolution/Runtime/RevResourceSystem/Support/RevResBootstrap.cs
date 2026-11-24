@@ -88,6 +88,9 @@ namespace Revolution
         /// <summary>已验证的完整版本映射。存在时整体使用该版本，返回空值时使用内置首包和显式覆盖。</summary>
         public static Func<Dictionary<string, string>> ResMapSnapshot { get; set; }
 
+        /// <summary>扩展提供已验证的整版地址索引。返回空值时才尝试旧版入口和内置首包。</summary>
+        public static Func<RevResMap> ResolvedResMapSnapshot { get; set; }
+
         // ==================== 初始化 ====================
 
         /// <summary>结束上一轮 Play 的资源回执和覆盖委托。新会话的扩展随后通过正常启动入口重新注册。</summary>
@@ -100,6 +103,7 @@ namespace Revolution
             // 委托可能捕获旧场景对象。当前会话可以在 RevInitialize 的资源装配回调中重新安装自己的解析器。
             ResMapOverride = null;
             ResMapSnapshot = null;
+            ResolvedResMapSnapshot = null;
             RevABLoader.BundlePathResolver = null;
             RevABLoader.BundleCacheKeyResolver = null;
             RevABLoader.DependenciesOverride = null;
@@ -110,11 +114,11 @@ namespace Revolution
         {
             // 映射是策略的前置条件。失败时不要把当前资源缓存和依赖图清掉。
 #if UNITY_EDITOR
-            bool useBundles = UseABInEditor;
-            Dictionary<string, string> map = useBundles ? LoadResMap() : null;
+            RevABLoader loader = UseABInEditor ? new RevABLoader() : null;
 #else
-            Dictionary<string, string> map = LoadResMap();
+            RevABLoader loader = new RevABLoader();
 #endif
+            RevABResPolicy bundlePolicy = loader == null ? null : CreateBundlePolicy(loader);
 
             // Init 可能是编辑器 AB 开关触发的热切换，也可能在关闭 Domain Reload 后重复执行；
             // 先终止旧请求并用旧策略释放缓存，再替换策略，避免缓存继续返回旧来源资源。
@@ -132,7 +136,7 @@ namespace Revolution
             // ================== 开发模式（默认）==================
             // 只注册编辑器策略 → 所有资源一律 AssetDatabase 直读；
             // 直接 return，AB / Resources 策略根本不注册。
-            if (!useBundles)
+            if (loader == null)
             {
                 RevResManager.RegisterPolicy(new RevEditorResPolicy());
                 return;
@@ -142,8 +146,8 @@ namespace Revolution
 
             // ================== AB 模式（运行时 / 编辑器手动开启）==================
             // ① AB 策略（主方案）：除 "Res/" 前缀外全部接管；失败可兜底
-            _abLoader = new RevABLoader();
-            RevResManager.RegisterPolicy(new RevABResPolicy(map, _abLoader));
+            _abLoader = loader;
+            RevResManager.RegisterPolicy(bundlePolicy);
 
             // ② Resources 策略（链尾兜底）：接住 "Res/" 特殊资源 + AB 加载失败兜底
             RevResManager.RegisterPolicy(new RevResourcesResPolicy());
@@ -151,32 +155,42 @@ namespace Revolution
             // 注册顺序 = 优先级 → AB > Resources
         }
 
-        /// <summary>优先读完整热更版本。首包解压并验证，旧 Player 可继续加载原有内置文本。</summary>
-        private Dictionary<string, string> LoadResMap()
+        /// <summary>选择本次 AB 映射来源。内置与类型化扩展直接持有地址索引，旧钩子沿用原来字典。</summary>
+        private static RevABResPolicy CreateBundlePolicy(RevABLoader loader)
         {
+            RevResMap resolved = ResolvedResMapSnapshot?.Invoke();
+            if (resolved != null)
+            {
+                return new RevABResPolicy(resolved, loader);
+            }
             Dictionary<string, string> snapshot = ResMapSnapshot?.Invoke();
             if (snapshot != null)
             {
-                return snapshot;
+                return new RevABResPolicy(snapshot, loader);
             }
 
-            Dictionary<string, string> map = LoadBuiltinResMap();
-            // 保留宿主显式增量覆盖入口。版本级热更新用完整快照，避免已删除的逻辑键回落到旧包坐标。
+            string text = ReadBuiltinResMapText();
             Func<Dictionary<string, string>> overrideSource = ResMapOverride;
-            if (overrideSource != null)
+            if (overrideSource == null)
             {
-                Dictionary<string, string> hot = overrideSource();
-                if (hot != null)
+                return new RevABResPolicy(RevResMap.Parse(text), loader);
+            }
+
+            // 旧的增量覆盖是宿主接口。它保持文本字典语义，版本级热更新则提供完整的类型化快照。
+            Dictionary<string, string> map = RevResMapCodec.ParseText(text);
+            Dictionary<string, string> hot = overrideSource();
+            if (hot != null)
+            {
+                foreach (KeyValuePair<string, string> entry in hot)
                 {
-                    foreach (KeyValuePair<string, string> kv in hot) map[kv.Key] = kv.Value;
+                    map[entry.Key] = entry.Value;
                 }
             }
-
-            return map;
+            return new RevABResPolicy(map, loader);
         }
 
         /// <summary>读取一份内置引导资产。派生副本损坏时中止，旧格式只在压缩资产不存在时读取。</summary>
-        private static Dictionary<string, string> LoadBuiltinResMap()
+        private static string ReadBuiltinResMapText()
         {
             TextAsset asset = Resources.Load<TextAsset>(RevResMapCodec.PackedResourcePath);
             bool packed = asset != null;
@@ -186,14 +200,13 @@ namespace Revolution
             }
             if (asset == null)
             {
-                return new Dictionary<string, string>(StringComparer.Ordinal); // 纯远端或 Resources 项目。
+                return string.Empty; // 纯远端或 Resources 项目。
             }
 
             try
             {
                 byte[] bytes = asset.bytes;
-                string text = packed ? RevResMapCodec.Unpack(bytes) : RevResMapCodec.DecodeText(bytes);
-                return RevResMapCodec.ParseText(text);
+                return packed ? RevResMapCodec.Unpack(bytes) : RevResMapCodec.DecodeText(bytes);
             }
             finally
             {

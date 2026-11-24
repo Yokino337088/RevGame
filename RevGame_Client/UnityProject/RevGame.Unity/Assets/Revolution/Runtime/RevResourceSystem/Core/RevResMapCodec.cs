@@ -56,6 +56,20 @@ namespace Revolution
         /// <summary>完整验证后才返回映射。重复键、非法行和失控路径都会拒绝整表。</summary>
         public static Dictionary<string, string> ParseText(string text)
         {
+            var map = new Dictionary<string, string>(StringComparer.Ordinal);
+            ReadRows(text, (path, bundle, asset, line) =>
+            {
+                if (!map.TryAdd(path, bundle + "|" + asset))
+                {
+                    throw InvalidRow(line, "重复逻辑路径 " + path);
+                }
+            });
+            return map;
+        }
+
+        /// <summary>首包、热更与旧文本共用逐行校验。不同索引在收到合法行后自行检查重复键。</summary>
+        internal static void ReadRows(string text, Action<string, string, string, int> add)
+        {
             if (text == null || Utf8.GetByteCount(text) > MaxTextBytes)
             {
                 throw new InvalidDataException("ResMap 文本缺失或超过大小上限");
@@ -65,7 +79,6 @@ namespace Revolution
                 text = text.Substring(1);
             }
 
-            var map = new Dictionary<string, string>(StringComparer.Ordinal);
             // 逐行读取，避免在启动阶段额外持有全量行数组和每行的字段数组。
             using (var reader = new StringReader(text))
             {
@@ -93,13 +106,9 @@ namespace Revolution
                     {
                         throw InvalidRow(lineNumber, "路径或包内名称含非法字符、空段或目录跳转");
                     }
-                    if (!map.TryAdd(logicalPath, line.Substring(first + 1)))
-                    {
-                        throw InvalidRow(lineNumber, "重复逻辑路径 " + logicalPath);
-                    }
+                    add(logicalPath, bundle, asset, lineNumber);
                 }
             }
-            return map;
         }
 
         /// <summary>生成确定的 UTF-8 派生副本，并在写入前检测映射格式和重复键。</summary>
@@ -246,7 +255,7 @@ namespace Revolution
         }
 
         /// <summary>将失败定位到原表行号，调用方可以直接回到构建产物排查。</summary>
-        private static InvalidDataException InvalidRow(int lineNumber, string reason)
+        internal static InvalidDataException InvalidRow(int lineNumber, string reason)
         {
             return new InvalidDataException("ResMap 第 " + lineNumber + " 行无效：" + reason);
         }

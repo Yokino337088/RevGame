@@ -14,8 +14,31 @@ namespace Revolution
         //   ulong 是值类型，比较/哈希都在栈上，快得多，也不产生 GC 垃圾。
         public ulong Key { get; internal set; }   // 唯一 Key（路径的 FNV-1a 哈希）
         public string StandardPath { get; internal set; }   // 标准路径（业务传入：如 "Hero/1001"）
-        public string RealPath { get; internal set; }   // 真实路径（策略映射后，给 Loader 用）
+        /// <summary>诊断和旧加载器读取的真实路径。AB 地址在需要文本时才转为原来的两段格式。</summary>
+        public string RealPath
+        {
+            get => _resolvedPath is RevABAddress address ? address.ToPath() : (string)_resolvedPath;
+            internal set => _resolvedPath = value;
+        }
         public System.Type ContentType { get; internal set; }   // 内容类型 typeof(T)
+
+        /// <summary>沿用单个引用槽。旧策略存路径文本，内置 AB 策略存映射条目的共享地址。</summary>
+        private object _resolvedPath;
+
+        /// <summary>取得本次策略已经找到的 AB 地址。旧策略返回空，由传统加载入口解析。</summary>
+        internal RevABAddress ABAddress => _resolvedPath as RevABAddress;
+
+        /// <summary>保存映射中自带的地址引用，供加载器直接读取。</summary>
+        internal void SetABAddress(RevABAddress address)
+        {
+            _resolvedPath = address;
+        }
+
+        /// <summary>将实际来源交给弱类型加载的具体类型视图。AB 地址保持共享。</summary>
+        internal void CopyResolvedPathFrom(RevResHandle source)
+        {
+            _resolvedPath = source._resolvedPath;
+        }
 
         // ===== 生命周期 =====
 

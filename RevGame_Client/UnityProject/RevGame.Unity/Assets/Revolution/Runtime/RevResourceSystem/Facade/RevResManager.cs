@@ -142,23 +142,25 @@ namespace Revolution
         {
             if (!RevResPathUtil.IsValidResName(resName)) return RevResHandle.Empty;
 
-            // ① 缓存命中（零字符串分配）
+            // 命中与冷路径复用同一个键。仅创建新句柄时才需要完整字符串。
             ulong key = RevResPathUtil.ComputeKey(rootPath, resName);
-            // 失败结果也会暂存在缓存里，避免每帧都重复尝试同一个坏路径；但调用方释放失败句柄、引用数归零后，
-            // 以后再次 Load 应该允许重新尝试（例如玩家修正资源或热更已补上文件）。若保留旧失败项，后续请求只会不断拿到上次的错误。
-            if (_cache.TryGetValue(key, out RevResHandle existing) && !existing.IsLoaded && !existing.IsLoading && existing.RefCount <= 0)
-                DiscardFailedHandle(key, existing);
             if (TryHitCache(key, contentType, group, out RevResHandle hit)) return hit;
 
-            // ② 未命中：这时才拼出完整逻辑路径（映射表 / 句柄 / 日志都要它，一次分配可接受）
-            return LoadByPath(RevResPathUtil.Join(rootPath, resName), contentType, group);
+            return LoadUncached(key, RevResPathUtil.Join(rootPath, resName), contentType, group);
         }
 
-        /// <summary>缓存命中处理：校验内容类型后引用 +1、刷新 LRU 并补分组。</summary>
+        /// <summary>单次查缓存。有效句柄取得引用，已归零的失败条目撤掉后允许重试。</summary>
         private static bool TryHitCache(ulong key, Type contentType, RevResGroup group, out RevResHandle handle)
         {
             if (_cache.TryGetValue(key, out RevResHandle cached))
             {
+                // 失败缓存有持有者时保留回执，归零后下一次请求应能尝试新资源。
+                if (!cached.IsLoaded && !cached.IsLoading && cached.RefCount <= 0)
+                {
+                    DiscardFailedHandle(key, cached);
+                    handle = null;
+                    return false;
+                }
                 // 缓存表用资源路径查找，不把请求的 C# 类型也放进 key。同一路径如果已经按 Sprite 加载，后来又按 Texture 请求，
                 // 不检查类型就会错误复用 Sprite 句柄，业务拿到的 Content as Texture 只会变成 null，看不出真正原因。
                 // 返回一个独立的 TypeMismatch 失败句柄，并且不增加原资源的引用数；这样既明确报错，也不影响正确请求的资源寿命。
@@ -212,19 +214,10 @@ namespace Revolution
             handle.RemoveFlag(RevResInstanceFlag.MarkedUnused);
         }
 
-        /// <summary>按完整逻辑路径加载（框架内部：两条对外入口最终都汇到这里）。</summary>
-        private static RevResHandle LoadByPath(string standardPath, Type contentType, RevResGroup group)
+        /// <summary>使用已知未命中的键按策略加载，成功或失败只登记一次句柄。</summary>
+        private static RevResHandle LoadUncached(ulong key, string standardPath, Type contentType, RevResGroup group)
         {
-            if (string.IsNullOrEmpty(standardPath)) return RevResHandle.Empty;
-
-            ulong key = ComputeKey(standardPath);
-
-            // ① 缓存命中：计数 +1，直接返回
-            if (_cache.TryGetValue(key, out RevResHandle existing) && !existing.IsLoaded && !existing.IsLoading && existing.RefCount <= 0)
-                DiscardFailedHandle(key, existing);
-            if (TryHitCache(key, contentType, group, out RevResHandle cached)) return cached;
-
-            // ② 按优先级依次尝试策略（责任链 + 兜底）
+            // 按优先级依次尝试策略。第一个接单策略才创建新句柄。
             RevResHandle handle = null;
 
             for (int i = 0; i < _policies.Count; i++)
@@ -266,10 +259,11 @@ namespace Revolution
         /// <summary>用指定策略尝试加载一次；失败时通过 err 说明原因</summary>
         private static bool TryLoadWithPolicy(IRevResPolicy policy, RevResHandle handle, out RevResLoadErrorReason err)
         {
-            // 1) 映射真实路径
-            string realPath = policy.MapPath(handle.StandardPath, handle.ContentType);
-            if (string.IsNullOrEmpty(realPath)) { err = RevResLoadErrorReason.PathNotMapped; return false; }
-            handle.RealPath = realPath;
+            if (!TryResolvePath(policy, handle))
+            {
+                err = RevResLoadErrorReason.PathNotMapped;
+                return false;
+            }
 
             // 2) 交给策略对应的加载器读取文件或 AssetBundle。自定义 Loader 可能因路径、磁盘或 AB 状态异常而抛错，
             //    若让异常直接传到游戏业务，调用方会拿不到正常的失败句柄，已经增加的资源引用也难以按统一流程归还。
@@ -350,36 +344,27 @@ namespace Revolution
                 return ready;
             }
 
-            // 只有可能跨帧且存在业务回调的域请求需要回执对象，热命中不会为回调额外分配。
-            string path = RevResPathUtil.Join(rootPath, resName);
+            // 传递本次已经查到的缓存项。已有在途请求用其完整路径，无须再拼一次或重算键。
             if (scope == null || onFinished == null)
             {
-                RevResHandle handle = LoadAsyncByPath(path, contentType, onFinished, group, priority);
+                RevResHandle handle = LoadAsyncRequest(key, ready, rootPath, resName, contentType, onFinished, group, priority);
                 TrackScopeReference(scope, handle);
                 return handle;
             }
             var request = new ScopedLoadCallback(scope, onFinished);
-            RevResHandle result = LoadAsyncByPath(path, contentType, request.Finish, group, priority);
+            RevResHandle result = LoadAsyncRequest(key, ready, rootPath, resName, contentType, request.Finish, group, priority);
             request.Register(result);
             return result;
         }
 
-        /// <summary>按完整逻辑路径异步加载（框架内部）。</summary>
-        private static RevResHandle LoadAsyncByPath(string standardPath, Type contentType,
+        /// <summary>在主线程复用或重试已查到的句柄。确实发起新的读取时才创建新路径与句柄。</summary>
+        private static RevResHandle LoadAsyncRequest(ulong key, RevResHandle cached, string rootPath, string resName, Type contentType,
             Action<RevResHandle> onFinished, RevResGroup group,
             RevResLoadPriority priority)
         {
-            if (string.IsNullOrEmpty(standardPath))
-            {
-                InvokeFinished(onFinished, RevResHandle.Empty);
-                return RevResHandle.Empty;
-            }
-
-            ulong key = ComputeKey(standardPath);
-
             // ① 缓存命中：成功句柄直接复用；在途句柄合并回调。
             //    已完成失败句柄若引用归零，则丢弃失败项并重新尝试（例如 UI 资源路径修正后再次打开）。
-            if (_cache.TryGetValue(key, out RevResHandle cached))
+            if (cached != null)
             {
                 if (!cached.IsLoaded && !cached.IsLoading && cached.RefCount <= 0)
                 {
@@ -421,7 +406,7 @@ namespace Revolution
             var handle = new RevResHandle
             {
                 Key = key,
-                StandardPath = standardPath,
+                StandardPath = RevResPathUtil.Join(rootPath, resName),
                 ContentType = contentType,
                 Group = EffectiveGroup(group),                     // ★ 新建句柄也要过作用域兜底（见 EffectiveGroup）
                 RefCount = 1,
@@ -436,6 +421,7 @@ namespace Revolution
             return handle;
         }
 
+        /// <summary>复用弱类型在途请求。完成后给具体类型视图共享已取得的地址和资源。</summary>
         private static RevResHandle JoinWeakTypedRequest(RevResHandle owner, Type requestedType, Action<RevResHandle> callback, RevResGroup group)
         {
             owner.RefCount++;
@@ -451,7 +437,7 @@ namespace Revolution
             // 保留 Object 的底层加载类型，完成后才校验真实对象；一个错误类型请求不能污染其它等待者。
             AddPendingCallback(owner, result =>
             {
-                view.RealPath = result.RealPath;
+                view.CopyResolvedPathFrom(result);
                 view.ErrorReason = result.ErrorReason;
                 if (result.IsLoaded && !requestedType.IsInstanceOfType(result.Content))
                 {
@@ -487,10 +473,7 @@ namespace Revolution
                 onFinished == null ? null : handle => onFinished(handle.Content as T), group, priority, lifetime);
         }
 
-        /// <summary>
-        /// 异步版"责任链"：从 startIndex 开始找能处理 handle 的策略；
-        /// 若该策略加载失败且 AllowFallback = true，就自动换下一条策略重试。
-        /// </summary>
+        /// <summary>从指定策略继续异步尝试。成功、取消和失败依照原策略结束或继续回退。</summary>
         private static void TryLoadAsyncFrom(RevResHandle handle, int startIndex, RevResLoadPriority priority)
         {
             for (int i = startIndex; i < _policies.Count; i++)
@@ -498,8 +481,7 @@ namespace Revolution
                 IRevResPolicy policy = _policies[i];
                 if (!policy.Match(handle.StandardPath)) continue;
 
-                string realPath = policy.MapPath(handle.StandardPath, handle.ContentType);
-                if (string.IsNullOrEmpty(realPath))
+                if (!TryResolvePath(policy, handle))
                 {
                     handle.ErrorReason = RevResLoadErrorReason.PathNotMapped;
                     handle.MarkError();
@@ -508,7 +490,6 @@ namespace Revolution
                     return;
                 }
 
-                handle.RealPath = realPath;
                 handle.MarkLoading();
                 handle.ErrorReason = RevResLoadErrorReason.None;
 
@@ -536,6 +517,22 @@ namespace Revolution
             handle.ErrorReason = RevResLoadErrorReason.PolicyNotFound;
             handle.MarkError();
             CompleteAsync(handle);
+        }
+
+        /// <summary>内置 AB 策略直传共享地址，其他策略继续根据公开接口返回路径文本。</summary>
+        private static bool TryResolvePath(IRevResPolicy policy, RevResHandle handle)
+        {
+            if (policy is RevABResPolicy bundlePolicy && bundlePolicy.UsesResolvedMap)
+            {
+                return bundlePolicy.TryResolveAddress(handle);
+            }
+            string path = policy.MapPath(handle.StandardPath, handle.ContentType);
+            if (string.IsNullOrEmpty(path))
+            {
+                return false;
+            }
+            handle.RealPath = path;
+            return true;
         }
 
         private static void AddPendingCallback(RevResHandle handle, Action<RevResHandle> callback)

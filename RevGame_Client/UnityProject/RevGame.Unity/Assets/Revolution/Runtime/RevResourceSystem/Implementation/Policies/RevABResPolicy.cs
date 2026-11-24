@@ -12,65 +12,96 @@ namespace Revolution
     //   这样"没打进包的资源"也会先走到这里，失败后再兜底到 Resources，
     //   从而精确实现"只有加载不到的资源才走 Resources"。
     //
-    // 【映射表格式】逻辑名 → "包名|资源名"
-    //   由打包工具生成的 ResMap.txt 解析而来（见 RevResBootstrap.LoadResMap）。
+    // 【查表】内置来源使用已解析的包名与资源名，旧的公开构造器继续接受字典。
     // ============================================================
+    /// <summary>加载由 AB 提供的资源。缺失时允许资源门面尝试后续策略。</summary>
     public class RevABResPolicy : IRevResPolicy
     {
         /// <summary>
-        ///逻辑名 → "包名|资源名"的映射字典
-        ///键（Key）  ：业务写的逻辑路径，如 "Hero/1001"（也就是 handle.StandardPath）。
-        ///值（Value）：AB 包里真正的坐标，格式 "包名|资源名"，
-        ///如 "hero_1001.ab|Hero_1001"，用竖线 | 分隔：
+        /// 公开构造器的旧映射实例。保留原字典和其匹配规则，便于现有宿主动态调整映射。
         /// </summary>
-        private readonly Dictionary<string,string> _map;
+        private readonly Dictionary<string, string> _map;
 
-        //对应的ab包加载器
+        /// <summary>已验证且可整版替换的内置映射。启用这种来源时没有第二张文本字典。</summary>
+        private readonly RevResMap _catalog;
+
+        /// <summary>本策略绑定到的 AB 加载器。</summary>
         private readonly RevABLoader _loader;
 
         /// <summary>映射表条目数（窗口/排查用）</summary>
-        public int MapCount => _map.Count;
+        public int MapCount => _catalog?.Count ?? _map.Count;
+
+        /// <summary>只有框架装配的类型化策略走地址直传。第三方策略继续调用 IRevResPolicy。</summary>
+        internal bool UsesResolvedMap => _catalog != null;
 
         /// <summary>
         /// 对外提供调用的ab包加载器属性
         /// </summary>
         public RevABLoader BundleLoader => _loader;
+        /// <summary>兼容接受可变字典的项目与自定义策略。</summary>
         public RevABResPolicy(Dictionary<string, string> map, RevABLoader loader)
         {
             _map = map ?? new Dictionary<string, string>();
             _loader = loader;
         }
-        // ★ AB 里没有 / 包坏了 → 允许继续用 Resources 兜底
+        /// <summary>框架装配首包或已验证的完整热更版本时使用。</summary>
+        internal RevABResPolicy(RevResMap catalog, RevABLoader loader)
+        {
+            _catalog = catalog;
+            _loader = loader;
+        }
+
+        /// <summary>AB 未命中或加载失败后允许继续尝试后续策略。</summary>
         public bool AllowFallback => true;
 
+        /// <summary>返回本策略绑定的加载器，包引用由同一实例维护。</summary>
         public IRevResLoader CreateLoader()
         {
             return _loader;
         }
 
-        // 查表：查到 → "包名|资源名"；查不到 → null（门面据此触发兜底）
+        /// <summary>为旧策略接口和诊断保留包名与资源名的文本表示。普通 AB 加载直接使用地址。</summary>
         public string MapPath(string standardPath, Type contentType)
         {
+            if (_catalog != null)
+            {
+                return _catalog.TryGetAddress(standardPath, out RevABAddress address) ? address.ToPath() : null;
+            }
             return _map.TryGetValue(standardPath, out string v) ? v : null;
         }
 
-        // 除显式指定走 Resources 的资源外，全部由 AB 接管
+        /// <summary>将映射中已有的地址交给句柄，缺失时由门面继续后续策略。</summary>
+        internal bool TryResolveAddress(RevResHandle handle)
+        {
+            if (!_catalog.TryGetAddress(handle.StandardPath, out RevABAddress address))
+            {
+                return false;
+            }
+            handle.SetABAddress(address);
+            return true;
+        }
+
+        /// <summary>明确请求 Resources 的路径交给后续策略，其余由 AB 尝试。</summary>
         public bool Match(string standardPath)
         {
             return !standardPath.StartsWith(RevResourcesResPolicy.PREFIX);
         }
 
-        /// <summary>
-        /// 资源级引用归零 / 被强制移除时，把对应的 AB 包引用也还掉（包引用归零会自动 Unload）。
-        /// 调用方：RevResManager 的 FlushUnused / UnloadGroup / ForceRemove / UnloadAll。
-        ///
-        /// 【为什么要用逻辑路径反查】加载时走的是"包名|资源名"，而卸载时手上只有逻辑路径，
-        /// 所以拿同一张映射表反查一次，再从值里切出包名。
-        /// </summary>
+        /// <summary>兼容按逻辑路径直接归还包引用的调用。门面管理的资源由其句柄归还实际取得的包和依赖。</summary>
         public void ReleaseBundleOf(string standardPath)
         {
-            if (_map.TryGetValue(standardPath, out string v))
-                _loader.ReleaseBundle(v.Split('|')[0]);
+            if (_catalog != null)
+            {
+                if (_catalog.TryGetAddress(standardPath, out RevABAddress address))
+                {
+                    _loader.ReleaseBundle(address.BundleName);
+                }
+            }
+            else if (_map.TryGetValue(standardPath, out string path))
+            {
+                int separator = path.IndexOf('|');
+                _loader.ReleaseBundle(separator < 0 ? path : path.Substring(0, separator));
+            }
         }
     }
 }

@@ -385,20 +385,17 @@ namespace Revolution
 
         // ==================== IRevResLoader接口实现 ====================
 
+        /// <summary>同步读取已查到的 AB 地址，并将实际取得的包引用记到句柄。</summary>
         public object Load(RevResHandle handle, out RevResLoadErrorReason err)
         {
-            // RealPath 约定为 "包名|资源名"
-            //   · 包名可能是"生效包名"，即带变体时形如 "ui_login.hd"（与构建出的文件名一致）
-            //   · 资源名不含扩展名
-            string[] parts = handle.RealPath.Split('|');
-            // 拆不出两段 → 句柄本不该进 RevABLoader（映射表坏了 / 策略匹配漏了）
-            if (parts.Length != 2) 
-            { 
-                err = RevResLoadErrorReason.PathNotMapped; 
-                return null; 
+            RevABAddress address = ResolveAddress(handle);
+            if (address == null)
+            {
+                err = RevResLoadErrorReason.PathNotMapped;
+                return null;
             }
-            //加载ab包
-            AssetBundle bundle = AcquireBundle(parts[0], out string[] acquiredDependencies);
+            // 加载器直接使用映射保留的包名和包内名称。
+            AssetBundle bundle = AcquireBundle(address.BundleName, out string[] acquiredDependencies);
             if (bundle == null)
             {
                 err = RevResLoadErrorReason.BundleLoadFail;
@@ -407,11 +404,11 @@ namespace Revolution
             handle.BundleAcquired = true;
             handle.BundleLoader = this;
             handle.BundleGeneration = _generation;
-            handle.BundleName = parts[0];
+            handle.BundleName = address.BundleName;
             handle.BundleDependencies = acquiredDependencies;
             //加载ab包中的资源
-            UnityEngine.Object asset = bundle.LoadAsset(parts[1], handle.ContentType);
-            ReportAndroidShaderIssues(asset, parts[0], parts[1]);
+            UnityEngine.Object asset = bundle.LoadAsset(address.AssetName, handle.ContentType);
+            ReportAndroidShaderIssues(asset, address.BundleName, address.AssetName);
             err = asset != null ? RevResLoadErrorReason.None : RevResLoadErrorReason.AssetLoadFail;
             return asset;
 
@@ -430,8 +427,8 @@ namespace Revolution
             var acquiredDependencies = new List<string>();
             try
             {
-                string[] parts = handle.RealPath.Split('|');
-                if (parts.Length != 2)
+                RevABAddress address = ResolveAddress(handle);
+                if (address == null)
                 {
                     handle.ErrorReason = RevResLoadErrorReason.PathNotMapped;
                     handle.MarkError();
@@ -454,7 +451,7 @@ namespace Revolution
                     handle.MarkError();
                     return;
                 }
-                string failedDependency = await AcquireDependenciesAsync(ResolveDependencies(parts[0]), acquiredDependencies, generation, token);
+                string failedDependency = await AcquireDependenciesAsync(ResolveDependencies(address.BundleName), acquiredDependencies, generation, token);
                 if (generation != _generation)
                 {
                     throw new RevOperationCanceledException();
@@ -463,7 +460,7 @@ namespace Revolution
                 if (failedDependency != null)
                 {
 #if UNITY_ANDROID && !UNITY_EDITOR
-                    RevLog.Error($"Android AB 依赖包加载失败：目标 {parts[0]} / 依赖 {failedDependency} / 路径 {ResolveBundlePath(failedDependency)}。请检查平台产物、热更版本与包文件。", "Res");
+                    RevLog.Error($"Android AB 依赖包加载失败：目标 {address.BundleName} / 依赖 {failedDependency} / 路径 {ResolveBundlePath(failedDependency)}。请检查平台产物、热更版本与包文件。", "Res");
 #endif
                     ReleaseDependencies(acquiredDependencies, generation);
                     acquiredDependencies.Clear();
@@ -472,7 +469,7 @@ namespace Revolution
                     return;
                 }
 
-                AssetBundle bundle = await AcquireSingleAsync(parts[0]);
+                AssetBundle bundle = await AcquireSingleAsync(address.BundleName);
                 if (generation != _generation)
                 {
                     throw new RevOperationCanceledException();
@@ -482,7 +479,7 @@ namespace Revolution
                     // 清理或换包发生在等待之间，旧请求应结束为取消，资源门面也不会尝试后续兜底策略。
                     token?.ThrowIfCancelled();
 #if UNITY_ANDROID && !UNITY_EDITOR
-                    RevLog.Error($"Android AB 目标包加载失败：{parts[0]} / 路径 {ResolveBundlePath(parts[0])}。先检查包来源，不能当作材质 Shader 缺失处理。", "Res");
+                    RevLog.Error($"Android AB 目标包加载失败：{address.BundleName} / 路径 {ResolveBundlePath(address.BundleName)}。先检查包来源，不能当作材质 Shader 缺失处理。", "Res");
 #endif
                     ReleaseDependencies(acquiredDependencies, generation);
                     acquiredDependencies.Clear();
@@ -494,7 +491,7 @@ namespace Revolution
                 handle.BundleAcquired = true;
                 handle.BundleLoader = this;
                 handle.BundleGeneration = _generation;
-                handle.BundleName = parts[0];
+                handle.BundleName = address.BundleName;
                 // 加载这个资源时，代码已经逐个给它的依赖包增加了引用计数；把这次实际取得的依赖名单交给句柄保存。
                 // 随后清空本地列表，表示“释放责任已经转交给句柄”，这样取消/异常清理就不会和句柄再次释放同一依赖。
                 // 若重复减引用，共享该依赖的其他资源还在使用时也可能被提前卸载，导致资源突然加载失败。
@@ -503,11 +500,11 @@ namespace Revolution
                 if (generation != _generation) { throw new RevOperationCanceledException(); }
                 token?.ThrowIfCancelled();
 
-                AssetBundleRequest req = bundle.LoadAssetAsync(parts[1], handle.ContentType);
+                AssetBundleRequest req = bundle.LoadAssetAsync(address.AssetName, handle.ContentType);
                 await req;
                 if (generation != _generation) { throw new RevOperationCanceledException(); }
                 token?.ThrowIfCancelled();
-                ReportAndroidShaderIssues(req.asset, parts[0], parts[1]);
+                ReportAndroidShaderIssues(req.asset, address.BundleName, address.AssetName);
                 handle.ErrorReason = req.asset != null ? RevResLoadErrorReason.None : RevResLoadErrorReason.AssetLoadFail;
                 handle.SetContent(req.asset);
             }
@@ -527,6 +524,23 @@ namespace Revolution
             {
                 onFinished?.Invoke(handle);
             }
+        }
+
+        /// <summary>优先使用策略已查到的地址。旧自定义策略仍可传入包名与资源名的两段文本。</summary>
+        private static RevABAddress ResolveAddress(RevResHandle handle)
+        {
+            RevABAddress address = handle.ABAddress;
+            if (address != null)
+            {
+                return address;
+            }
+            string path = handle.RealPath;
+            int separator = path?.IndexOf('|') ?? -1;
+            if (separator < 0 || path.IndexOf('|', separator + 1) >= 0)
+            {
+                return null;
+            }
+            return new RevABAddress(path.Substring(0, separator), path.Substring(separator + 1));
         }
 
         /// <summary>
