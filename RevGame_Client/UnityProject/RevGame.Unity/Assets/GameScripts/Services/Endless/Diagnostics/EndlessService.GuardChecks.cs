@@ -1,6 +1,6 @@
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
 // ============================================================
-// EndlessService.GuardChecks.cs —— 盾战/刺客/远程/交互规则夹具（3×3防御区与盾击 / 刺客突刺 / 远程连发 / 不停顿 / 智能驻守 / 选牌后点棋）
+// EndlessService.GuardChecks.cs —— 盾战、刺客、远程出手与近战落子驻守的规则夹具。
 // 只在隔离实例里建立前置条件，断言全部读真实业务结果；不碰玩家存档、不代表正常难度通关。
 // ============================================================
 using System;
@@ -14,14 +14,13 @@ namespace RevGame.Endless
 {
     public sealed partial class EndlessService
     {
-        /// <summary>从隔离棋局运行守护、突刺、移动和输入验收，同时逐格核对驻守计分的距离查表。</summary>
+        /// <summary>在隔离棋局核对守护、突刺、远程连发和棋盘输入，再用实战固定步验收新部署的近战驻守。</summary>
         public static object CheckGuardRules()
         {
             var passed = new List<string>();
             string previousSave = _isolatedSave;
             try
             {
-                CheckGuardDistanceFactors(passed);
                 using (var s = new EndlessService())
                 {
                     // 炎环棋阵：盾战在 (1,4)，以自身为中心的 3×3 防御区应为 x0~2、y3~5 共 9 格。
@@ -110,39 +109,9 @@ namespace RevGame.Endless
                     Check(s.Run.phase == EndlessPhase.Fighting && s.Run.hand.Count == 1, "分钟节点不进整备、战斗中自动补牌", passed);
                     Check(s.SelectCard(0), "战斗中可以选手牌", passed);
 
-                    // 智能驻守：左下区堆大量敌人，重新规划后至少一枚近战被派往左下区（区号 0）。
-                    for (int i = 0; i < 6; i++)
-                    {
-                        PutHorde(s, i, -1 - i * .3f, 1);
-                    }
-                    s._zonePlanAt = 0;
-                    s.PlanZones();
-                    bool guarded = false;
-                    foreach (EndlessUnit u in s.Units)
-                    {
-                        guarded |= u.Zone == 0;
-                    }
-                    Check(guarded, "敌人最多的区优先分到近战驻守", passed);
-
-                    // 手动保持：战斗中手动移动近战棋后，ManualHoldSeconds 内不被自动索敌拉走。
-                    // 先取消上面选中的手牌，否则点己方棋子会走“手牌合星”分支。
-                    s.Run.selectedCard = -1;
-                    EndlessUnit swordman = null;
-                    foreach (EndlessUnit u in s.Units)
-                    {
-                        if (u.Piece.Def.Kind == PieceKind.Swordman)
-                        {
-                            swordman = u;
-                        }
-                    }
-                    Check(swordman != null && s.ClickCell(swordman.Piece.Pos.X, swordman.Piece.Pos.Y), "战斗中可以点选己方棋子", passed);
-                    BoardPos target = FreeNeighbour(s, swordman.Piece);
-                    Check(s.ClickCell(target.X, target.Y) && swordman.HoldUntil > s.Run.seconds, "手动移动后进入保持时间", passed);
-                    BoardPos held = swordman.Piece.Pos;
-                    s.MeleeAdvance(swordman);
-                    Check(swordman.Piece.Pos.Equals(held), "保持时间内自动索敌不移动该棋", passed);
-
                     // 交互修复：先点手牌，再点一枚不能合星的己方棋子 → 放下手牌、改为选中这枚棋子，并能显示移动范围、真正移动。
+                    EndlessUnit swordman = UnitAt(s, 4, 2);
+                    Check(swordman != null && swordman.Piece.Def.Kind == PieceKind.Swordman, "炎环剑士仍站在开局格", passed);
                     s.Run.hand.Clear();
                     s.Run.hand.Add((int)PieceKind.Priest);
                     Check(s.SelectCard(0), "战斗中先选中一张手牌", passed);
@@ -153,10 +122,11 @@ namespace RevGame.Endless
                     Check(s.CanPlaceAt(step.X, step.Y), "选中后空格显示为可移动（绿色范围）", passed);
                     Check(s.ClickCell(step.X, step.Y) && swordman.Piece.Pos.Equals(step), "选牌后改点的棋子可以正常移动", passed);
                 }
+                CheckMeleeDeployment(passed);
                 return new Dictionary<string, object>
                 {
                     ["success"] = true, ["passed"] = passed.Count, ["checks"] = passed,
-                    ["scope"] = "独立规则夹具：3×3防御区居中/并集/减伤/格挡回执、盾击范围与冷却、刺客射程与贯穿、远程攻速与一步连发、不停顿补牌、驻守分配与手动保持、选牌后点棋可移动"
+                    ["scope"] = "独立规则夹具：防御区与格挡、盾击、刺客贯穿、远程连发、战斗补牌、主动调阵和近战落子驻守"
                 };
             }
             finally
@@ -164,46 +134,33 @@ namespace RevGame.Endless
                 _isolatedSave = previousSave;
             }
         }
-        /// <summary>逐项比较所有合法半格中心与连续或格外坐标，覆盖查表和原式回退的浮点边界。</summary>
-        private static void CheckGuardDistanceFactors(List<string> passed)
+        /// <summary>用固定种子复跑守眼阵的盾战落子。在敌潮实际到场后逐步核对同一枚棋的生命、模型位置和占格。</summary>
+        private static void CheckMeleeDeployment(List<string> passed)
         {
-            for (int y = 0; y < ZoneHalfGridSide; y++)
+            using (var s = new EndlessService())
             {
-                for (int x = 0; x < ZoneHalfGridSide; x++)
+                s.Begin(2, 0, 1101, true);
+                var drop = new BoardPos(4, 8);
+                // 守眼阵开局只有石子盾战，这张手牌会经玩家拖放共用入口新部署一枚主力。
+                Check(s.PlayCardAt(1, drop.X, drop.Y) && s.LastCardAction == "Deploy", "从守眼整备手牌部署盾战", passed);
+                EndlessUnit shield = s.Find(s.LastCardTarget);
+                Check(shield != null && shield.Piece.Def.Kind == PieceKind.Shield && s.Board.GetPiece(drop) == shield.Piece,
+                    "新盾战占用实际落点", passed);
+                Check(s.StartWave(), "部署后开始迎战", passed);
+
+                // 推进九秒，覆盖曾经在第六秒解除保持后被敌潮拉走的回归。
+                float step = V("SimulationStep");
+                int steps = Mathf.CeilToInt(9f / step);
+                bool stayed = true;
+                for (int i = 0; i < steps; i++)
                 {
-                    var center = new Vector2(x * .5f, y * .5f);
-                    int index = ZoneDistanceRow(center);
-                    if (index < 0)
-                    {
-                        throw new InvalidOperationException("半格中心未命中驻守距离表：" + x + "," + y);
-                    }
-                    for (int zone = 0; zone < ZoneCount; zone++)
-                    {
-                        float expected = 1 + ZoneDistanceWeight * Vector2.Distance(center, ZoneAnchor(zone));
-                        if (ZoneDistanceFactor(center, index, zone) != expected)
-                        {
-                            throw new InvalidOperationException("驻守距离分母与原式不一致：" + x + "," + y + "/" + zone);
-                        }
-                    }
+                    s.Tick(step);
+                    stayed &= shield.Piece.IsAlive && shield.Piece.Pos.Equals(drop) && s.Board.GetPiece(drop) == shield.Piece;
                 }
+                Check(s.Run.phase == EndlessPhase.Fighting && s.Run.seconds > 8.5f && s.HordeCount() > 0,
+                    "固定步已越过旧保持期限且敌潮在场", passed);
+                Check(stayed, "玩家部署的盾战在每个战斗固定步都留在落点", passed);
             }
-            foreach (Vector2 center in new[] { new Vector2(.25f, 2), new Vector2(-.5f, 3), new Vector2(8, 8.5f) })
-            {
-                int index = ZoneDistanceRow(center);
-                if (index != -1)
-                {
-                    throw new InvalidOperationException("非标准中心未走驻守距离回退");
-                }
-                for (int zone = 0; zone < ZoneCount; zone++)
-                {
-                    float expected = 1 + ZoneDistanceWeight * Vector2.Distance(center, ZoneAnchor(zone));
-                    if (ZoneDistanceFactor(center, index, zone) != expected)
-                    {
-                        throw new InvalidOperationException("非标准中心驻守距离回退与原式不一致");
-                    }
-                }
-            }
-            Check(true, "驻守距离查表的 1734 个半格中心与区域组合及格外回退均与原式相同", passed);
         }
 
         private static int ZoneCells(EndlessService s)

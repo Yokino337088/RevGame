@@ -8,11 +8,9 @@ namespace RevGame.Endless
 {
     public sealed partial class EndlessService
     {
-        /// <summary>固定步内先攻击再移动；只遍历现有名单，死亡移除统一延后，避免漏掉交换到当前索引的单位。</summary>
+        /// <summary>固定步推进现有棋子的持续伤害和行动。己方守在当前格出手，入侵者按各自规则移动，死亡统一延后回收。</summary>
         internal void UpdateUnits(float step)
         {
-            // 每 MeleeMoveSeconds 秒按威胁/守军重新给近战棋分配驻守区（见 EndlessService.Guard）。
-            PlanZones();
             for (int i = 0; i < Units.Count; i++)
             {
                 EndlessUnit unit = Units[i];
@@ -46,10 +44,10 @@ namespace RevGame.Endless
                     {
                         unit.SteadyShield = true;
                     }
-                    // 近战棋的剑气独立于普攻计时，持续切割身边一圈（吸血鬼幸存者式的被动武器）。
+                    // 近战以当前占格为战斗起点。玩家主动调阵时由 ClickCell 提交新位置。
+                    // 剑气与盾击各自沿用独立于普攻的计时。
                     UpdateAura(unit);
                     UpdateShieldBash(unit);
-                    MeleeAdvance(unit);
                     // 积压最多算一个模拟步：被锁/没目标/读档后恢复时只补本步内该打的几发，不会一口气补打一大串。
                     unit.AttackAt = Mathf.Max(unit.AttackAt, Run.seconds - step);
                     // 攻速很高时一次出手间隔会比 0.1 秒的模拟步还短（远程 ×12 约 0.03 秒），

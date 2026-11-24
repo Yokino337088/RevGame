@@ -20,7 +20,7 @@ namespace RevGame.Bootstrap
         /// <summary>同样推进 100 个固定步，后 80 步采集整帧。</summary>
         private const int EndlessEndStep = 100;
 
-        /// <summary>从正常进入的炎环棋阵执行压力对照，只观测真实固定步和绿格渲染状态，离场由作业拥有者执行。</summary>
+        /// <summary>从正常进入的炎环棋阵执行压力对照，核对盾战原位驻守、真实固定步和绿格渲染，离场由作业拥有者执行。</summary>
         internal static IEnumerator Endless(MathAbRun run)
         {
             var service = RevServices.GetRequired<EndlessService>();
@@ -36,6 +36,9 @@ namespace RevGame.Bootstrap
                 throw new InvalidOperationException("无尽对照开打前须清掉已有选中提示");
             }
 
+            // 固定阵的盾战开局落在 (1,4)。记录身份，避免采样点把后来占格的棋子误认成原来的盾战。
+            var shieldPos = new BoardPos(1, 4);
+            int shieldId = service.Board.GetPiece(shieldPos)?.Id ?? 0;
             long startStep = service.TickCount;
             if (!service.DebugStress(EndlessEnemyLoad) || service.HordeCount() != EndlessEnemyLoad)
             {
@@ -51,7 +54,6 @@ namespace RevGame.Bootstrap
             }
             CheckEndlessAbStep(service, match, startStep, EndlessWarmupSteps, deadline);
             run.BeginFrames();
-            int assignedMelee = 0;
             int hints = 0;
             try
             {
@@ -62,28 +64,16 @@ namespace RevGame.Bootstrap
                 }
                 CheckEndlessAbStep(service, match, startStep, EndlessInputStep, deadline);
 
-                // 只选择当前盾战，不移动、不扣牌。读取当前格，避免自动驻守已把它从开局格移走。
-                EndlessUnit shield = null;
-                for (int index = 0; index < service.Units.Count; index++)
+                // 在开局格点选同一枚存活盾战，测量玩家点选到可操作提示的时间。
+                var shield = service.Board.GetPiece(shieldPos);
+                if (shield == null || shield.Id != shieldId || shield.Side != GameSide.Player || !shield.IsAlive ||
+                    shield.Def.Kind != PieceKind.Shield || arena.PlacementHintCount != 0)
                 {
-                    EndlessUnit unit = service.Units[index];
-                    if (unit.Piece.Side == GameSide.Player && unit.Piece.IsAlive && unit.Zone >= 0)
-                    {
-                        assignedMelee++;
-                    }
-                    if (unit.Piece.Side == GameSide.Player && unit.Piece.IsAlive && unit.Piece.Def.Kind == PieceKind.Shield && shield == null)
-                    {
-                        shield = unit;
-                    }
-                }
-                if (shield == null || assignedMelee == 0 || arena.PlacementHintCount != 0)
-                {
-                    throw new InvalidOperationException("无尽驻守未生效、盾战离场或旧绿格仍亮着");
+                    throw new InvalidOperationException("无尽盾战开局格或身份不符，或旧绿格仍亮着");
                 }
 
-                BoardPos pos = shield.Piece.Pos;
                 long inputAt = Stopwatch.GetTimestamp();
-                if (!service.ClickCell(pos.X, pos.Y) || match.selectedUnit != shield.Piece.Id)
+                if (!service.ClickCell(shieldPos.X, shieldPos.Y) || match.selectedUnit != shield.Id)
                 {
                     throw new InvalidOperationException("真实棋盘操作未选中盾战：" + service.LastError);
                 }
@@ -109,10 +99,10 @@ namespace RevGame.Bootstrap
                 run.EndFrames();
             }
 
-            // 指纹和汇总都放在计时窗外。保留显式数值，便于先定位分区、击杀还是受击回执差异。
+            // 指纹和汇总放在计时窗外。保留落点、击杀与受击回执等数值以定位规则差异。
             ulong fingerprint = EndlessAbFingerprint(service);
             run.RecordRule(FormattableString.Invariant(
-                $"endless seed={match.seed} formation={match.formation} initialHorde={EndlessEnemyLoad} fixedSteps={EndlessEndStep} logicSeconds={match.seconds:F3} assignedAtInput={assignedMelee} hints={hints} heart={match.heart:R} kills={match.kills} invaderKills={match.invaderKills} score={match.score} level={match.level} random={match.random} units={service.Units.Count} liveHorde={service.HordeCount()} impacts={service.ImpactSerial} damageReceipts={service.DamageSerial} state={fingerprint:x16}"));
+                $"endless seed={match.seed} formation={match.formation} initialHorde={EndlessEnemyLoad} fixedSteps={EndlessEndStep} logicSeconds={match.seconds:F3} shieldAtInput={shieldPos.X},{shieldPos.Y} hints={hints} heart={match.heart:R} kills={match.kills} invaderKills={match.invaderKills} score={match.score} level={match.level} random={match.random} units={service.Units.Count} liveHorde={service.HordeCount()} impacts={service.ImpactSerial} damageReceipts={service.DamageSerial} state={fingerprint:x16}"));
         }
 
         /// <summary>等待中保持同一实例和战斗阶段，并用真实秒为逻辑步设置超时。</summary>
@@ -178,7 +168,6 @@ namespace RevGame.Bootstrap
                 Add((uint)piece.MaxHp);
                 Add((uint)piece.Liberties);
                 Add((uint)piece.EyeCount);
-                Add(unchecked((uint)actor.Zone));
                 AddFloat(actor.AttackAt);
                 AddFloat(actor.MoveAt);
             }

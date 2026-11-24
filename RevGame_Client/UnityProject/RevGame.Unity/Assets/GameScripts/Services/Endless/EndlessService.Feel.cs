@@ -44,7 +44,7 @@ namespace RevGame.Endless
             private set;
         }
 
-        /// <summary>近战棋：剑士、盾战、重剑、刺客。它们都会被智能索敌派去驻守（见 EndlessService.Guard）。</summary>
+        /// <summary>近战棋分类，供无尽驻守统计识别剑士、盾战、重剑与刺客。</summary>
         public static bool IsMelee(PieceKind kind)
         {
             return kind == PieceKind.Swordman || kind == PieceKind.Shield || kind == PieceKind.HeavySword || kind == PieceKind.Assassin;

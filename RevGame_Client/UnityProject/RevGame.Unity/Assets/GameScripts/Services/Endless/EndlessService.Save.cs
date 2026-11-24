@@ -82,7 +82,7 @@ namespace RevGame.Endless
                         bornAt = u.BornAt, bossTemplate = u.BossTemplate, warningLine = u.WarningLine,
                         role = u.Role, gate = u.Gate, breakEyeAt = u.BreakEyeAt, breakEyeTarget = u.BreakEyeTarget,
                         furyUntil = u.FuryUntil, stationarySince = u.StationarySince, steadyShield = u.SteadyShield,
-                        auraAt = u.AuraAt, comboCount = u.ComboCount, holdUntil = u.HoldUntil,
+                        auraAt = u.AuraAt, comboCount = u.ComboCount,
                         outside = u.Outside, centerX = u.Center.x, centerY = u.Center.y, damageBudgetAt = u.DamageBudgetAt, damageBudgetUsed = u.DamageBudgetUsed
                     }
                     );
@@ -112,6 +112,7 @@ namespace RevGame.Endless
                 return Reject(Run.error);
             }
         }
+        /// <summary>验证存档原文的校验和，再读取当前业务字段。Unity 忽略旧版多出的保持计时，原坐标继续用于恢复占格。</summary>
         private static EndlessRun Decode(string encoded)
         {
             Envelope envelope = JsonUtility.FromJson<Envelope>(encoded);
@@ -181,7 +182,7 @@ namespace RevGame.Endless
                     BornAt = s.bornAt, BossTemplate = s.bossTemplate, WarningLine = s.warningLine,
                     Role = s.role, Gate = s.gate, BreakEyeAt = s.breakEyeAt, BreakEyeTarget = s.breakEyeTarget,
                     FuryUntil = s.furyUntil, StationarySince = s.stationarySince, SteadyShield = s.steadyShield,
-                    AuraAt = s.auraAt, ComboCount = s.comboCount, HoldUntil = s.holdUntil,
+                    AuraAt = s.auraAt, ComboCount = s.comboCount,
                     Outside = outside, Center = s.outside ? new Vector2(s.centerX, s.centerY) : new Vector2(s.gate == 0 ? -V("BossStandoff") : 8 + V("BossStandoff"), Mathf.Clamp(s.y, 1, 7)), DamageBudgetAt = s.damageBudgetAt, DamageBudgetUsed = s.damageBudgetUsed
                 }
                 );

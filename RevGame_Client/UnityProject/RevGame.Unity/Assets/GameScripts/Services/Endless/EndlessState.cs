@@ -61,10 +61,6 @@ namespace RevGame.Endless
         public float AuraAt;
         /// <summary>组合技计数：本棋子满足搭档条件后已打出的普攻次数，到 Every 次就放一次组合技。存档保存。</summary>
         public int ComboCount;
-        /// <summary>玩家手动摆放/移动后，自动索敌暂停到这个战斗时间（秒）。存档保存。</summary>
-        public float HoldUntil;
-        /// <summary>智能索敌这一轮分配到的驻守区（0~5，-1 未分配）。每次规划重算，不进存档。</summary>
-        public int Zone = -1;
     }
     /// <summary>外围敌人是值类型，不挂MonoBehaviour，不参与围棋连通块。Id在转入棋盘后保持。</summary>
     [Serializable]
@@ -188,8 +184,9 @@ namespace RevGame.Endless
         public float centerX, centerY, damageBudgetAt, damageBudgetUsed;
         public float attackScale, attackAt, moveAt, burnUntil, burnAt, burnDamage, slowUntil, counterAt;
         public float brokenUntil, nextSkillAt, warningAt, bornAt, breakEyeAt, furyUntil, stationarySince;
-        /// <summary>剑气与组合技状态（新增字段，旧存档读出来是 0，等于“马上可以切/从头计数”，不会出错）。</summary>
-        public float auraAt, holdUntil;
+        /// <summary>剑气或盾击下次触发的战斗时间（秒）。旧存档缺省为 0，表示首次模拟步即可出手。</summary>
+        public float auraAt;
+        /// <summary>上一次组合技后已积累的普攻次数。旧存档缺省为 0，从头计数。</summary>
         public int comboCount;
     }
 }

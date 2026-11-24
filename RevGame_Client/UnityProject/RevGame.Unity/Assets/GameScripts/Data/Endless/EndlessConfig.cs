@@ -58,11 +58,9 @@ namespace RevGame.Endless
             Value("AuraTickSeconds");
             Value("AuraDamageRatio");
             Count("AuraTargetLimit");
-            Value("MeleeMoveSeconds");
             // 第三轮：战斗不停顿 + 盾战防御区 + 刺客突刺；整数项在这里就确认是整数。
             Value("CardRefillSeconds");
             Value("RangedAttackSpeedBonus");
-            Value("ManualHoldSeconds");
             Value("ShieldDefenseBonus");
             Value("AssassinRange");
             // 第四轮：盾击、波次成长、领主奖励表。

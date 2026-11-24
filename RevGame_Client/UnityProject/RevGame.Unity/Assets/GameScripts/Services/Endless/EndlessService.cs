@@ -264,6 +264,7 @@ namespace RevGame.Endless
             Run.selectedUnit = -1;
             return true;
         }
+        /// <summary>处理落子、点选、升星和玩家主动换格。换格成功后刷新占格规则与静守计时，非法落点保留原站位。</summary>
         public bool ClickCell(int x, int y)
         {
             var pos = new BoardPos(x, y);
@@ -311,8 +312,7 @@ namespace RevGame.Endless
             {
                 return Reject("落点非法或棋子处于锁定状态");
             }
-            // 玩家亲手摆的位置优先：近战棋在 ManualHoldSeconds 秒内不被自动索敌拉走。
-            unit.HoldUntil = Run.seconds + V("ManualHoldSeconds");
+            // 主动换格会中断静守。先刷新新位置的气眼，再按实战时钟重新开始计时。
             Run.selectedUnit = -1;
             RefreshRules();
             unit.StationarySince = Run.seconds;
@@ -338,7 +338,6 @@ namespace RevGame.Endless
                 return UpgradeWithCard(index, upgrade);
             }
             EndlessUnit placed = AddPlayer(kind, pos.X, pos.Y, false);
-            placed.HoldUntil = Run.seconds + V("ManualHoldSeconds");
             Run.hand.RemoveAt(index);
             Run.selectedCard = -1;
             CardPlaySerial++;
@@ -463,6 +462,7 @@ namespace RevGame.Endless
         {
             Clear();
         }
+        /// <summary>统一重置单局棋盘、演员、战斗回执和缓存。新局、读档和离场共用。</summary>
         private void Clear()
         {
             Units.Clear();
@@ -480,7 +480,6 @@ namespace RevGame.Endless
             BlockSerial = 0;
             System.Array.Clear(ShieldZone, 0, ShieldZone.Length);
             ShieldZoneVersion++;
-            _zonePlanAt = 0;
             Array.Clear(DamageReceipts, 0, DamageReceipts.Length);
             Array.Clear(DeathReceipts, 0, DeathReceipts.Length);
             TickCount = 0;

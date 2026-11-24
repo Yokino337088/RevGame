@@ -138,7 +138,7 @@ namespace RevGame.Endless
                 return Accepted(RevServices.GetRequired<GameFlow>().EnterEndless(JsonUtility.FromJson<FormationArgs>(json).formation, 0, 1101, false, true));
             }
             , owner: Owner);
-            RevRuntimeAutomation.Register("endless.guard-rules", "隔离实例验证盾战3×3防御区与盾击、格挡回执、刺客贯穿射程、远程攻速与一步连发、不停顿补牌、智能驻守与手动保持、选牌后点棋可移动", Empty, _ => EndlessService.CheckGuardRules(), owner: Owner);
+            RevRuntimeAutomation.Register("endless.guard-rules", "隔离实例验证盾战防御与盾击、刺客贯穿、远程连发、战斗补牌、近战落子驻守及主动调阵", Empty, _ => EndlessService.CheckGuardRules(), owner: Owner);
             RevRuntimeAutomation.Register("endless.boss-reward", "隔离局立刻走一次击杀领主的真实奖励（随机增益+大横幅），正式局拒绝", Empty, _ => Accepted(Service.DebugBossReward()), owner: Owner);
             RevRuntimeAutomation.Register("endless.snowball-rules", "隔离实例验证波次血攻成长、一步连刷与上限、10波领主来袭横幅、领主奖励随机累加与彩色横幅、增益接入伤害攻速范围生命", Empty, _ => EndlessService.CheckSnowballRules(), owner: Owner);
             RevRuntimeAutomation.Register("endless.feedback", "只读：六章同款战斗反馈的在播/累计次数、绿色落子提示格数、外围敌人出生口分布", Empty, _ => Feedback(), readOnly: true, owner: Owner);
@@ -271,30 +271,24 @@ namespace RevGame.Endless
                 ["performance"] = RevUI.Get<EndlessHudPanel>()?.PerformanceSnapshot()
             };
         }
-        /// <summary>近战智能驻守的分配情况：分到区的近战数、覆盖了几个不同的区、手动保持中的近战数。</summary>
+        /// <summary>按实际站位统计存活近战及覆盖的区数。反馈里的 assigned 和 held 都对应原地驻守的主力。</summary>
         private static object GuardZones()
         {
-            int assigned = 0, held = 0;
+            var service = Service;
+            int stationed = 0;
             var zones = new HashSet<int>();
-            foreach (EndlessUnit u in Service.Units)
+            foreach (EndlessUnit u in service.Units)
             {
-                if (u.Piece.Side != GameSide.Player || !EndlessService.IsMelee(u.Piece.Def.Kind) || u.Stone)
+                if (u.Piece.Side != GameSide.Player || !u.Piece.IsAlive || !EndlessService.IsMelee(u.Piece.Def.Kind) || u.Stone || u.Summoned)
                 {
                     continue;
                 }
-                if (u.Zone >= 0)
-                {
-                    assigned++;
-                    zones.Add(u.Zone);
-                }
-                if (u.HoldUntil > (Service.Run?.seconds ?? 0))
-                {
-                    held++;
-                }
+                stationed++;
+                zones.Add(EndlessService.ZoneOf(service.ActorPosition(u)));
             }
             return new Dictionary<string, object>
             {
-                ["assigned"] = assigned, ["distinctZones"] = zones.Count, ["held"] = held
+                ["assigned"] = stationed, ["distinctZones"] = zones.Count, ["held"] = stationed
             };
         }
         /// <summary>视觉夹具的模式参数，仅控制显示透明度，不允许通过它改变伤害。</summary>

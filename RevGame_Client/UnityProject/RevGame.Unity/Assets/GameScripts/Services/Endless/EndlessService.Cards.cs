@@ -152,7 +152,6 @@ namespace RevGame.Endless
                 return Reject("升级占格提交失败，已还原原棋子");
             }
             actor.Piece = upgraded;
-            actor.HoldUntil = Run.seconds + V("ManualHoldSeconds");
             Run.hand.RemoveAt(index);
             Run.selectedCard = Run.selectedUnit = -1;
             CardPlaySerial++;
