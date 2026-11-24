@@ -57,7 +57,8 @@ namespace RevGame.Pvp
             get;
             private set;
         } = -1;
-        public GoCore DisplayCore { get { return _replay ?? Core; } }
+        /// <summary>绘制层共用一条数据入口，练习与复盘均保留各自独立棋盘。</summary>
+        public GoCore DisplayCore => Tutorial?.Core ?? _replay ?? Core;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
         /// <summary>隔离人机演出验收用的固定棋谱。双方都走正式提交，既不改棋盘字段，也不访问云端。</summary>
         internal bool FillComputerMatchForCheck()

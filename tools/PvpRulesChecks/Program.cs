@@ -16,11 +16,96 @@ internal static class Program
         CaptureAndSuicide();
         SuperkoAcrossScoring();
         ScoringNegotiation();
+        GuidedTutorial();
         AnalysisAndHints();
         DuelForecastAtMoveFifty();
         ClockBoundaries();
         DeterministicGames(500);
         Console.WriteLine("PASS: " + _assertions + " assertions; 500 fixed-seed games; " + _accepted + " accepted commands; " + _rejected + " rejected attempts.");
+    }
+
+    /// <summary>按玩家可操作步骤跑完真实规则课，覆盖禁着回滚、盘面缓存换代和重试恢复。</summary>
+    private static void GuidedTutorial()
+    {
+        var lesson = new PvpTutorial(15);
+        var analysis = new GoBoardAnalysis();
+        var liberties = new int[GoCore.PointCount];
+        for (int step = 1; step <= lesson.StepCount; step++)
+        {
+            // 错点与重试不应丢掉当前课，也不能误消耗一手。
+            Check(lesson.StepNumber == step && !lesson.Completed, "tutorial step stays pending");
+            ulong start = lesson.Core.StateHash;
+            if (lesson.HintPoint >= 0)
+            {
+                Check(!lesson.Click(-1, 0) && lesson.Core.StateHash == start && !lesson.CanContinue, "wrong input cannot advance lesson");
+                int point = lesson.HintPoint;
+                Check(lesson.Click(point % 9, point / 9), "guided point accepted " + lesson.Cue + " " + lesson.Feedback);
+            }
+            else if (lesson.CanPass)
+            {
+                Check(lesson.Core.Turn == GoSide.Black && lesson.Pass() && lesson.Core.Phase == GoPhase.Scoring, "two real passes enter scoring");
+            }
+            else if (lesson.CanConfirmScore)
+            {
+                Check(lesson.Core.DeadStones.Contains(0) && lesson.ConfirmScore(), "both sides confirm actual dead stones");
+            }
+
+            switch (lesson.Cue)
+            {
+                case "TutorialPlace":
+                    Check(lesson.Core.GetStone(4, 4) == GoSide.Black && lesson.Core.GetStone(5, 4) == GoSide.White, "black and white take turns");
+                    break;
+                case "TutorialLiberty":
+                    Check(lesson.FocusPoint == 40 && lesson.Core.CopyLiberties(lesson.FocusPoint, liberties) == 4 &&
+                        Array.IndexOf(liberties, 49, 0, 4) >= 0, "highlight points to a real liberty");
+                    break;
+                case "TutorialConnect":
+                    lesson.Core.Analyze(analysis);
+                    Check(lesson.FocusPoint == 39 && analysis.Group[39] >= 0 && analysis.Group[39] == analysis.Group[41],
+                        "played stone connects groups");
+                    break;
+                case "TutorialEscape":
+                    Check(lesson.Core.CopyLiberties(30, liberties) > 1, "extension saves the threatened group");
+                    break;
+                case "TutorialCapture":
+                    Check(lesson.Core.GetStone(3, 3) == GoSide.Empty && lesson.Core.BlackCaptures == 1, "capture removed actual opponent stone");
+                    break;
+                case "TutorialSuicide":
+                    Check(lesson.Core.StateHash == start && lesson.Feedback.Contains("没有气"), "suicide lesson uses genuine rule rejection");
+                    break;
+                case "TutorialKo":
+                    Check(lesson.Core.StateHash == start && lesson.Feedback.Contains("全局同形"), "ko lesson preserves the prior position");
+                    break;
+                case "TutorialKoAway":
+                    Check(lesson.Core.GetStone(5, 4) == GoSide.White, "white can play elsewhere despite ko");
+                    break;
+                case "TutorialEyes":
+                    lesson.Core.Analyze(analysis);
+                    Check(analysis.Eye[0] == 1 && analysis.Eye[2] == 1, "both example eyes exist in production analysis");
+                    break;
+                case "TutorialTerritory":
+                    lesson.Core.Analyze(analysis);
+                    Check(analysis.Territory[80] == (byte)GoSide.White && analysis.Territory[40] == 0, "territory demo contains white and neutral points");
+                    break;
+                case "TutorialDead":
+                    Check(lesson.Core.DeadStones.Contains(0) && lesson.Core.GetStone(0) == GoSide.White, "scoring marks instead of removing a dead chain early");
+                    break;
+                case "TutorialScore":
+                    Check(lesson.Core.Phase == GoPhase.Finished && lesson.Core.Score.BlackTerritory == 2 &&
+                        lesson.Core.Score.WhiteTerritory == 1 && lesson.Core.Score.KomiHalfPoints == 15, "confirmed outcome uses production scoring and configured komi");
+                    break;
+            }
+            Check(lesson.CanContinue, "completed exercise unlocks next lesson");
+
+            // 计分阶段重试必须恢复死子草稿。随后重新确认，才能推进到结课。
+            if (lesson.Cue == "TutorialScore")
+            {
+                Check(lesson.Retry() && lesson.Core.StateHash == start && lesson.CanConfirmScore &&
+                    !lesson.CanContinue && lesson.ConfirmScore(), "retry restores the genuine scoring state");
+            }
+            Check(lesson.Continue(), "advance after completing exercise");
+        }
+        Check(lesson.Completed && !lesson.Continue() && !lesson.Retry(), "completed tutorial is terminal");
     }
 
     private static void Check(bool condition, string message)

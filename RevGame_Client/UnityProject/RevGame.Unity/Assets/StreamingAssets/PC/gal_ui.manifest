@@ -3,13 +3,13 @@ CRC: 1390973864
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 7bcea692c5050e60bce9572bd54d3d9a
+    Hash: 14060227c3e416ce66a2aaead4bddab2
   TypeTreeHash:
     serializedVersion: 2
     Hash: 0b9d8a50f45b12a6d4747df18594bc01
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 7bcea692c5050e60bce9572bd54d3d9a
+    Hash: 14060227c3e416ce66a2aaead4bddab2
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -81,6 +81,6 @@ Assets:
 - Assets/GameRes/UI/Gal/RevGalPanel.prefab
 - Assets/GameRes/UI/Gal/RevGalPanelTheme.asset
 Dependencies:
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_uigalcottage
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_uimenus
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/font_cjk
+- D:/RevGameUnity/AssetBundles/PC/atlas_uigalcottage
+- D:/RevGameUnity/AssetBundles/PC/atlas_uimenus
+- D:/RevGameUnity/AssetBundles/PC/font_cjk

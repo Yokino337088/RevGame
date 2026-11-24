@@ -891,9 +891,15 @@ namespace RevGame.Pvp
             nextClock = clockCopy;
             return true;
         }
-        /// <summary>响应真实棋盘点选。房间未同步或轮到对方时保持棋盘展示并拒绝选点。</summary>
+        /// <summary>真实棋盘点选先交给独立练习盘，正式房间继续按座位和同步状态准入。</summary>
         public void SelectPoint(int x, int y)
         {
+            if (Tutorial != null)
+            {
+                Tutorial.Click(x, y);
+                Revision++;
+                return;
+            }
             if (AgentControlsHumanSeat || !CanAct || Core.Phase == GoPhase.Finished || x < 0 || x >= 9 || y < 0 || y >= 9)
             {
                 return;
@@ -1121,10 +1127,11 @@ namespace RevGame.Pvp
             _leaveSent = false;
             _syncOutgoing.Clear();
         }
-        /// <summary>结束 PvP 服务寿命，清空当前房身份并阻止迟到回调。</summary>
+        /// <summary>结束 PvP 服务寿命，清空练习与房间身份并阻止迟到回调。</summary>
         public void Dispose()
         {
             _disposed = true;
+            ExitTutorial();
             StopLobbyLan();
             CloseConnection();
             RoomId = string.Empty;

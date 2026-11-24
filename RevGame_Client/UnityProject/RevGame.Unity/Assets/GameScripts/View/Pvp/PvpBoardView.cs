@@ -103,6 +103,7 @@ namespace RevGame.Pvp
             _boardBlock = _boardBlock ?? new MaterialPropertyBlock();
             _backgroundBlock = _backgroundBlock ?? new MaterialPropertyBlock();
         }
+        /// <summary>驱动真实棋盘交互与时钟效果。练习沿用正常材质，棋局变动时才重建点位标记。</summary>
         private void Update()
         {
             PvpService service = RevServices.Get<PvpService>();
@@ -120,7 +121,7 @@ namespace RevGame.Pvp
             GoCore core = service.DisplayCore;
             // 围住的区域按规则分析结果常显；Shader时钟只控制呼吸光，不改变落子、领地或胜负。
             bool counting = core != null && ReferenceEquals(_scoreCore, core);
-            _boardBlock.SetFloat("_ShowTerritory", core != null && (service.HintsVisible || core.Phase == GoPhase.Scoring) ? 1 : 0);
+            _boardBlock.SetFloat("_ShowTerritory", core != null && (service.HintsVisible || service.Tutorial != null || core.Phase == GoPhase.Scoring) ? 1 : 0);
             _boardBlock.SetFloat("_ScoreProgress", counting ? _scoreProgress : -1);
             _boardBlock.SetFloat("_Clock", Time.unscaledTime);
             // 状态只上传一个格子和动画起点。高亮不会写入棋盘数组，也不需要另建格子对象。
@@ -212,6 +213,7 @@ namespace RevGame.Pvp
                 service.SelectPoint(x, y);
             }
         }
+        /// <summary>棋局或练习盘变更时上传格面、气口、提子预览和提示，复用棋盘现有材质与缓冲。</summary>
         private void RefreshBoard(PvpService service)
         {
             GoCore core = service.DisplayCore;
@@ -279,11 +281,25 @@ namespace RevGame.Pvp
                     GoHint hint = service.Suggestions[i];
                     _marks[hint.Y * 9 + hint.X].z = i + 1;
                 }
-
+                // 教学目标沿用建议点的可见标记，最近一手用正式棋盘的落子特效。
+                if (service.Tutorial != null)
+                {
+                    int focus = service.Tutorial.FocusPoint;
+                    if (focus >= 0)
+                    {
+                        MarkLiberties(core, focus);
+                    }
+                    int target = service.Tutorial.HintPoint;
+                    if (target >= 0 && target < GoCore.PointCount)
+                    {
+                        _marks[target].z = 1;
+                    }
+                    last = service.Tutorial.LastPoint;
+                }
             }
             _boardBlock.SetVectorArray("_Cells", _cells);
             _boardBlock.SetVectorArray("_Marks", _marks);
-            _boardBlock.SetFloat("_ShowHints", service.HintsVisible ? 1 : 0);
+            _boardBlock.SetFloat("_ShowHints", service.HintsVisible || service.Tutorial != null ? 1 : 0);
             _boardBlock.SetFloat("_Selected", selected);
             _boardBlock.SetFloat("_Last", core != null && core.Phase == GoPhase.Playing ? last : -1);
             _boardBlock.SetFloat("_Turn", core == null ? 1 : (int)core.Turn);

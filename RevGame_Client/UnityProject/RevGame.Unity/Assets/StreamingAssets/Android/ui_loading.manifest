@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 2677027893
+CRC: 580535487
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 5e0ef03a1cd9709419e3fa18442d10da
+    Hash: 104a5b3ed84f8b93283a46f45f96261e
   TypeTreeHash:
     serializedVersion: 2
     Hash: 3e8cad45452b4891534f5f37775f1dbd
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 5e0ef03a1cd9709419e3fa18442d10da
+    Hash: 104a5b3ed84f8b93283a46f45f96261e
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -75,6 +75,6 @@ Assets:
 - Assets/GameShader/UI/LoadingPortalEffect.shader
 - Assets/GameRes/UI/Panel/Loading/LoadingPanel.prefab
 Dependencies:
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_uiloading
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/font_cjk
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/material_background
+- D:/RevGameUnity/AssetBundles/Android/atlas_uiloading
+- D:/RevGameUnity/AssetBundles/Android/font_cjk
+- D:/RevGameUnity/AssetBundles/Android/material_background

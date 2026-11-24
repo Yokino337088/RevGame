@@ -3,13 +3,13 @@ CRC: 2230028019
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 7d15c496e68531707504ceabc3b6b111
+    Hash: a6359aa6e0f3301828f6021ff7d0e9d5
   TypeTreeHash:
     serializedVersion: 2
     Hash: 16a24302a63592c9439dc87edf47fbf7
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 7d15c496e68531707504ceabc3b6b111
+    Hash: a6359aa6e0f3301828f6021ff7d0e9d5
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -69,8 +69,8 @@ Assets:
 - Assets/GameRes/UI/Panel/LevelSelectPanel.prefab
 - Assets/GameRes/UI/Panel/HomePanel.prefab
 Dependencies:
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_uibattle
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_uimenus
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/font_cjk
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/material_background
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/material_ui
+- D:/RevGameUnity/AssetBundles/PC/atlas_uibattle
+- D:/RevGameUnity/AssetBundles/PC/atlas_uimenus
+- D:/RevGameUnity/AssetBundles/PC/font_cjk
+- D:/RevGameUnity/AssetBundles/PC/material_background
+- D:/RevGameUnity/AssetBundles/PC/material_ui

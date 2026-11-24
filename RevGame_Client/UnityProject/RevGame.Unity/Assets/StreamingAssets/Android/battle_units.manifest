@@ -3,13 +3,13 @@ CRC: 3622977128
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: fc6f32b5eeafb77d112427f03dcfd650
+    Hash: 7f8d0f83ac11858c50ff774fc3d26478
   TypeTreeHash:
     serializedVersion: 2
     Hash: 94e7c7c2500b34f6cb594e520402f631
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: fc6f32b5eeafb77d112427f03dcfd650
+    Hash: 7f8d0f83ac11858c50ff774fc3d26478
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -37,7 +37,7 @@ Assets:
 - Assets/GameRes/Pieces/Unit/SlimePiece.prefab
 - Assets/GameRes/Pieces/Unit/PieceView.prefab
 Dependencies:
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_boardstatus
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_pieceframes
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/config_piece_art
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/material_pieces
+- D:/RevGameUnity/AssetBundles/Android/atlas_boardstatus
+- D:/RevGameUnity/AssetBundles/Android/atlas_pieceframes
+- D:/RevGameUnity/AssetBundles/Android/config_piece_art
+- D:/RevGameUnity/AssetBundles/Android/material_pieces

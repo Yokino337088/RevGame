@@ -3,13 +3,13 @@ CRC: 1905360350
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: aeb175484102f6130dda3552d80dc398
+    Hash: 261902cae9abaf8b521f71ed5a6decdf
   TypeTreeHash:
     serializedVersion: 2
     Hash: 4e0238251d1cd3bc2999f44d619657c7
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: aeb175484102f6130dda3552d80dc398
+    Hash: 261902cae9abaf8b521f71ed5a6decdf
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -56,9 +56,9 @@ Assets:
 - Assets/GameRes/Endless/Textures/EndlessThrustBlade.png
 - Assets/GameRes/Material/Endless/EndlessCardUpgrade.mat
 Dependencies:
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_boardstatus
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_endlesshearteye
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/background_temple_shared
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/config_piece_art
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/material_board
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/shared_shaders
+- D:/RevGameUnity/AssetBundles/Android/atlas_boardstatus
+- D:/RevGameUnity/AssetBundles/Android/atlas_endlesshearteye
+- D:/RevGameUnity/AssetBundles/Android/background_temple_shared
+- D:/RevGameUnity/AssetBundles/Android/config_piece_art
+- D:/RevGameUnity/AssetBundles/Android/material_board
+- D:/RevGameUnity/AssetBundles/Android/shared_shaders

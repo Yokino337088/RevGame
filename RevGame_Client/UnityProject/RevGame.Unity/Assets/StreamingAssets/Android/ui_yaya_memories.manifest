@@ -3,13 +3,13 @@ CRC: 1263317318
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 8d830107504c53c706d7a1524fe77c27
+    Hash: c194066c757e682e683f9017d127bde4
   TypeTreeHash:
     serializedVersion: 2
     Hash: 62fe6f203fe29321d633f2589750ae93
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 8d830107504c53c706d7a1524fe77c27
+    Hash: c194066c757e682e683f9017d127bde4
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -74,6 +74,6 @@ Assets:
 - Assets/GameRes/UI/Panel/YayaMemories/Book/OpenBook.png
 - Assets/GameRes/Material/UI/YayaMemories/MemorySceneComposite.mat
 Dependencies:
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_uiyayamemories
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/font_cjk
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/shared_shaders
+- D:/RevGameUnity/AssetBundles/Android/atlas_uiyayamemories
+- D:/RevGameUnity/AssetBundles/Android/font_cjk
+- D:/RevGameUnity/AssetBundles/Android/shared_shaders

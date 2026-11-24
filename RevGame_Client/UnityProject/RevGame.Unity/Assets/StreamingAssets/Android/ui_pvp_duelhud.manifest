@@ -3,13 +3,13 @@ CRC: 1051413434
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: fe8ec8ac2e7ecbc53aa31ea931f518d4
+    Hash: 6445fb7c04f588bae082976a6bbeb271
   TypeTreeHash:
     serializedVersion: 2
     Hash: 597ff65b0b5805584ce760352a2e73fd
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: fe8ec8ac2e7ecbc53aa31ea931f518d4
+    Hash: 6445fb7c04f588bae082976a6bbeb271
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -62,8 +62,8 @@ SerializeReferenceClassIdentifiers:
 Assets:
 - Assets/GameRes/UI/Panel/Pvp/DuelHud/DuelHudPanel.prefab
 Dependencies:
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_duelhud
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_pvpdefeat
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_uibattle
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_uimenus
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/font_cjk
+- D:/RevGameUnity/AssetBundles/Android/atlas_duelhud
+- D:/RevGameUnity/AssetBundles/Android/atlas_pvpdefeat
+- D:/RevGameUnity/AssetBundles/Android/atlas_uibattle
+- D:/RevGameUnity/AssetBundles/Android/atlas_uimenus
+- D:/RevGameUnity/AssetBundles/Android/font_cjk

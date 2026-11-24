@@ -3,13 +3,13 @@ CRC: 2457488035
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 3c0f91cb0472263ac1ec2bfda9ed931f
+    Hash: dbc047d01d5090ef8ac640e79417138d
   TypeTreeHash:
     serializedVersion: 2
     Hash: 3e8cad45452b4891534f5f37775f1dbd
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 3c0f91cb0472263ac1ec2bfda9ed931f
+    Hash: dbc047d01d5090ef8ac640e79417138d
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -75,6 +75,6 @@ Assets:
 - Assets/GameShader/UI/LoadingPortalEffect.shader
 - Assets/GameRes/UI/Panel/Loading/LoadingPanel.prefab
 Dependencies:
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_uiloading
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/font_cjk
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/material_background
+- D:/RevGameUnity/AssetBundles/PC/atlas_uiloading
+- D:/RevGameUnity/AssetBundles/PC/font_cjk
+- D:/RevGameUnity/AssetBundles/PC/material_background

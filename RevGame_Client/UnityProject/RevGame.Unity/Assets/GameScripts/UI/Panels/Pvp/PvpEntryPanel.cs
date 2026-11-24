@@ -15,10 +15,17 @@ namespace RevGame.Pvp
         protected override void OnBindView()
         {
             RevGame.UI.GameMobileLayout.EnableSafePanel(transform, "screenBackground");
-            // 视图由RevBind装配；控件路由使用RevButtonClick，不在刷新时重复注册。
+            BindTutorialChoice();
         }
 
+        /// <summary>入口的转场接单锁，防止连点打开两个页面。</summary>
         private bool _entering;
+        /// <summary>首次询问时隐藏的普通模式与设置按钮。</summary>
+        private GameObject[] _modeButtons;
+        /// <summary>教学确认窗与入口面板同寿命。</summary>
+        private GameObject _tutorialChoice;
+        /// <summary>在常规模式菜单保留的教学入口。</summary>
+        private Button _tutorialReplay;
         [RevButtonClick("agentSettings")]
         private void AgentSettings()
         {
@@ -46,14 +53,96 @@ namespace RevGame.Pvp
             Enter("Local");
         }
 
+        /// <summary>只在大厅打开对战入口时询问首次玩家。</summary>
         protected override void OnOpen()
         {
             _entering = false;
+            var flow = RevServices.GetRequired<GameFlow>();
+            ShowTutorialChoice(flow.Screen == GameScreen.Home && flow.ShouldPromptPvpTutorial);
         }
 
-        private void Enter(string destination)
+        /// <summary>从既有菜单底板、字体及按钮拼装提示窗。各按钮只注册一次。</summary>
+        private void BindTutorialChoice()
+        {
+            RectTransform veil = PvpTutorialControls.Rect("tutorialChoice", transform, 0, 0, 1, 1);
+            _tutorialChoice = veil.gameObject;
+            // 蒙层挡住下面的按钮。普通菜单也会隐藏，以免键盘焦点绕过询问。
+            veil.gameObject.AddComponent<Image>().color = new Color(.07f, .09f, .13f, .82f);
+            var plate = Instantiate(transform.Find("background").GetComponent<Image>(), veil, false);
+            PvpTutorialControls.SetRect(plate.rectTransform, .15f, .12f, .85f, .88f);
+            RectTransform popup = plate.rectTransform;
+            var heading = Instantiate(transform.Find("heading").GetComponent<Text>(), popup, false);
+            PvpTutorialControls.SetRect(heading.rectTransform, .12f, .71f, .88f, .87f);
+            heading.text = "你是围棋高手吗？";
+            var subtitle = Instantiate(transform.Find("subtitle").GetComponent<Text>(), popup, false);
+            PvpTutorialControls.SetRect(subtitle.rectTransform, .19f, .59f, .81f, .72f);
+            subtitle.text = "想先练几手？鸦鸦带你从第一颗棋子学起。";
+            Button local = transform.Find("local").GetComponent<Button>();
+            Button computer = transform.Find("computer").GetComponent<Button>();
+            Button back = transform.Find("back").GetComponent<Button>();
+            PvpTutorialControls.Button("tutorialExpert", local, popup, "我是高手", .25f, .43f, .75f, .56f, ChooseExpert);
+            PvpTutorialControls.Button("tutorialBeginner", computer, popup, "我是菜鸡", .25f, .28f, .75f, .41f, OpenTutorial);
+            PvpTutorialControls.Button("tutorialLater", back, popup, "稍后再玩", .37f, .13f, .63f, .24f, Back);
+            _tutorialReplay = PvpTutorialControls.Button("tutorialReplay", back, transform,
+                "围棋教学", .31f, .085f, .54f, .171f, OpenTutorial);
+            _modeButtons = new[]
+            {
+                transform.Find("server").gameObject, transform.Find("lan").gameObject,
+                computer.gameObject, local.gameObject, transform.Find("agentSettings").gameObject, back.gameObject
+            };
+            _tutorialChoice.SetActive(false);
+        }
+
+        /// <summary>在首次询问和常规模式菜单之间交割输入。</summary>
+        private void ShowTutorialChoice(bool visible)
+        {
+            foreach (GameObject button in _modeButtons)
+            {
+                button.SetActive(!visible);
+            }
+            _tutorialReplay.gameObject.SetActive(!visible);
+            _tutorialChoice.SetActive(visible);
+            if (visible)
+            {
+                _tutorialChoice.transform.SetAsLastSibling();
+            }
+        }
+
+        /// <summary>记录直接进入对战菜单的选择，之后仍可点围棋教学。</summary>
+        private void ChooseExpert()
         {
             if (_entering)
+            {
+                return;
+            }
+            RevServices.GetRequired<GameFlow>().SkipPvpTutorial();
+            ShowTutorialChoice(false);
+        }
+
+        /// <summary>提交真实九路围棋教学入口，转场失败时让玩家能重试。</summary>
+        private void OpenTutorial()
+        {
+            if (_entering)
+            {
+                return;
+            }
+            var flow = RevServices.GetRequired<GameFlow>();
+            GameScreen screen = flow.Screen;
+            _entering = flow.EnterPvpTutorial();
+            if (_entering && screen == GameScreen.Home)
+            {
+                CloseSelf();
+            }
+            else if (!_entering)
+            {
+                PvpNoticePanel.ShowMessage(flow.LastError);
+            }
+        }
+
+        /// <summary>核对当前转场锁与首次询问，然后转发玩家选择的对战模式。</summary>
+        private void Enter(string destination)
+        {
+            if (_entering || _tutorialChoice.activeSelf)
             {
                 return;
             }
@@ -74,6 +163,7 @@ namespace RevGame.Pvp
             }
         }
 
+        /// <summary>关闭选择或返回大厅。稍后再玩时不提交教学选择。</summary>
         [RevButtonClick("back")]
         private void Back()
         {

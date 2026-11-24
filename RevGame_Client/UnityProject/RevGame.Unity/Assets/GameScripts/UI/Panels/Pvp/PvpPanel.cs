@@ -24,7 +24,7 @@ namespace RevGame.Pvp
         private static readonly string[] LeftSidebarPaths =
         {
             "controls/back", "controls/reconnect", "controls/agent", "controls/agentSettings",
-            "controls/DuelChallenge", "controls/DuelTest", "boardToast"
+            "controls/DuelChallenge", "controls/DuelTest", "boardToast", "tutorialControls/tutorialExit", "tutorialControls/tutorialRetry"
         };
         private static readonly string[] RightSidebarPaths =
         {
@@ -47,6 +47,7 @@ namespace RevGame.Pvp
         {
             BindOutcomeTitle();
             BindAnalysisHud();
+            BindTutorialHud();
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
             BindDuelTestButton();
 #endif
@@ -356,8 +357,15 @@ namespace RevGame.Pvp
         }
 
         /// <summary>应用房间快照的显示与按钮门禁，动画和复盘继续使用各自的表现状态。</summary>
+        /// <summary>依据当前对战或教学快照落屏，两种模式各自管理控件和输入提示。</summary>
         protected override void OnRefreshView()
         {
+            if (_battleVisible && Menu == "Tutorial" && Service.Tutorial != null)
+            {
+                RefreshTutorialHud(Service.Tutorial);
+                return;
+            }
+            HideTutorialHud();
             RefreshDuelChallenge();
             PvpService service = Service;
             PvpService.PvpRoomSnapshot room = service.RoomSnapshot;
@@ -614,6 +622,7 @@ namespace RevGame.Pvp
         /// <summary>关闭本轮对局界面时清理动画、确认队列和画面资源。</summary>
         protected override void OnClose()
         {
+            HideTutorialHud();
             StopDuelChallenge();
             if (_duelButton != null)
             {

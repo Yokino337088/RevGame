@@ -3,13 +3,13 @@ CRC: 1121984207
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 2e6de583d4e33cabb07438e952bbf706
+    Hash: e42531aafe25d62d5a8a8efe27505071
   TypeTreeHash:
     serializedVersion: 2
     Hash: 94e7c7c2500b34f6cb594e520402f631
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 2e6de583d4e33cabb07438e952bbf706
+    Hash: e42531aafe25d62d5a8a8efe27505071
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -37,7 +37,7 @@ Assets:
 - Assets/GameRes/Pieces/Unit/SlimePiece.prefab
 - Assets/GameRes/Pieces/Unit/PieceView.prefab
 Dependencies:
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_boardstatus
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_pieceframes
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/config_piece_art
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/material_pieces
+- D:/RevGameUnity/AssetBundles/PC/atlas_boardstatus
+- D:/RevGameUnity/AssetBundles/PC/atlas_pieceframes
+- D:/RevGameUnity/AssetBundles/PC/config_piece_art
+- D:/RevGameUnity/AssetBundles/PC/material_pieces

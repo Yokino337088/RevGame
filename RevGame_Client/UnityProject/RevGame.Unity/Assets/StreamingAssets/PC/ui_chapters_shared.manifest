@@ -3,13 +3,13 @@ CRC: 1940946703
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: e592d493134a90dd123cd7cf6fcb73cf
+    Hash: 2d55bddfc5c600ed1ccefee1a6f5fe9d
   TypeTreeHash:
     serializedVersion: 2
     Hash: 4bceabad879f2dc19392235bc9dd33c7
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: e592d493134a90dd123cd7cf6fcb73cf
+    Hash: 2d55bddfc5c600ed1ccefee1a6f5fe9d
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -87,9 +87,9 @@ Assets:
 - Assets/GameRes/UI/Panel/BattleHudPanel.prefab
 - Assets/GameRes/UI/Panel/SettlePanel.prefab
 Dependencies:
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_uibattle
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_uimenus
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/config_piece_art
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/font_cjk
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/material_cards
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/material_ui
+- D:/RevGameUnity/AssetBundles/PC/atlas_uibattle
+- D:/RevGameUnity/AssetBundles/PC/atlas_uimenus
+- D:/RevGameUnity/AssetBundles/PC/config_piece_art
+- D:/RevGameUnity/AssetBundles/PC/font_cjk
+- D:/RevGameUnity/AssetBundles/PC/material_cards
+- D:/RevGameUnity/AssetBundles/PC/material_ui

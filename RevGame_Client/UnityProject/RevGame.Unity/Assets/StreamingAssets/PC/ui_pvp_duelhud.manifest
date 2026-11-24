@@ -3,13 +3,13 @@ CRC: 581361458
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 4276e6742c6477f638500fd221eedcc9
+    Hash: 1d4839025e4fc26554232d43c2de9d35
   TypeTreeHash:
     serializedVersion: 2
     Hash: 597ff65b0b5805584ce760352a2e73fd
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 4276e6742c6477f638500fd221eedcc9
+    Hash: 1d4839025e4fc26554232d43c2de9d35
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -62,8 +62,8 @@ SerializeReferenceClassIdentifiers:
 Assets:
 - Assets/GameRes/UI/Panel/Pvp/DuelHud/DuelHudPanel.prefab
 Dependencies:
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_duelhud
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_pvpdefeat
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_uibattle
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_uimenus
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/font_cjk
+- D:/RevGameUnity/AssetBundles/PC/atlas_duelhud
+- D:/RevGameUnity/AssetBundles/PC/atlas_pvpdefeat
+- D:/RevGameUnity/AssetBundles/PC/atlas_uibattle
+- D:/RevGameUnity/AssetBundles/PC/atlas_uimenus
+- D:/RevGameUnity/AssetBundles/PC/font_cjk

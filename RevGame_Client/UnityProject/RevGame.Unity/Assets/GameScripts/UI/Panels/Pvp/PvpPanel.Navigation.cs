@@ -44,6 +44,21 @@ namespace RevGame.Pvp
         internal async RevTask<bool> ShowDestinationAsync(string destination)
         {
             int version = ++_menuVersion;
+            if (destination == "Tutorial")
+            {
+                // 业务先装配练习，再把同一块九路围棋盘交给教学操作。
+                if (Service.Tutorial == null || _board == null)
+                {
+                    return false;
+                }
+                CloseMenus();
+                Menu = "Tutorial";
+                _battleTransition = false;
+                _battleVisible = true;
+                _board.gameObject.SetActive(true);
+                RefreshView();
+                return true;
+            }
             if (destination == "Computer" || destination == "Local")
             {
                 Menu = destination;
@@ -101,6 +116,12 @@ namespace RevGame.Pvp
         {
             if (!_opening)
             {
+                return;
+            }
+            if (Menu == "Tutorial" && Service.Tutorial != null)
+            {
+                // 教学没有匹配状态与房间通知，计时刷新只更新练习视图。
+                RefreshView();
                 return;
             }
             _confirmationQueue?.SetPhase(_battleVisible && !_battleTransition ? "Battle" : "Menu");

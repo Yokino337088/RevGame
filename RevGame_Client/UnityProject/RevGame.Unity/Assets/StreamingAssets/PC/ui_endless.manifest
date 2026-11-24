@@ -3,13 +3,13 @@ CRC: 2071554815
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 28ad5c0a73bc4dbd3e228fa9616a2f17
+    Hash: c2a63bda113e69845a3a0dfe43dae365
   TypeTreeHash:
     serializedVersion: 2
     Hash: a944b98311130451f0ed23f9b77d2af2
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 28ad5c0a73bc4dbd3e228fa9616a2f17
+    Hash: c2a63bda113e69845a3a0dfe43dae365
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -71,11 +71,11 @@ Assets:
 - Assets/GameRes/UI/Panel/Endless/EndlessEntryPanel.prefab
 - Assets/GameRes/UI/Panel/Endless/EndlessHudPanel.prefab
 Dependencies:
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_endlesscardarrow
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_endlessmenu
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_uibattle
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_uimenus
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/background_temple_shared
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/font_cjk
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/material_cards
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/material_ui
+- D:/RevGameUnity/AssetBundles/PC/atlas_endlesscardarrow
+- D:/RevGameUnity/AssetBundles/PC/atlas_endlessmenu
+- D:/RevGameUnity/AssetBundles/PC/atlas_uibattle
+- D:/RevGameUnity/AssetBundles/PC/atlas_uimenus
+- D:/RevGameUnity/AssetBundles/PC/background_temple_shared
+- D:/RevGameUnity/AssetBundles/PC/font_cjk
+- D:/RevGameUnity/AssetBundles/PC/material_cards
+- D:/RevGameUnity/AssetBundles/PC/material_ui

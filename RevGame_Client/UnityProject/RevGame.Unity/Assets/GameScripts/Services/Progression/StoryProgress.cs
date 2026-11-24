@@ -6,6 +6,8 @@ namespace RevGame.Services
     public sealed class StoryProgress
     {
         private const string Key = "RevGame.Story.Introduction.v1";
+        /// <summary>九路围棋的首次选择独立占位，兼容已有剧情和远征教学存档。</summary>
+        private const int PvpTutorialMask = 4;
         /// <summary>默认生产键固定；构造注入仅用于隔离的持久化回归。</summary>
         private readonly string _storageKey;
         /// <summary>开发测试用内存进度，绝不删除、覆盖或临时改写真实玩家PlayerPrefs。</summary>
@@ -32,6 +34,27 @@ namespace RevGame.Services
                 return (Flags & 2) != 0;
             }
         }
+        /// <summary>玩家明确跳过九路教学或实际完成后，便可直接打开对战方式。</summary>
+        public bool PvpTutorialResolved => (Flags & PvpTutorialMask) != 0;
+
+        /// <summary>保存九路教学的终态，隔离测试时沿用本对象的内存进度。</summary>
+        public void ResolvePvpTutorial()
+        {
+            Save(Flags | PvpTutorialMask);
+        }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+        /// <summary>只重置隔离会话中的围棋选择，保留本轮其它教学与玩家原档。</summary>
+        public bool ResetPvpTutorialForCheck()
+        {
+            if (!_isolated)
+            {
+                return false;
+            }
+            _memory &= ~PvpTutorialMask;
+            return true;
+        }
+#endif
         public bool IsIsolated
         {
             get

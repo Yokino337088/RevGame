@@ -52,6 +52,7 @@ namespace RevGame.Pvp
             RegisterRoomSnapshots();
             RegisterUiScale();
             RegisterUiCacheCheck();
+            RegisterTutorialChecks();
             RevRuntimeAutomation.Register("pvp.agent-storage-prepare", "用独立测试槽保存假Key，覆盖平台存储和安卓TXT；跨Play后调用verify", Empty,
                 _ => PvpAgentChecks.PrepareStorageCheck(), owner: Owner);
             RevRuntimeAutomation.Register("pvp.agent-storage-verify", "验证独立测试槽跨Play恢复、损坏拒绝与清除，不返回凭据", Empty,

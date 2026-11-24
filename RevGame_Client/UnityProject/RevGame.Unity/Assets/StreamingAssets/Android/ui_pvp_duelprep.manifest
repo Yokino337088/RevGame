@@ -3,13 +3,13 @@ CRC: 618701238
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: fd3f157016be99cd09760dfbfcf85993
+    Hash: 05d39e7d8b27f12e4cc5555d7a771a0d
   TypeTreeHash:
     serializedVersion: 2
     Hash: 3c8f72f33f2454c670d03b9362e36b8b
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: fd3f157016be99cd09760dfbfcf85993
+    Hash: 05d39e7d8b27f12e4cc5555d7a771a0d
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -67,6 +67,6 @@ Assets:
 - Assets/GameRes/UI/Panel/Pvp/DuelPrep/DuelLoadingPanel.prefab
 - Assets/GameRes/Material/UI/PvpDuelPrep/DuelSigil.mat
 Dependencies:
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_duelprep
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/font_cjk
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/shared_shaders
+- D:/RevGameUnity/AssetBundles/Android/atlas_duelprep
+- D:/RevGameUnity/AssetBundles/Android/font_cjk
+- D:/RevGameUnity/AssetBundles/Android/shared_shaders

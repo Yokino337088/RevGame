@@ -3,13 +3,13 @@ CRC: 3942255940
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: b9b0c7a50efcfc8e934505ea493ba0ad
+    Hash: 4b1641de352f6f158a4faca7cb947362
   TypeTreeHash:
     serializedVersion: 2
     Hash: 3bb72d0c45611a9c493e0b688c5cccd2
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: b9b0c7a50efcfc8e934505ea493ba0ad
+    Hash: 4b1641de352f6f158a4faca7cb947362
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -50,5 +50,5 @@ SerializeReferenceClassIdentifiers:
 Assets:
 - Assets/GameRes/Characters/Yaya/Reaction/YayaReaction.prefab
 Dependencies:
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_uimenus
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/font_cjk
+- D:/RevGameUnity/AssetBundles/Android/atlas_uimenus
+- D:/RevGameUnity/AssetBundles/Android/font_cjk

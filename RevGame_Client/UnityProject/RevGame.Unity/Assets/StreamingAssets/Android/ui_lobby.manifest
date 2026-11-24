@@ -3,13 +3,13 @@ CRC: 212049892
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: ad7800927a26a893fc8b2a5d795e4a2b
+    Hash: 6e8865df0b6da1612c2d0668c5e85197
   TypeTreeHash:
     serializedVersion: 2
     Hash: 16a24302a63592c9439dc87edf47fbf7
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: ad7800927a26a893fc8b2a5d795e4a2b
+    Hash: 6e8865df0b6da1612c2d0668c5e85197
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -69,8 +69,8 @@ Assets:
 - Assets/GameRes/UI/Panel/LevelSelectPanel.prefab
 - Assets/GameRes/UI/Panel/HomePanel.prefab
 Dependencies:
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_uibattle
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_uimenus
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/font_cjk
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/material_background
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/material_ui
+- D:/RevGameUnity/AssetBundles/Android/atlas_uibattle
+- D:/RevGameUnity/AssetBundles/Android/atlas_uimenus
+- D:/RevGameUnity/AssetBundles/Android/font_cjk
+- D:/RevGameUnity/AssetBundles/Android/material_background
+- D:/RevGameUnity/AssetBundles/Android/material_ui

@@ -3,13 +3,13 @@ CRC: 416237381
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: d577ef27be5ef271b4e67517eb73e360
+    Hash: b5c34ad5ce95e14251ce63b9eade4b56
   TypeTreeHash:
     serializedVersion: 2
     Hash: e22bb644f6d17c755039684c9be8c752
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: d577ef27be5ef271b4e67517eb73e360
+    Hash: b5c34ad5ce95e14251ce63b9eade4b56
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -40,6 +40,6 @@ Assets:
 - Assets/GameRes/Material/Pvp/Board/PvpIvoryBoard.mat
 - Assets/GameRes/Pvp/PvpBoardView.prefab
 Dependencies:
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_boardstatus
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/background_temple_shared
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/shared_shaders
+- D:/RevGameUnity/AssetBundles/Android/atlas_boardstatus
+- D:/RevGameUnity/AssetBundles/Android/background_temple_shared
+- D:/RevGameUnity/AssetBundles/Android/shared_shaders

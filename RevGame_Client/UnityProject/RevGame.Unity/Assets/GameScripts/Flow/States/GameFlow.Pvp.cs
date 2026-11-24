@@ -3,6 +3,7 @@ using RevGame.Core;
 using RevGame.Pvp;
 using RevGame.Pvp.Duel;
 using RevGame.Pvp.Networking;
+using RevGame.Services;
 using RevGame.UI;
 using RevGame.View;
 using Revolution;
@@ -27,6 +28,34 @@ namespace RevGame.Flow
 
         /// <summary>接受请求和实际完成分开；所有UI/GM只走此入口，防止连点创建两条连接或场景加载链。</summary>
         public string PvpDestination { get; private set; } = "Entry";
+
+        /// <summary>大厅只在九路教学尚未明确跳过或完成时询问玩家。</summary>
+        public bool ShouldPromptPvpTutorial => !RevServices.GetRequired<StoryProgress>().PvpTutorialResolved;
+
+        /// <summary>玩家主动选择「我是高手」后提交选择，普通模式由原菜单启动。</summary>
+        public void SkipPvpTutorial()
+        {
+            RevServices.GetRequired<StoryProgress>().ResolvePvpTutorial();
+        }
+
+        /// <summary>首次教学走九路场景交接，在已就绪的空闲菜单中重看则直接复用棋盘。</summary>
+        public bool EnterPvpTutorial()
+        {
+            if (Screen == GameScreen.Home)
+            {
+                return EnterPvp("Tutorial");
+            }
+            var panel = RevUI.Get<PvpPanel>();
+            if (Screen != GameScreen.Pvp || IsGameplayBlocked || RevScene.CurrentName != PvpSceneName ||
+                panel == null || !RevServices.GetRequired<PvpService>().StartTutorial(SkipPvpTutorial))
+            {
+                LastError = "请离开当前棋局或匹配后再打开教学";
+                return false;
+            }
+            LastError = "";
+            panel.ShowDestination("Tutorial");
+            return true;
+        }
 
         /// <summary>从大厅选择对战方式，创建一次进入流程。</summary>
         public bool EnterPvp(string destination = "Entry")
@@ -325,6 +354,11 @@ namespace RevGame.Flow
             Change(GameScreen.Pvp);
             PvpPanel panel = await RevUI.OpenAsync<PvpPanel>();
             await panel.PrepareAsync();
+            // 等棋盘和界面都装配好再分配练习盘，玩家中途退出时没有正式房间需要退。
+            if (PvpDestination == "Tutorial" && !service.StartTutorial(SkipPvpTutorial))
+            {
+                throw new InvalidOperationException("九路围棋教学尚未就绪");
+            }
             if (!await panel.ShowDestinationAsync(PvpDestination))
             {
                 throw new InvalidOperationException("九路围棋首屏菜单未完成交割");

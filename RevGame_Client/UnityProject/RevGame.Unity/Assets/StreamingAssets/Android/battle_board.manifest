@@ -3,13 +3,13 @@ CRC: 401571094
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 9c3652902bb8d7a172bcec86ec42bbd6
+    Hash: 05675caee8b3d3497d9ca5fe800800cd
   TypeTreeHash:
     serializedVersion: 2
     Hash: 4a4ac1c11b7a0276ac5d6280f8e911d7
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: 9c3652902bb8d7a172bcec86ec42bbd6
+    Hash: 05675caee8b3d3497d9ca5fe800800cd
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -37,7 +37,7 @@ Assets:
 - Assets/GameRes/Board/Indicator/BoardMoveHighlight.prefab
 - Assets/GameRes/Board/Indicator/BoardDeployZone.prefab
 Dependencies:
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_boardstatus
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/atlas_combatframes
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/material_board
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/Android/material_combat
+- D:/RevGameUnity/AssetBundles/Android/atlas_boardstatus
+- D:/RevGameUnity/AssetBundles/Android/atlas_combatframes
+- D:/RevGameUnity/AssetBundles/Android/material_board
+- D:/RevGameUnity/AssetBundles/Android/material_combat

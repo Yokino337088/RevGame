@@ -3,13 +3,13 @@ CRC: 767228184
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: e5775b50228e281ca72d49080a8e2606
+    Hash: c598968753ca7dac9c56d02bcd9ec557
   TypeTreeHash:
     serializedVersion: 2
     Hash: 7c2ee58946f1f5610ffa106293312236
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: e5775b50228e281ca72d49080a8e2606
+    Hash: c598968753ca7dac9c56d02bcd9ec557
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -91,10 +91,10 @@ Assets:
 - Assets/GameRes/UI/Panel/Pvp/PvpPanel.prefab
 - Assets/GameRes/UI/Panel/Pvp/Menu/PvpAgentSettingsPanel.prefab
 Dependencies:
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_pvpagent
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_pvpdefeat
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_uibattle
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/atlas_uimenus
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/config_yaya
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/font_cjk
-- G:/RevRoot/MyRevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/PC/material_background
+- D:/RevGameUnity/AssetBundles/PC/atlas_pvpagent
+- D:/RevGameUnity/AssetBundles/PC/atlas_pvpdefeat
+- D:/RevGameUnity/AssetBundles/PC/atlas_uibattle
+- D:/RevGameUnity/AssetBundles/PC/atlas_uimenus
+- D:/RevGameUnity/AssetBundles/PC/config_yaya
+- D:/RevGameUnity/AssetBundles/PC/font_cjk
+- D:/RevGameUnity/AssetBundles/PC/material_background
