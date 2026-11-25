@@ -178,7 +178,7 @@ namespace RevGame.Flow
         }
         /// <summary>当前接管业务画面的场景表现对象；场景交接前按旧状态使用。</summary>
         private GamePresentation _activePresentation;
-        /// <summary>诊断用真实阶段进度，不是DOTween插值后的视觉值；范围0~1。</summary>
+        /// <summary>本次交接已完成的分段工作量，范围 0~1，供诊断和面板读取。</summary>
         public float LoadProgress
         {
             get; private set;
@@ -231,10 +231,18 @@ namespace RevGame.Flow
         }
         /// <summary>
         /// 按框架交接步骤连接 RevGame 过场、场景与状态机。接单拒绝时让原交接保留门禁。
+        /// 进战场按真实阶段报告预载、分批对象预建与首屏就绪，结案前才报 100%。
         /// </summary>
         private async RevTask SwitchSceneAsync(GameScreen target)
         {
-            string sceneName = target == GameScreen.Battle ? BattleSceneName : StartSceneName;
+            bool enteringBattle = target == GameScreen.Battle;
+            string sceneName = enteringBattle ? BattleSceneName : StartSceneName;
+            // 战场多数加载帧用来创建对象，给这段留出足够的百分比；返营仍沿用原来的阶段区间。
+            float preloadStart = enteringBattle ? 0.13f : 0.18f;
+            float sceneLoadStart = enteringBattle ? 0.33f : 0.42f;
+            float sceneLoadEnd = enteringBattle ? 0.46f : 0.65f;
+            float scenePrepared = enteringBattle ? 0.47f : 0.66f;
+            float firstFrameStart = enteringBattle ? 0.86f : 0.78f;
             var warmup = new SceneResourceWarmup();
             GamePresentation presentation = null;
             var plan = new RevSceneHandoffPlan
@@ -246,9 +254,9 @@ namespace RevGame.Flow
                 Cover = async handoff =>
                 {
                     // 接单就重置本次诊断进度。面板需要异步创建，等待期间不能暴露上一趟的 100%。
-                    string covering = target == GameScreen.Battle ? "正在展开战场…" : "正在返回营地…";
+                    string covering = enteringBattle ? "正在展开战场…" : "正在返回营地…";
                     Report(0f, covering);
-                    if (target == GameScreen.Battle)
+                    if (enteringBattle)
                     {
                         _battleHandoff = handoff;
                     }
@@ -275,10 +283,11 @@ namespace RevGame.Flow
                         await LoadStartupDataAsync();
                     }
                     await RevServices.GetRequired<GameSpriteAtlasService>().PreloadAsync(
-                        target == GameScreen.Battle ? BattleAtlases : MenuAtlases, handoff.Resources);
+                        enteringBattle ? BattleAtlases : MenuAtlases, handoff.Resources);
                     ThrowIfDisposed();
-                    Report(0.18f, "正在整理行囊…");
-                    await warmup.LoadAsync(target == GameScreen.Battle, handoff.Resources, value => Report(0.18f + value * 0.24f, "正在集结冒险队伍…"));
+                    Report(preloadStart, "正在整理行囊…");
+                    await warmup.LoadAsync(enteringBattle, handoff.Resources,
+                        value => Report(Mathf.Lerp(preloadStart, sceneLoadStart, value), "正在集结冒险队伍…"));
                 },
                 Load = async handoff =>
                 {
@@ -289,7 +298,8 @@ namespace RevGame.Flow
                     {
                         // 先归还旧战斗视图，域仍由业务提交后退出。失败期间保持过场遮挡。
                         UnityEngine.Object.FindObjectOfType<GamePresentation>()?.SuspendBattle();
-                        await RevScene.LoadAsync(handoff.TargetScene, value => Report(0.42f + value * 0.23f, "正在穿越迷雾…"));
+                        await RevScene.LoadAsync(handoff.TargetScene,
+                            value => Report(Mathf.Lerp(sceneLoadStart, sceneLoadEnd, value), "正在穿越迷雾…"));
                         if (RevScene.CurrentName != handoff.TargetScene)
                         {
                             throw new InvalidOperationException("场景未完成交接：" + handoff.TargetScene + "，RevScene 状态=" + RevScene.State);
@@ -317,16 +327,17 @@ namespace RevGame.Flow
                     {
                         throw new InvalidOperationException("场景缺少 GamePresentation 接线：" + handoff.TargetScene);
                     }
-                    Report(0.66f, "正在点亮前路…");
+                    Report(scenePrepared, "正在点亮前路…");
                 },
                 Commit = async _ =>
                 {
                     // 预建对象归新域。先准备池，再发布进入战斗事件，避免首屏争建实例。
                     _activePresentation = presentation;
-                    Change(target, publish: target != GameScreen.Battle);
-                    if (target == GameScreen.Battle)
+                    Change(target, publish: !enteringBattle);
+                    if (enteringBattle)
                     {
-                        await warmup.WarmBattlePoolsAsync(value => Report(0.66f + value * 0.12f, "正在集结棋子与魔法…"));
+                        await warmup.WarmBattlePoolsAsync(
+                            value => Report(Mathf.Lerp(scenePrepared, firstFrameStart, value), "正在集结棋子与魔法…"));
                         ThrowIfDisposed();
                         PublishScreenChanged();
                     }
@@ -334,9 +345,9 @@ namespace RevGame.Flow
                 WaitReady = async _ =>
                 {
                     await presentation.WaitUntilReadyAsync(target,
-                        value => Report(0.78f + value * 0.20f, target == GameScreen.Battle ? "正在铺开棋盘与手牌…" : "正在布置营地…"));
+                        value => Report(Mathf.Lerp(firstFrameStart, 0.98f, value), enteringBattle ? "正在铺开棋盘与手牌…" : "正在布置营地…"));
 #if UNITY_WEBGL && !UNITY_EDITOR && !UNITY_WEIXINMINIGAME && !UNITY_BYTEDANCE_MINIGAME && !UNITY_BYTEDANCEMINIGAME
-                    if (target == GameScreen.Battle)
+                    if (enteringBattle)
                     {
                         // 格面和当前章帮手材质都已就绪，此时还能在加载遮挡下准备首次绘制。
                         await warmup.WarmBrowserBoardEffectsAsync(presentation.BrowserReadyBoard);
@@ -351,7 +362,7 @@ namespace RevGame.Flow
                 },
                 Reveal = async _ =>
                 {
-                    Report(1f, target == GameScreen.Battle ? "战场已就绪" : "营地已就绪");
+                    Report(1f, enteringBattle ? "战场已就绪" : "营地已就绪");
                     await _loading.FadeOutAsync();
                     ThrowIfDisposed();
                 },
@@ -526,7 +537,7 @@ namespace RevGame.Flow
             // 0.02是新一次过场的起点，允许从上次的1重新开始。
             float next = value <= 0.02f ? value : Mathf.Max(LoadProgress, Mathf.Clamp01(value));
 
-            // 轮询就绪时可能多帧没有新格子；不重复分配数据/重建文字/重启同一段Tween。
+            // 同一阶段可能多帧没有完成新的工作，只在进度或阶段变化时发新快照。
             if (Mathf.Approximately(next, LoadProgress) && message == LoadStep)
             {
                 return;

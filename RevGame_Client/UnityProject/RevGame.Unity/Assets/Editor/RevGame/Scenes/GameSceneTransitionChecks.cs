@@ -23,6 +23,9 @@ namespace RevGame.Editor
     /// </summary>
     public static class GameSceneTransitionChecks
     {
+        /// <summary>池预建期间同一整数百分比允许占用的连续帧数，给冷读和显示缓动留余量。</summary>
+        private const int MaxPoolFramesAtSamePercent = 45;
+
         /// <summary>最近一轮状态或最终断言文本。清理完成前始终为“运行中”。</summary>
         public static string LastResult { get; private set; } = "未运行";
         /// <summary>本轮已执行的业务断言数，接单时清零。</summary>
@@ -105,7 +108,12 @@ namespace RevGame.Editor
             {
                 flow = RevServices.GetRequired<GameFlow>();
                 await WaitForFlowAsync(flow);
-                score = ((BattleService)RevServices.GetRequired<IBattleService>()).BeginScorePreview();
+                // 隔离 Play 已由启动接线持有积分预览。只补上本夹具缺的租约，收尾也只释放自己开的那份。
+                var scoreService = (BattleService)RevServices.GetRequired<IBattleService>();
+                if (!scoreService.IsScorePreviewActive)
+                {
+                    score = scoreService.BeginScorePreview();
+                }
                 VerifyGmRegistry();
                 Require(flow.Screen == GameScreen.Home && RevScene.CurrentName == GameFlow.StartSceneName, "启动交付StartScene首页");
                 CheckImages("冷启动首页");
@@ -384,7 +392,7 @@ namespace RevGame.Editor
             }
         }
 
-        /// <summary>按帧观察遮挡完整性；MCP/Editor本身会影响帧耗时，这里只证明跨帧装配，不冒充手机性能数据。</summary>
+        /// <summary>按帧核对实际进度条、遮挡和棋盘装配。用连续帧数判断预建期间的读条停滞，避免依赖机器帧率。</summary>
         private static async RevTask ObserveTransitionAsync(GameFlow flow, bool entering, string mode, int cycle, bool captureEvidence)
         {
             float deadline = Time.realtimeSinceStartup + 60f;
@@ -395,6 +403,14 @@ namespace RevGame.Editor
             int previousCells = 0;
             bool captured = false;
             bool observedCover = false;
+            bool observedFullProgress = false;
+            Slider slider = null;
+            Text percentLabel = null;
+            float previousDisplayed = 0f;
+            int displayedPercent = -1;
+            int previousPoolPercent = -1;
+            int poolFramesAtSamePercent = 0;
+            int longestPoolStall = 0;
             RevSceneHandoff handoff = flow.LatestSceneHandoff;
             while (flow.IsTransitioning)
             {
@@ -411,13 +427,44 @@ namespace RevGame.Editor
                 }
                 else
                 {
-                    observedCover = true;
+                    if (!observedCover)
+                    {
+                        // 从实际遮挡取控件，兼容多画幅布局运行时调整控件的父节点。
+                        slider = cover.GetComponentInChildren<Slider>();
+                        percentLabel = cover.GetComponentsInChildren<Text>().FirstOrDefault(label => label.name == "percent");
+                        Require(slider != null && percentLabel != null, "遮挡实际绑定了进度条与百分比");
+                        observedCover = true;
+                    }
+
+                    float displayed = slider.value;
+                    Require(displayed >= previousDisplayed && displayed <= flow.LoadProgress + 0.0001f,
+                        "落屏进度不倒退，也不超出真实进度");
+                    previousDisplayed = displayed;
+                    int percent = Mathf.FloorToInt(displayed * 100f);
+                    if (percent != displayedPercent)
+                    {
+                        Require(percentLabel.text == percent + "%", "显示数字与进度条使用同一进度");
+                        displayedPercent = percent;
+                    }
+                    if (displayedPercent == 100)
+                    {
+                        Require(handoff.Stage == RevSceneHandoffStage.Revealing, "首屏就绪并进入揭幕后才显示100%");
+                        observedFullProgress = true;
+                    }
                 }
 
                 if (entering && flow.Screen == GameScreen.Battle)
                 {
                     Require(RevServices.GetRequired<IBattleService>().PreparationElapsed < 0.001f, "遮挡期间准备时间冻结");
                     BoardView board = UnityEngine.Object.FindObjectOfType<BoardView>();
+
+                    if (board == null && observedCover)
+                    {
+                        // 战斗域已提交且棋盘尚未激活时还在预建池。记录同一个可见百分比最长占多少帧。
+                        poolFramesAtSamePercent = displayedPercent == previousPoolPercent ? poolFramesAtSamePercent + 1 : 1;
+                        previousPoolPercent = displayedPercent;
+                        longestPoolStall = Mathf.Max(longestPoolStall, poolFramesAtSamePercent);
+                    }
 
                     if (board != null)
                     {
@@ -442,13 +489,16 @@ namespace RevGame.Editor
                 frames++;
                 await RevTask.Yield();
             }
-            Require(observedCover && !RevUI.IsOpen<LoadingPanel>(), "实际显示过遮罩，成功后过场面板已关闭");
+            Require(observedCover && observedFullProgress && !RevUI.IsOpen<LoadingPanel>(), "实际显示过进度，抵达100%后关闭遮挡");
 
             if (entering)
             {
+                Require(longestPoolStall > 0 && longestPoolStall <= MaxPoolFramesAtSamePercent,
+                    "战斗对象池预建时读条应持续推进，实测同一百分比最长 " + longestPoolStall + " 帧");
                 Require(partialBoardFrames > 1 && maximumCellDelta <= 4, "81格实际分帧创建，每帧最多4格");
             }
-            Report.Add((entering ? "进入" : "返回") + cycle + "：观察" + frames + "帧，分帧棋盘" + partialBoardFrames + "帧，最大每帧新增格" + maximumCellDelta);
+            Report.Add((entering ? "进入" : "返回") + cycle + "：观察" + frames + "帧，池预建同一百分比最长 "
+                + longestPoolStall + " 帧，分帧棋盘" + partialBoardFrames + "帧，最大每帧新增格" + maximumCellDelta);
         }
         private static void CheckImages(string step)
         {

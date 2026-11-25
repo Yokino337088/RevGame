@@ -198,8 +198,11 @@ namespace RevGame.View
             _uvs = new Vector4[MaxSlots];
             _bindingVersions = new int[MaxSlots];
         }
-        /// <summary>过场持有本池租约时调用；每帧至多6片/3ms，取消时交还创建者收尾，不让迟到预热进入新场景。</summary>
-        public async RevTask WarmSlotsAsync(Func<bool> cancelled)
+        /// <summary>
+        /// 过场持有本池租约时调用，每批至多 6 片并在 3 毫秒预算后让帧。
+        /// 每批结束报告本组已创建渲染节点的比例 0~1。取消时抛出，由持有租约的过场负责归还实例。
+        /// </summary>
+        public async RevTask WarmSlotsAsync(Func<bool> cancelled, Action<float> progress)
         {
             while (_createdSlots < MaxSlots)
             {
@@ -213,6 +216,9 @@ namespace RevGame.View
                 {
                     CreateSlot();
                 } while (_createdSlots < limit && Time.realtimeSinceStartupAsDouble - start < .003);
+
+                // 创建完成才记账，下一帧可以先把进度绘到遮挡上，再继续下一批。
+                progress?.Invoke(_createdSlots / (float)MaxSlots);
                 await RevTask.Yield();
             }
         }

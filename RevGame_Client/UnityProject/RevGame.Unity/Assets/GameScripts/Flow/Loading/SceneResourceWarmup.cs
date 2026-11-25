@@ -104,9 +104,12 @@ namespace RevGame.Flow
         /// <summary>
         /// 预创建24颗棋子、按本平台表现预算准备弹道/飘字/近战实例，并预建2条事件通知。它们仍由RevPool管理，第一次交火不再集中Instantiate。
         /// 每帧最多2个，且单批累计超过3毫秒就主动让帧。浏览器还在过场中准备首次交火会用的着色程序。
+        /// 进度为 0~1，普通实例按完成数报告，Boss 特效按各组内的渲染节点批次报告。
         /// </summary>
         public async RevTask WarmBattlePoolsAsync(Action<float> progress)
         {
+            // 普通实例约占本阶段四分之一的分帧工作，余下主要用于创建十组特效里的渲染节点。
+            const float regularPortion = 0.25f;
             const int feedbackEnd = 24 + BoardView.MaxFloatingTexts + BoardView.MaxProjectiles + BoardView.MaxMeleeEffects;
             const int regularEnd = feedbackEnd + UI.BattleHudPanel.MaxScoreSparks + 2;
             // 8组Boss预算加炸弹预警/落地的2组余量；资源预加载不等于实例已创建，必须同时持有全部租约。
@@ -178,7 +181,11 @@ namespace RevGame.Flow
                     if (instance is BossSkillFxView skill)
                     {
                         // 先登记租约再await：取消/异常会由finally成对归还，不能在await后才记账。
-                        await skill.WarmSlotsAsync(() => _disposed);
+                        int completedGroups = i - regularEnd;
+                        // 组内每批实际创建后立即折算到全阶段，消除直到整组结束才跳一次的读条停顿。
+                        Action<float> reportSlots = value => progress?.Invoke(
+                            Mathf.Lerp(regularPortion, 1f, (completedGroups + value) / BoardView.BossFxWarmCount));
+                        await skill.WarmSlotsAsync(() => _disposed, reportSlots);
 #if UNITY_WEBGL && !UNITY_EDITOR && !UNITY_WEIXINMINIGAME && !UNITY_BYTEDANCE_MINIGAME && !UNITY_BYTEDANCEMINIGAME
                         if (i == regularEnd)
                         {
@@ -186,8 +193,13 @@ namespace RevGame.Flow
                             await WarmBrowserVariantAsync(skill.BrowserSkillMaterial);
                         }
 #endif
+                        // 复用已预热的组时内部没有新批次，借到完整实例仍应记为整个组完成。
+                        reportSlots(1f);
                     }
-                    progress?.Invoke((i + 1f) / count);
+                    else
+                    {
+                        progress?.Invoke(regularPortion * ((i + 1f) / regularEnd));
+                    }
 
                     if (i % 2 == 1 || Time.realtimeSinceStartup - sliceStart >= 0.003f)
                     {

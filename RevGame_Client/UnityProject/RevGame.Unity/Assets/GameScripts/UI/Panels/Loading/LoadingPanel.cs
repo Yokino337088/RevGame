@@ -18,12 +18,13 @@ namespace RevGame.UI
         /// <summary>流程传给界面的不可变快照。Progress为0~1真实阶段进度；Error非空时显示返回入口。</summary>
         public sealed class ProgressData
         {
-            /// <summary>实际工作完成比例，不是按时间自动增长的假进度。</summary>
+            /// <summary>已完成的分段工作比例，范围 0~1。</summary>
             public readonly float Progress;
             /// <summary>给玩家看的当前步骤；不暴露对象池、预制体等工程细节。</summary>
             public readonly string Message;
             /// <summary>失败原因，空字符串代表正常加载。非空时允许玩家点击返回入口。</summary>
             public readonly string Error;
+            /// <summary>创建一次加载快照，将进度限制在 0~1，空错误表示继续正常显示。</summary>
             public ProgressData(float progress, string message, string error = "")
             {
                 Progress = Mathf.Clamp01(progress);
@@ -35,12 +36,20 @@ namespace RevGame.UI
         [RevBind] private Text _message; // 当前阶段文字，加粗居中，与进度条一起复用。
         [RevBind] private Text _percent; // 显示经过缓动的百分比，避免数字跳动与填充条不同步。
         [RevBind] private Button _btnReturn; // 只在失败时显示，回调只转发给GameFlow。
-        /// <summary>整面板的透明度；只在资源、实例及UI都就绪后才从1缓动到0。</summary>
+        /// <summary>整面板的透明度；只在资源、实例及 UI 都就绪后才从 1 缓动到 0。</summary>
         private CanvasGroup _cover;
-        /// <summary>仅持有本面板的Tween，关闭时Kill(false)，不会误停战斗中其他动画。</summary>
-        private Tween _progressTween;
+        /// <summary>本面板持有的淡出动画，关闭时停止且不触发完成回调。</summary>
         private Tween _fadeTween;
+        /// <summary>本次过场已报告的最高进度，范围 0~1；重置遮挡时归零。</summary>
+        private float _targetProgress;
+        /// <summary>当前已经绘到进度条上的比例，范围 0~1；只向本次过场的目标追赶。</summary>
         private float _displayed;
+        /// <summary>上次写到文本的整数百分比，-1 表示尚未写入，用来跳过重复字形刷新。</summary>
+        private int _displayedPercent = -1;
+        /// <summary>每真实秒至少可追赶的进度，防止靠近检查点时长时间停在整数百分比下方。</summary>
+        private const float MinimumProgressSpeed = 0.25f;
+        /// <summary>每真实秒按进度差乘上的追赶系数，检查点跨度大时能及时跟上。</summary>
+        private const float ProgressCatchUpRate = 12f;
 
         /// <summary>LoadingPanel 专用图集标签，随这次过场单独加载与归还。</summary>
         private const string ProgressAtlasName = "UILoading";
@@ -138,37 +147,62 @@ namespace RevGame.UI
         public void ResetCover()
         {
             KillAnimations();
+            _targetProgress = 0f;
             SetDisplayed(0f);
             _cover.alpha = 1f;
             _cover.blocksRaycasts = true;
             _cover.interactable = true;
             _btnReturn.gameObject.SetActive(false);
         }
+        /// <summary>消费流程快照。阶段与错误变更直接上屏，小批进度合并为这一帧的追赶目标。</summary>
         protected override void OnRefreshView()
         {
             if (Data == null)
             {
                 return;
             }
-            _message.text = string.IsNullOrEmpty(Data.Error) ? Data.Message : Data.Error;
-            _btnReturn.gameObject.SetActive(!string.IsNullOrEmpty(Data.Error));
-            _progressTween?.Kill(false);
-            // 只让视觉值追赶真实值，不靠定时器假装加载完成；慢机器可停在某个阶段等待真实结果。
-            float target = Mathf.Max(_displayed, Data.Progress);
-            _progressTween = DOTween.To(() => _displayed, SetDisplayed, target, 0.22f)
-                .SetEase(Ease.OutCubic).SetUpdate(true).OnComplete(() => _progressTween = null);
+            bool failed = !string.IsNullOrEmpty(Data.Error);
+            string message = failed ? Data.Error : Data.Message;
+            if (_message.text != message)
+            {
+                _message.text = message;
+            }
+            if (_btnReturn.gameObject.activeSelf != failed)
+            {
+                _btnReturn.gameObject.SetActive(failed);
+            }
+            _targetProgress = Mathf.Max(_targetProgress, Data.Progress);
         }
-        /// <summary>用同一个缓动值驱动 Slider 的裁切范围和百分比。</summary>
+
+        /// <summary>在绘制前用非缩放时间追赶已报告的进度，直到到达本轮目标。一次更新承接同帧的所有小批回报。</summary>
+        private void LateUpdate()
+        {
+            if (_displayed >= _targetProgress)
+            {
+                return;
+            }
+
+            float remaining = _targetProgress - _displayed;
+            float speed = Mathf.Max(MinimumProgressSpeed, remaining * ProgressCatchUpRate);
+            SetDisplayed(Mathf.MoveTowards(_displayed, _targetProgress, speed * Time.unscaledDeltaTime));
+        }
+
+        /// <summary>用同一个显示值驱动 Slider 和百分比，只在跨过整数时更新文字。</summary>
         private void SetDisplayed(float value)
         {
             _displayed = value;
-            _progress.value = value;
-            _percent.text = Mathf.FloorToInt(value * 100f) + "%";
+            _progress.SetValueWithoutNotify(value);
+            int percent = Mathf.FloorToInt(value * 100f);
+            if (percent != _displayedPercent)
+            {
+                _displayedPercent = percent;
+                _percent.text = percent + "%";
+            }
         }
         /// <summary>先让进度条到100%，再淡出0.35秒；使用非缩放时间，暂停或慢动作不会卡死遮挡层。</summary>
         public async RevTask FadeOutAsync()
         {
-            while (this != null && _progressTween != null && _progressTween.IsActive())
+            while (this != null && _displayed < _targetProgress)
             {
                 await RevTask.Yield();
             }
@@ -218,11 +252,11 @@ namespace RevGame.UI
             _progressAtlas?.Dispose();
             _progressAtlas = null;
         }
+        /// <summary>结束本次追赶并取消淡出；关闭或重置遮挡都从这里清理本面板的动画状态。</summary>
         private void KillAnimations()
         {
-            _progressTween?.Kill(false);
+            _targetProgress = _displayed;
             _fadeTween?.Kill(false);
-            _progressTween = null;
             _fadeTween = null;
         }
     }
