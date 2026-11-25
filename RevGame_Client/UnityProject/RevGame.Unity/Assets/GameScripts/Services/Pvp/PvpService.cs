@@ -875,17 +875,12 @@ namespace RevGame.Pvp
             }
             return ApplyMove(move, out _);
         }
+        /// <summary>本地双人确认从黑方开始，黑方同意当前方案后交给白方。界面和提交共用同一座位。</summary>
         private GoSide LocalActor(GoAction action)
         {
             if (action == GoAction.ConfirmScore && Core.Phase == GoPhase.Scoring)
             {
-                // 本地双人练习按两个座位依次确认；联机绝不代替对方确认。
-                int confirmations = 0;
-                for (int i = _moves.Count - 1; i >= 0 && _moves[i].kind == (int)GoAction.ConfirmScore; i--)
-                {
-                    confirmations++;
-                }
-                return confirmations == 0 ? GoSide.Black : GoSide.White;
+                return Core.HasConfirmed(GoSide.Black) ? GoSide.White : GoSide.Black;
             }
             return Core.Turn;
         }

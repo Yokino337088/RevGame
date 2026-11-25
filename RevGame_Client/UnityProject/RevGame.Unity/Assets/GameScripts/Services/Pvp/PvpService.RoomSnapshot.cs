@@ -196,6 +196,10 @@ namespace RevGame.Pvp
             public string TurnText { get; }
             /// <summary>当前棋局规则计算出的轮次或计分文案。</summary>
             public string ResultText { get; }
+            /// <summary>停手按钮文案。前一手已停时明确本次将进入数子。</summary>
+            public string PassLabel { get; }
+            /// <summary>数子按钮文案。本地双人显示下一位实际确认者，其他模式按本人许可显示。</summary>
+            public string ConfirmScoreLabel { get; }
             /// <summary>服务器入口主状态文本。</summary>
             public string ServerStatusText { get; }
             /// <summary>当前等待初始服务器握手时为真，服务器菜单可取消此请求。</summary>
@@ -248,6 +252,8 @@ namespace RevGame.Pvp
                 int lineEnd = ResultText.IndexOf('\n');
                 string turnText = !HasGame ? "选择一种对战方式" : lineEnd >= 0 ? ResultText.Substring(0, lineEnd) : ResultText;
                 TurnText = syncingText.Length == 0 || (Phase == GoPhase.Finished && !MissingCriticalState) ? turnText : syncingText;
+                PassLabel = Phase == GoPhase.Playing && core.ConsecutivePasses == 1 ? "停手并数子" : "停一手";
+                ConfirmScoreLabel = ResolveConfirmScoreLabel(service, core, local);
                 ServerStatusText = MissingCriticalState ? syncingText : service.Queued ? "正在寻找棋友…"
                     : HasGame && service.Connected ? service.Status : service.Connected ? "连接成功 · 可以开始匹配"
                     : !online ? "连接服务器，与在线棋友相遇" : service.Status;
@@ -283,6 +289,20 @@ namespace RevGame.Pvp
                 _disabled[(int)PvpRoomAction.Match] = service.MatchBlockReason();
                 _disabled[(int)PvpRoomAction.ChangeMode] = service.ModeBlockReason();
                 _disabled[(int)PvpRoomAction.Leave] = leaving;
+            }
+
+            /// <summary>投影当前数子确认人。死子方案变化后，由棋盘上的确认状态决定下一方。</summary>
+            private static string ResolveConfirmScoreLabel(PvpService service, GoCore core, bool local)
+            {
+                if (core?.Phase != GoPhase.Scoring)
+                {
+                    return "确认计分";
+                }
+                if (local && !service.IsComputerGame)
+                {
+                    return service.LocalActor(GoAction.ConfirmScore) == GoSide.Black ? "黑方确认" : "白方确认";
+                }
+                return core.HasConfirmed(service.MySide) ? "等待对方" : "确认计分";
             }
 
             /// <summary>房间级允许条件；服务端和棋规仍会校验具体命令。</summary>

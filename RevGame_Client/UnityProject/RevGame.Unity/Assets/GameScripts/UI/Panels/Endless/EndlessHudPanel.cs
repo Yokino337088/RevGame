@@ -364,7 +364,7 @@ namespace RevGame.Endless
                 Set(_startLabel, run.phase == EndlessPhase.Formation ? "开战 " + Mathf.CeilToInt(run.formationLeft) : "开战");
             }
         }
-        /// <summary>从每次真实拒绝开始计时，然后依次显示领主预警与操作引导。</summary>
+        /// <summary>从每次真实拒绝开始计时，然后显示领主预警与当前点选或拖放的操作引导。</summary>
         private void RefreshTip(EndlessRun run)
         {
             if (Service.RejectionSerial != _seenRejectionSerial)
@@ -384,7 +384,16 @@ namespace RevGame.Endless
             }
             else if (run.selectedCard >= 0)
             {
-                tip = Service.CardUpgradeTarget(run.selectedCard) != null ? "箭头指向升级目标\n松手升级高亮棋子" : "拖到棋盘空格出牌\n松手放置新棋子";
+                bool canUpgrade = Service.CardUpgradeTarget(run.selectedCard) != null;
+                // 只有手牌真正被拖起才显示松手提示。点选保留指定和随机升星的规则。
+                if (IsCardDragging)
+                {
+                    tip = canUpgrade ? "箭头指向升级目标\n松手升级高亮棋子" : "拖到棋盘空格出牌\n松手放置新棋子";
+                }
+                else
+                {
+                    tip = canUpgrade ? "点同名未满星棋子升星\n点可用空格则随机升星" : "点绿色亮格落子\n也可以拖动手牌";
+                }
             }
             else if (run.selectedUnit >= 0)
             {

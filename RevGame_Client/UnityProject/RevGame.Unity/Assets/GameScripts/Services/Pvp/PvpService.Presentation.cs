@@ -314,6 +314,7 @@ namespace RevGame.Pvp
             ReplayStep = -1;
             Revision++;
         }
+        /// <summary>从权威棋面生成轮次、数子状态和终局原因。认输等判负原因明确写实际判负方。</summary>
         public string ResultText()
         {
             if (Core == null)
@@ -338,7 +339,19 @@ namespace RevGame.Pvp
                     + "黑：" + s.BlackStones + "子 + " + s.BlackTerritory + "空   白：" + s.WhiteStones + "子 + " + s.WhiteTerritory
                     + "空\n白贴 " + (s.KomiHalfPoints / 2.0).ToString("0.0") + " 目 · 中立 " + s.Neutral;
             }
-            return winner + (Core.EndReason == GoEndReason.Resigned ? " · 对方认输" : Core.EndReason == GoEndReason.Timeout ? " · 对方超时" : " · 对方离开");
+            string reason = Core.EndReason switch
+            {
+                GoEndReason.Resigned => "认输",
+                GoEndReason.Timeout => "超时",
+                GoEndReason.Disconnected => "离开对局",
+                _ => string.Empty
+            };
+            GoSide forfeited = GoCore.Opponent(Core.Winner);
+            if (reason.Length == 0 || forfeited == GoSide.Empty)
+            {
+                return winner;
+            }
+            return winner + " · " + (forfeited == GoSide.Black ? "黑方" : "白方") + reason;
         }
         /// <summary>新局或离场清空棋盘表现与建议轮换，旧盘面的诱饵不能留到新局。</summary>
         private void ResetPresentation()

@@ -153,6 +153,8 @@ namespace RevGame.Pvp
         [RevBind("top/white")] private Text _white;
         [RevBind("top/turn")] private Text _turn;
         [RevBind("controls/pass")] private Button _pass;
+        /// <summary>当前停手是让出回合还是进入数子的按钮文字。</summary>
+        [RevBind("controls/pass/label")] private Text _passLabel;
         /// <summary>返回按钮在退房进行期间按房间快照禁用。</summary>
         [RevBind("controls/back")] private Button _back;
         [RevBind("controls/resign")] private Button _resign;
@@ -166,6 +168,8 @@ namespace RevGame.Pvp
         [RevBind("scoring")] private GameObject _scoring;
         [RevBind("scoring/text")] private Text _scoringText;
         [RevBind("scoring/confirmScore")] private Button _confirmScore;
+        /// <summary>数子按钮展示当前要确认的座位，和服务的棋局快照同步。</summary>
+        [RevBind("scoring/confirmScore/label")] private Text _confirmScoreLabel;
         [RevBind("scoring/resume")] private Button _resume;
         [RevBind("result")] private GameObject _result;
         [RevBind("result/text")] private Text _resultText;
@@ -403,6 +407,8 @@ namespace RevGame.Pvp
             Show(_scoring, _battleVisible && scoring);
             Show(_result, _battleVisible && finished && (_counting || !_settling));
             Show(_pass.gameObject, playing);
+            Set(_passLabel, room.PassLabel);
+            Set(_confirmScoreLabel, room.ConfirmScoreLabel);
             Show(_resign.gameObject, hasGame && !finished);
             Show(_hint.gameObject, playing);
             Show(_toggleHints.gameObject, hasGame);
