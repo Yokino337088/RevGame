@@ -10,11 +10,14 @@ namespace RevGame.Pvp
         /// <summary>空闲围棋域内的教学会话，使用练习棋盘，生命周期由本服务管理。</summary>
         public PvpTutorial Tutorial { get; private set; }
 
+        /// <summary>进入剧情前可查询的教学许可。对局、配对、邀请和已有练习均优先。</summary>
+        public bool CanStartTutorial => !_disposed && Config != null && Tutorial == null && Core == null &&
+            !Queued && !Connected && !_leaving && Lan == null && _server == null;
+
         /// <summary>九路场景加载后建立练习。已有对局、排队或邀请传输时保持原会话。</summary>
         public bool StartTutorial(Action completed)
         {
-            if (_disposed || Config == null || Tutorial != null || Core != null || Queued ||
-                Connected || _leaving || Lan != null || _server != null)
+            if (!CanStartTutorial)
             {
                 return false;
             }

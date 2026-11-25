@@ -1,6 +1,7 @@
-// 全屏剧情背景：大厅使用小屋材质，正式篇章借用场景原画，开发预览也可单独租用配置对应的章节资源。
+// 全屏剧情背景：小屋和围棋神殿可独立加载，章节原画优先借用当前场景。
 // 只负责展示与等比铺满；关闭先解除UI引用，再归还本面板的资源。
 using System;
+using RevGame.Data;
 using Revolution;
 using UnityEngine;
 using UnityEngine.Sprites;
@@ -8,13 +9,13 @@ using UnityEngine.UI;
 
 namespace RevGame.View
 {
-    /// <summary>剧情面板的全屏 RawImage，最多持有一章独立背景；同章战斗中优先借用已经交付的原画。</summary>
+    /// <summary>剧情面板的全屏 RawImage。持有当前独立背景的租约，战斗中优先借用已经交付的同章原画。</summary>
     [RequireComponent(typeof(RawImage))]
     public sealed class StoryBackdrop : MonoBehaviour
     {
-        /// <summary>背景UI和大厅资源句柄，0=大厅，正数=当前章；取消代次阻止迟到结果写到新故事。</summary>
         private RawImage _image;
-        private RevResHandle _lobby;
+        /// <summary>大厅或九路神殿共用的独立材质句柄，面板关闭时按当前编号归还。</summary>
+        private RevResHandle _standaloneMaterial;
         private ChapterBackgroundLease _chapterLease;
         private int _generation;
         /// <summary>章节背景单面板材质副本，只复制一次以承接SpriteRenderer参数；关闭销毁，不逐帧或逐棋子克隆。</summary>
@@ -27,12 +28,23 @@ namespace RevGame.View
             get;
             private set;
         }
-        /// <summary>当前原画的来源章节，0=大厅，只读用于验收；不负责切换游戏章节。</summary>
+        /// <summary>当前背景编号，-1 为九路神殿，0 为大厅，正数为战役章节。</summary>
         public int Chapter
         {
             get;
             private set;
         }
+        /// <summary>当前背景 Shader 的原画采样属性，准备与视觉验收都用此属性确认实际纹理。</summary>
+        public string TextureProperty => Chapter == 1 || Chapter == StoryBook.PvpBackgroundChapter ? "_MainTex" : "_ChapterTex";
+
+        /// <summary>选用正式大厅和九路棋盘已有材质的逻辑路径，独立背景无需创建场景对象。</summary>
+        private static (string Root, string Name) StandaloneMaterial(int chapter)
+        {
+            return chapter == StoryBook.PvpBackgroundChapter
+                ? ("Material/Pvp/Board", "PvpTemple")
+                : ("Material/Lobby", "MagicCottageMaterial");
+        }
+
         /// <summary>等待当前面板需要的背景，不打开其它章节；参数来自篇章配置。</summary>
         public async RevTask PrepareAsync(int chapter, bool preview)
         {
@@ -40,11 +52,12 @@ namespace RevGame.View
             int generation = _generation;
             _image = GetComponent<RawImage>();
             Chapter = chapter;
-            if (chapter == 0)
+            if (chapter <= 0)
             {
-                // 背景租约跟随常驻的演出容器，替换背景时由演出主动归还。
-                _lobby = RevResManager.LoadAsync("Material/Lobby", "MagicCottageMaterial", typeof(Material), null, RevResGroup.UI, lifetime: RevResLifetime.Manual);
-                while (_lobby != null && _lobby.IsLoading)
+                // 与场景复用材质和原画。剧情可能在大厅开始，独立租约由这个面板归还。
+                var (root, name) = StandaloneMaterial(chapter);
+                _standaloneMaterial = RevResManager.LoadAsync(root, name, typeof(Material), null, RevResGroup.UI, lifetime: RevResLifetime.Manual);
+                while (_standaloneMaterial != null && _standaloneMaterial.IsLoading)
                 {
                     await RevTask.Yield();
                     if (generation != _generation)
@@ -52,15 +65,15 @@ namespace RevGame.View
                         return;
                     }
                 }
-                Material material = _lobby?.Content as Material;
-                if (material == null)
+                Material material = _standaloneMaterial?.Content as Material;
+                if (material == null || !material.HasProperty(TextureProperty))
                 {
-                    throw new InvalidOperationException("大厅剧情背景加载失败：" + _lobby?.ErrorReason);
+                    throw new InvalidOperationException("剧情背景材质未就绪：" + name + " " + _standaloneMaterial?.ErrorReason);
                 }
-                Texture texture = material.GetTexture("_ChapterTex");
+                Texture texture = material.GetTexture(TextureProperty);
                 if (texture == null)
                 {
-                    throw new InvalidOperationException("大厅剧情背景缺少实际纹理");
+                    throw new InvalidOperationException("剧情背景缺少原画：" + name);
                 }
                 _image.material = material;
                 _image.texture = texture;
@@ -161,10 +174,11 @@ namespace RevGame.View
                 _image.texture = null;
                 _image.material = null;
             }
-            if (_lobby != null)
+            if (_standaloneMaterial != null)
             {
-                RevResManager.Release("Material/Lobby", "MagicCottageMaterial", RevResLifetime.Manual);
-                _lobby = null;
+                var (root, name) = StandaloneMaterial(Chapter);
+                RevResManager.Release(root, name, RevResLifetime.Manual);
+                _standaloneMaterial = null;
             }
             if (_chapterMaterial != null)
             {

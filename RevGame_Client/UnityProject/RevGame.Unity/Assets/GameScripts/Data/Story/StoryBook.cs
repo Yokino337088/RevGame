@@ -7,6 +7,9 @@ namespace RevGame.Data
     [CreateAssetMenu(menuName = "RevGame/剧情/剧情配置", fileName = "StoryBook")]
     public sealed class StoryBook : ScriptableObject
     {
+        /// <summary>篇章背景编号。九路教学前可直接使用围棋神殿原画，无需先生成棋盘。</summary>
+        public const int PvpBackgroundChapter = -1;
+
         /// <summary>旧配置保留原字段供导入迁移。正式资源由下方的无对象引用表记录。</summary>
         [HideInInspector] public Sprite Guide;
         [HideInInspector] public Sprite[] GuideFrames = Array.Empty<Sprite>();
@@ -52,9 +55,9 @@ namespace RevGame.Data
                 {
                     throw new InvalidOperationException("剧情Id重复、空白或篇章没有台词");
                 }
-                if (episode.BackgroundChapter < 0 || episode.BackgroundChapter > 6)
+                if (episode.BackgroundChapter < PvpBackgroundChapter || episode.BackgroundChapter > 6)
                 {
-                    throw new InvalidOperationException("剧情背景章节必须为0～6：" + episode.Id);
+                    throw new InvalidOperationException("剧情背景须为 -1（九路围棋）、0（大厅）或 1～6（章节）：" + episode.Id);
                 }
                 foreach (Line line in episode.Lines)
                 {
@@ -104,8 +107,8 @@ namespace RevGame.Data
             [InspectorName("篇章立绘覆盖")]
             [Tooltip("拖入项目Sprite；留空按每句表情选择。每句指定立绘时优先使用每句的图片。")]
             public GamePortraitReference PortraitReference;
-            /// <summary>0使用大厅小屋，1～6复用对应关卡原画与Shader；只保存选择，不硬引用六章材质。</summary>
-            [InspectorName("背景章节（0为大厅）")] public int BackgroundChapter;
+            /// <summary>-1 使用九路围棋神殿，0 使用大厅小屋，1～6 使用对应关卡。材质由面板按编号取得。</summary>
+            [InspectorName("背景章节（-1 九路围棋，0 大厅）")] public int BackgroundChapter;
             /// <summary>按播放顺序排列的对白，一次点击推进一项。</summary>
             [InspectorName("对白列表")] public Line[] Lines;
             /// <summary>编辑器按本篇实际立绘生成的图集名，播放时仅借用这些绑定租约，不能手工维护。</summary>

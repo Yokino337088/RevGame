@@ -119,7 +119,7 @@ namespace RevGame.Pvp
             ShowTutorialChoice(false);
         }
 
-        /// <summary>提交真实九路围棋教学入口，转场失败时让玩家能重试。</summary>
+        /// <summary>将入口交给开场剧情，接单后关闭菜单。拒绝时保留原菜单供玩家重试。</summary>
         private void OpenTutorial()
         {
             if (_entering)
@@ -127,13 +127,12 @@ namespace RevGame.Pvp
                 return;
             }
             var flow = RevServices.GetRequired<GameFlow>();
-            GameScreen screen = flow.Screen;
             _entering = flow.EnterPvpTutorial();
-            if (_entering && screen == GameScreen.Home)
+            if (_entering)
             {
                 CloseSelf();
             }
-            else if (!_entering)
+            else
             {
                 PvpNoticePanel.ShowMessage(flow.LastError);
             }

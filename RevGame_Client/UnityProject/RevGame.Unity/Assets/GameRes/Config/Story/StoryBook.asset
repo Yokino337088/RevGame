@@ -336,6 +336,73 @@ MonoBehaviour:
     PortraitAtlasNames:
     - YayaExpressions
     - YayaStoryOpening
+  - Id: pvp_tutorial_intro
+    Title: "\u4E5D\u8DEF\u56F4\u68CB \xB7 \u7B2C\u4E00\u9897\u68CB"
+    Portrait: {fileID: 0}
+    PortraitReference:
+      AssetGuid: 
+      LocalId: 0
+      SpriteName: 
+      Atlas: 
+    BackgroundChapter: -1
+    Lines:
+    - Speaker: "\u5192\u9669\u5BB6"
+      Portrait: {fileID: 0}
+      PortraitReference:
+        AssetGuid: 
+        LocalId: 0
+        SpriteName: 
+        Atlas: 
+      Expression: 18
+      Text: "\u8FD9\u5C31\u662F\u4E5D\u8DEF\u56F4\u68CB\uFF1F\u68CB\u5B50\u4E5F\u80FD\u62FF\u6765\u6253\u67B6\u5417\uFF1F"
+    - Speaker: "\u9E26\u9E26"
+      Portrait: {fileID: 0}
+      PortraitReference:
+        AssetGuid: 
+        LocalId: 0
+        SpriteName: 
+        Atlas: 
+      Expression: 10
+      Text: "\u5148\u628A\u6253\u67B6\u90A3\u4E00\u5957\u6536\u8D77\u6765\u3002\u8FD9\u91CC\u9760\u843D\u5B50\u3001\u63D0\u5B50\u548C\u56F4\u5730\u5206\u80DC\u8D1F\uFF0C\u672C\u9E26\u5E26\u4F60\u8D70\u4E00\u904D\u3002"
+    - Speaker: "\u5192\u9669\u5BB6"
+      Portrait: {fileID: 0}
+      PortraitReference:
+        AssetGuid: 
+        LocalId: 0
+        SpriteName: 
+        Atlas: 
+      Expression: 11
+      Text: "\u90A3\u6211\u628A\u9ED1\u68CB\u653E\u8FDB\u683C\u5B50\u91CC\uFF0C\u8D70\u9519\u4E86\u518D\u632A\u4E00\u683C\uFF1F"
+    - Speaker: "\u9E26\u9E26"
+      Portrait: {fileID: 0}
+      PortraitReference:
+        AssetGuid: 
+        LocalId: 0
+        SpriteName: 
+        Atlas: 
+      Expression: 1
+      Text: "\u4E0B\u5728\u4E24\u6761\u7EBF\u7684\u4EA4\u53C9\u70B9\u3002\u9ED1\u68CB\u5148\u4E0B\uFF0C\u843D\u5B9A\u5C31\u4E0D\u80FD\u632A\u4E86\u3002\u5F85\u4F1A\u513F\u770B\u597D\u4EAE\u8D77\u6765\u7684\u70B9\u3002"
+    - Speaker: "\u5192\u9669\u5BB6"
+      Portrait: {fileID: 0}
+      PortraitReference:
+        AssetGuid: 
+        LocalId: 0
+        SpriteName: 
+        Atlas: 
+      Expression: 18
+      Text: "\u597D\uFF0C\u6211\u5148\u4E0B\u4E00\u9897\u3002\u8D70\u9519\u4E86\u4F60\u53EF\u5F97\u63D0\u9192\u6211\u3002"
+    - Speaker: "\u9E26\u9E26"
+      Portrait: {fileID: 0}
+      PortraitReference:
+        AssetGuid: 
+        LocalId: 0
+        SpriteName: 
+        Atlas: 
+      Expression: 3
+      Text: "\u90A3\u5C31\u4ECE\u7B2C\u4E00\u9897\u5F00\u59CB\u3002\u770B\u68CB\u76D8\uFF0C\u522B\u603B\u770B\u6211\u3002"
+    PortraitAtlasNames:
+    - YayaExpressions
+    - YayaStoryOpening
   - Id: chapter1
     Title: "\u7B2C\u4E00\u7AE0 \xB7 \u661F\u843D\u5C0F\u5F84"
     Portrait: {fileID: 0}

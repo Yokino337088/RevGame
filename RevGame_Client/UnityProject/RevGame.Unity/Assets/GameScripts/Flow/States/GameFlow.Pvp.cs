@@ -17,6 +17,8 @@ namespace RevGame.Flow
         public const string PvpSceneName = "PvpScene";
         // 独立决斗表现场景名，与编辑器构建列表保持一致。
         public const string DuelSceneName = "PvpDuelScene";
+        /// <summary>主线 StoryBook 中九路教学前的开场篇章。</summary>
+        private const string PvpTutorialIntroId = "pvp_tutorial_intro";
         // 准备页随当前 PvP 域存活，两个阶段换同一套图集，不在每帧加载资源。
         private DuelPrepPanelBase _duelPreparationPanel;
         // 决斗 HUD 独立于准备页，直到 HUD 关闭后才归还专用图集。
@@ -38,29 +40,57 @@ namespace RevGame.Flow
             RevServices.GetRequired<StoryProgress>().ResolvePvpTutorial();
         }
 
-        /// <summary>首次教学走九路场景交接，在已就绪的空闲菜单中重看则直接复用棋盘。</summary>
+        /// <summary>首次进入和从空闲围棋菜单重看都先播放开场。接单时不创建练习、不写教学进度。</summary>
         public bool EnterPvpTutorial()
         {
-            if (Screen == GameScreen.Home)
-            {
-                return EnterPvp("Tutorial");
-            }
-            var panel = RevUI.Get<PvpPanel>();
-            if (Screen != GameScreen.Pvp || IsGameplayBlocked || RevScene.CurrentName != PvpSceneName ||
-                panel == null || !RevServices.GetRequired<PvpService>().StartTutorial(SkipPvpTutorial))
+            GameScreen origin = Screen;
+            if (_disposed || _storyBook == null || IsGameplayBlocked ||
+                (origin != GameScreen.Home && (origin != GameScreen.Pvp || RevScene.CurrentName != PvpSceneName ||
+                    !RevUI.IsOpen<PvpPanel>() || !RevServices.GetRequired<PvpService>().CanStartTutorial)))
             {
                 LastError = "请离开当前棋局或匹配后再打开教学";
                 return false;
             }
             LastError = "";
-            panel.ShowDestination("Tutorial");
+            PlayStory(PvpTutorialIntroId, () => StartPvpTutorialAfterStory(origin));
             return true;
         }
 
-        /// <summary>从大厅选择对战方式，创建一次进入流程。</summary>
+        /// <summary>对白完成或跳过后才进入真实教学，旧场景或失效请求不得创建练习。</summary>
+        private void StartPvpTutorialAfterStory(GameScreen origin)
+        {
+            if (_disposed || Screen != origin)
+            {
+                return;
+            }
+            if (origin == GameScreen.Home)
+            {
+                // 从大厅走原有的场景交接和棋盘首屏，开场此时已经归还背景和立绘。
+                if (!EnterPvp("Tutorial", false))
+                {
+                    PvpNoticePanel.ShowMessage(LastError);
+                }
+                return;
+            }
+            var panel = RevUI.Get<PvpPanel>();
+            if (IsGameplayBlocked || RevScene.CurrentName != PvpSceneName || panel == null ||
+                !RevServices.GetRequired<PvpService>().StartTutorial(SkipPvpTutorial))
+            {
+                LastError = "请离开当前棋局或匹配后再打开教学";
+                if (panel != null && panel.Menu == "Entry")
+                {
+                    panel.ShowDestination("Entry");
+                }
+                PvpNoticePanel.ShowMessage(LastError);
+                return;
+            }
+            panel.ShowDestination("Tutorial");
+        }
+
+        /// <summary>从大厅选择对战方式。教学请求先由统一的开场入口接单。</summary>
         public bool EnterPvp(string destination = "Entry")
         {
-            return EnterPvp(destination, false);
+            return destination == "Tutorial" ? EnterPvpTutorial() : EnterPvp(destination, false);
         }
 
         /// <summary>接受大厅的一条真实局域网邀请，移交被动监听的票据给对战域。</summary>

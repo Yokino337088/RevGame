@@ -87,7 +87,7 @@ namespace RevGame.UI
             float required = dialogue.cachedTextGeneratorForLayout.GetPreferredHeight(line.Text, settings) / dialogue.pixelsPerUnit;
             var background = panel._storyBackdrop.GetComponent<UnityEngine.UI.RawImage>();
             Material material = background.material;
-            string textureProperty = panel._storyBackdrop.Chapter == 1 ? "_MainTex" : "_ChapterTex";
+            string textureProperty = panel._storyBackdrop.TextureProperty;
             return new System.Collections.Generic.Dictionary<string, object>
             {
                 ["open"] = true,
@@ -106,6 +106,7 @@ namespace RevGame.UI
                 ["mobilePreview"] = UnityEngine.Device.Application.isMobilePlatform,
                 ["deviceModel"] = UnityEngine.Device.SystemInfo.deviceModel,
                 ["backgroundChapter"] = panel._storyBackdrop.Chapter,
+                ["backgroundMaterial"] = material.name,
                 ["backgroundShader"] = material.shader.name,
                 ["backgroundShaderSupported"] = material.shader.isSupported,
                 ["backgroundTexture"] = background.texture == null ? "" : background.texture.name,

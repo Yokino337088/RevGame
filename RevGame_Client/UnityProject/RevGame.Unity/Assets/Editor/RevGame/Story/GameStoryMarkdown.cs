@@ -108,6 +108,7 @@ namespace RevGame.Editor
             };
         }
 
+        /// <summary>将正式剧情转换为可往返的 Markdown，保留篇章顺序、背景编号和每句原文。</summary>
         private static string Format(StoryBook book)
         {
             var text = new StringBuilder();
@@ -116,7 +117,7 @@ namespace RevGame.Editor
                 .Append("运行 **同步剧情.cmd --check** 可先只校验。编辑器处于 Play 时请先退出 Play。\n\n")
                 .Append("- 二级标题包含篇章 ID 和游戏内标题。保留已有 ID，整块移动对白即可改变播放顺序。教学说明 lesson 保留五句。\n")
                 .Append("- 三级标题是说话人。围栏内是游戏原文，保留标点与换行。复制整段可增添对白。\n")
-                .Append("- 背景 0 是大厅小屋，1 到 6 对应关卡。表情 0 使用默认立绘。当前表情编号为 ")
+                .Append("- 背景 -1 是九路围棋神殿，0 是大厅小屋，1 到 6 对应关卡。表情 0 使用默认立绘。当前表情编号为 ")
                 .Append(string.Join("、", book.ExpressionIds)).Append("。\n")
                 .Append("- 立绘覆盖填「无」、已打入图集的唯一 Sprite 资产路径，或导出中的 GUID:本地ID。默认立绘及表情映射继续在 Inspector 编辑。\n")
                 .Append("- 同步完成会保存 SO。游戏使用 AssetBundle 时，先在仓库根运行 python tools/font-subset.py 更新字库，再按项目流程重建对应平台资源。\n\n")
