@@ -53,6 +53,8 @@ namespace RevGame.Pvp
     {
         public const string ProtocolVersion = GoCore.MatchProtocolVersion;
         private const string LocalRatingKey = "RevGame.Pvp.OnlineRating.v1";
+        /// <summary>仅保存本机最近握手成功的服务器地址。没有记录时，匹配页留空。</summary>
+        private const string LastServerAddressKey = "RevGame.Pvp.LastServerAddress.v1";
         private const int InitialRating = 1500;
         private const int MinRating = 100;
         private const int MaxRating = 3000;
@@ -64,7 +66,17 @@ namespace RevGame.Pvp
         public string BlackName { get; private set; } = "黑方";
         public string WhiteName { get; private set; } = "白方";
         public string Nickname { get; private set; }
+        /// <summary>当前连接尝试使用的地址，供同一会话重连。</summary>
         public string Endpoint { get; private set; }
+        /// <summary>匹配页打开时读取最近一次成功地址，缺失或格式无效时返回空字符串。</summary>
+        internal string LastSuccessfulServerAddress
+        {
+            get
+            {
+                string saved = PlayerPrefs.GetString(_serverAddressPreferenceKey, string.Empty);
+                return FantasyGoTransport.TryParseEndpoint(saved, out _, out _) ? saved.Trim() : string.Empty;
+            }
+        }
         public bool Queued { get; private set; }
         public bool Connected { get; private set; }
         /// <summary>本地人机由服务推进白方，UI/视图不能代替AI提交规则。</summary>
@@ -86,6 +98,8 @@ namespace RevGame.Pvp
         private readonly Stopwatch _clock = Stopwatch.StartNew();
         private double _turnStarted, _queueStarted;
         private FantasyGoTransport _server;
+        /// <summary>进入围棋场景时选定的地址偏好键。隔离验收使用独立的本机记录。</summary>
+        private string _serverAddressPreferenceKey = LastServerAddressKey;
         private string _resumeToken = "";
         // 服务跨场景常驻。同地址、昵称及规则可复用连接令牌，棋力由独立的本机存档保存。
         private (string Endpoint, string Nickname, string Rules, string Kind, string Token) _matchIdentity;
@@ -107,12 +121,13 @@ namespace RevGame.Pvp
         private List<PvpMove> _syncMoves;
         private int _syncTotal;
 
-        /// <summary>模式配置在GameFlow异步加载表之后传入，构造服务时不读尚未加载的表。</summary>
-        public void Begin(PvpConfig config)
+        /// <summary>进入围棋场景时提交已加载的模式配置，并选择玩家或隔离验收的地址存储。</summary>
+        public void Begin(PvpConfig config, bool isolateServerAddress = false)
         {
             Dispose();
             _disposed = false;
             Config = config;
+            _serverAddressPreferenceKey = isolateServerAddress ? LastServerAddressKey + ".Isolated" : LastServerAddressKey;
             Core = null;
             _moves.Clear();
             HintsVisible = true;
@@ -583,12 +598,37 @@ namespace RevGame.Pvp
             }
         }
 
-        /// <summary>仅在接受当前会话的回包时保存连接状态及恢复信息。</summary>
+        /// <summary>接受当前会话的权威回包时更新连接状态及恢复信息。首次真实连通时记住地址。</summary>
         private void AdoptServerConnection(FantasyGoTransport connection)
         {
+            // 当前连接已通过上层归属校验，且真正的握手才会建立可用 Socket。
+            bool newlyConnected = !Connected && connection.CanRequestSync;
             Connected = connection.Connected;
             _resumeToken = connection.ResumeToken;
             _matchIdentity = (Endpoint, Nickname, Config.RulesJson, Config.rookie ? "rookie" : "advanced", _resumeToken);
+            if (newlyConnected)
+            {
+                RememberServerAddress();
+            }
+        }
+
+        /// <summary>提交当前已连通的地址并立即落盘。写入失败只记日志，当前连接仍可使用。</summary>
+        private void RememberServerAddress()
+        {
+            try
+            {
+                // 同一地址的重复握手无需刷新本机偏好。
+                if (PlayerPrefs.GetString(_serverAddressPreferenceKey, string.Empty) == Endpoint)
+                {
+                    return;
+                }
+                PlayerPrefs.SetString(_serverAddressPreferenceKey, Endpoint);
+                PlayerPrefs.Save();
+            }
+            catch (PlayerPrefsException error)
+            {
+                RevLog.Warn("保存最近连接的服务器地址失败：" + error.Message, "Pvp");
+            }
         }
 
         /// <summary>按当前设备读取棋力。旧版本没有本机档案，首次从初始分起算。</summary>

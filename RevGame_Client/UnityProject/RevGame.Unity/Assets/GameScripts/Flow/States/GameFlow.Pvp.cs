@@ -329,7 +329,8 @@ namespace RevGame.Flow
             await RevServices.GetRequired<GameSpriteAtlasService>().PreloadAsync(new[] { "UIBattle", "UIMenus" });
             ThrowIfDisposed();
             var service = RevServices.GetRequired<PvpService>();
-            service.Begin(config);
+            // 围棋服务沿用当前启动会话的隔离选择，测试连通不会改写玩家记住的地址。
+            service.Begin(config, isolateServerAddress: RevServices.GetRequired<StoryProgress>().IsIsolated);
             RevTimerHandle receiveDuringLoad = default;
             if (invitation != null && service.AdoptLobbyLanInvitation(invitation))
             {

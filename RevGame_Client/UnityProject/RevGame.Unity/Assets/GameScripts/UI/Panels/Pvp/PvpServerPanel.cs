@@ -22,7 +22,7 @@ namespace RevGame.Pvp
         }
 
         [RevBind("nickname")] private InputField _nickname;
-        /// <summary>玩家输入要连接的域名或 IP 和端口，首次打开时为空。</summary>
+        /// <summary>玩家可编辑的服务器域名或 IP 和端口，没有成功记录时保持空白。</summary>
         [RevBind("endpoint")] private InputField _endpoint;
         /// <summary>已有预制体内的地址字段标签，兼容旧 AB 的节点名称。</summary>
         [RevBind("endpointLabel")] private Text _endpointLabel;
@@ -39,12 +39,12 @@ namespace RevGame.Pvp
         /// <summary>本次输入的拒绝原因，修改地址或重新打开面板后清除。</summary>
         private string _addressError;
         private PvpService Service { get { return RevServices.GetRequired<PvpService>(); } }
-        /// <summary>读取当前会话用过的地址，空会话不预填任何主机和端口。</summary>
+        /// <summary>回填上次握手成功的地址，玩家可修改后主动连接。</summary>
         protected override void OnOpen()
         {
             _nickname.text = string.IsNullOrEmpty(Service.Nickname) ? "棋友" : Service.Nickname;
             _addressError = null;
-            _endpoint.SetTextWithoutNotify(Service.Endpoint ?? string.Empty);
+            _endpoint.SetTextWithoutNotify(Service.LastSuccessfulServerAddress);
             RevTimer.Every(.2f, RefreshView, domain: RevTimeDomain.Unscaled, owner: this);
         }
         /// <summary>展示当前连接状态，未连接时在原队列说明处提示地址格式。</summary>
