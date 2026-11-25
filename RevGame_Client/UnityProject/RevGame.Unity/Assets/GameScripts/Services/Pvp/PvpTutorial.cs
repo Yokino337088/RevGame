@@ -8,7 +8,7 @@ namespace RevGame.Pvp
         /// <summary>区分点击落子、观察棋面、尝试禁着和使用计分按钮，确保读对白不能完成实操。</summary>
         private enum Exercise
         {
-            /// <summary>读完说明后允许直接继续。</summary>
+            /// <summary>只展示说明，由面板留足阅读时间后推进。</summary>
             Read,
             /// <summary>必须提交一个符合题意的合法落点。</summary>
             Play,
@@ -74,7 +74,7 @@ namespace RevGame.Pvp
 
         /// <summary>给实景棋盘和数子面板读取。教学动作在独立草稿上判定，成功后才交付新实例。</summary>
         public GoCore Core { get; private set; }
-        /// <summary>当前课程的 Excel 台词键，答题后保持到玩家继续。</summary>
+        /// <summary>当前课程的 Excel 台词键，答题后保持到反馈展示结束。</summary>
         public string Cue => Current.Cue;
         /// <summary>界面显示的当前课程编号，从 1 开始。</summary>
         public int StepNumber => _index + 1;
@@ -93,13 +93,15 @@ namespace RevGame.Pvp
         public int LastPoint { get; private set; } = -1;
         /// <summary>玩家最近动作的提示或规则回执，进入新课程和重试时清空。</summary>
         public string Feedback { get; private set; } = string.Empty;
-        /// <summary>只有完成当前实操或读当前说明时允许切到下一课。</summary>
-        public bool CanContinue => !Completed && (_answered || Current.Action == Exercise.Read);
+        /// <summary>这是只读说明课，面板需要按台词配置留出完整阅读时间。</summary>
+        public bool IsReadingLesson => Current.Action == Exercise.Read;
+        /// <summary>实操已作答或本课是说明页时，允许面板推进。</summary>
+        public bool CanContinue => !Completed && (_answered || IsReadingLesson);
         /// <summary>当前要求玩家停一手时才启用按钮。</summary>
         public bool CanPass => !Completed && !_answered && Current.Action == Exercise.Pass;
         /// <summary>当前要求玩家确认计分时才启用按钮。</summary>
         public bool CanConfirmScore => !Completed && !_answered && Current.Action == Exercise.Confirm;
-        /// <summary>最后一课已主动继续。调用方据此结束会话并记录完成。</summary>
+        /// <summary>最后一课已推进完毕。调用方据此结束会话并记录完成。</summary>
         public bool Completed { get; private set; }
 
         /// <summary>为新教学会话建立第一课的空盘。</summary>
@@ -118,7 +120,7 @@ namespace RevGame.Pvp
             }
             if (Current.Point < 0)
             {
-                return Reject(CanPass ? "这一步请点“停一手”。" : CanConfirmScore ? "这一步请确认数子。" : "读完说明后继续。");
+                return Reject(CanPass ? "这一步请点“停一手”。" : CanConfirmScore ? "这一步请确认数子。" : "读一读鸦鸦的说明。");
             }
             if (x < 0 || x >= GoCore.BoardSize || y < 0 || y >= GoCore.BoardSize ||
                 y * GoCore.BoardSize + x != Current.Point)
@@ -127,7 +129,7 @@ namespace RevGame.Pvp
             }
             if (Current.Action == Exercise.Inspect)
             {
-                return Accept("找到了。看清棋盘后就能继续。");
+                return Accept("找到了。看看这处交叉点。");
             }
 
             // 棋盘分析以 GoCore 实例缓存。提交成功后换一份规则盘，气、眼和圈地提示同一帧更新。
@@ -227,7 +229,7 @@ namespace RevGame.Pvp
             return true;
         }
 
-        /// <summary>保留玩家能理解的结果，停在当前棋面等玩家继续。</summary>
+        /// <summary>保留玩家能理解的结果，面板展示反馈后可推进。</summary>
         private bool Accept(string message)
         {
             _answered = true;

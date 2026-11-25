@@ -16,7 +16,7 @@ namespace RevGame.Bootstrap
             RegisterCommand("围棋教学/状态", "只读教学进度、落点提示、规则结果、页面与首次选择，返回 JSON", _ => PvpTutorialStatus());
             RegisterCommand("围棋教学/落点", "点击交叉点，列从左向右、行从下向上，范围 0 至 8。是否答对见 continue 和 feedback",
                 args => SelectPvpTutorialPoint(args.Int(0), args.Int(1)), RevGMArg.IntRequired("列"), RevGMArg.IntRequired("行"));
-            RegisterCommand("围棋教学/继续", "进入下一课或正式完成教学，未作答时拒绝",
+            RegisterCommand("围棋教学/继续", "调试立即推进已完成的课程，未作答时拒绝",
                 _ => RunPvpTutorialAction(panel => panel.AdvanceTutorialFromPanel(), "请先完成本节练习"));
             RegisterCommand("围棋教学/停一手", "走教学停一手按钮的业务入口，只在停手课允许",
                 _ => RunPvpTutorialAction(panel => panel.PassTutorialFromPanel(), "当前课还不能停一手"));

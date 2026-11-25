@@ -24,7 +24,7 @@ namespace RevGame.Pvp
         private static void RegisterTutorialChecks()
         {
             const string point = "{\"type\":\"object\",\"properties\":{\"x\":{\"type\":\"integer\",\"minimum\":0,\"maximum\":8},\"y\":{\"type\":\"integer\",\"minimum\":0,\"maximum\":8}},\"required\":[\"x\",\"y\"],\"additionalProperties\":false}";
-            RevRuntimeAutomation.Register("pvp.tutorial.state", "读取九路教学、当前练习盘和首次选择", Empty,
+            RevRuntimeAutomation.Register("pvp.tutorial.state", "读取九路教学、练习棋盘、对白布局和首次选择", Empty,
                 _ => TutorialCheckState(), readOnly: true, owner: Owner);
             RevRuntimeAutomation.Register("pvp.tutorial.point", "点击教学棋盘上的真实交叉点，复用玩家输入入口", point, json =>
             {
@@ -93,6 +93,7 @@ namespace RevGame.Pvp
                 ["cue"] = tutorial?.Cue ?? "",
                 ["hint"] = tutorial?.HintPoint ?? -1,
                 ["continue"] = tutorial?.CanContinue ?? false,
+                ["readingOnly"] = tutorial?.IsReadingLesson ?? false,
                 ["pass"] = tutorial?.CanPass ?? false,
                 ["confirmScore"] = tutorial?.CanConfirmScore ?? false,
                 ["phase"] = core?.Phase.ToString() ?? "",
@@ -101,7 +102,8 @@ namespace RevGame.Pvp
                 ["blackCaptures"] = core?.BlackCaptures ?? 0,
                 ["scoreDifferenceHalfPoints"] = core?.EndReason == GoEndReason.Scored ? (int?)core.Score.DifferenceHalfPoints : null,
                 ["feedback"] = tutorial?.Feedback ?? "",
-                ["sequence"] = core?.Sequence ?? 0
+                ["sequence"] = core?.Sequence ?? 0,
+                ["dialogue"] = panel?.TutorialDialogueSnapshot()
             };
         }
     }

@@ -111,7 +111,7 @@ namespace RevGame.Pvp
             return true;
         }
 
-        /// <summary>把业务状态转换为可见页面和弹窗准入，再刷新当前对局视图。</summary>
+        /// <summary>刷新可见棋局和教学。教学复用本面板计时，反馈先显示，时间到再推进。</summary>
         private void TickPresentation()
         {
             if (!_opening)
@@ -120,8 +120,9 @@ namespace RevGame.Pvp
             }
             if (Menu == "Tutorial" && Service.Tutorial != null)
             {
-                // 教学没有匹配状态与房间通知，计时刷新只更新练习视图。
+                // 先让反馈落屏，再由本轮面板的计时驱动下一课。
                 RefreshView();
+                TickTutorialAdvance(Service.Tutorial);
                 return;
             }
             _confirmationQueue?.SetPhase(_battleVisible && !_battleTransition ? "Battle" : "Menu");
