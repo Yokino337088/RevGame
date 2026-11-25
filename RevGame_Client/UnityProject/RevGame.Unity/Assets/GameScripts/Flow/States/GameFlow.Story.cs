@@ -378,7 +378,7 @@ namespace RevGame.Flow
                 ExpressionIndex = index
             };
         }
-        /// <summary>UI和自动化共用入口。一次点击直接下一句，末句之后关闭并执行一次完成回调。</summary>
+        /// <summary>推进到下一句。普通点击由 StoryView 确认本句完整后转发，末句关闭并执行一次完成回调。</summary>
         public bool AdvanceStory()
         {
             if (!_storyVisible || _episode == null || _disposed)

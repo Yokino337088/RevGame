@@ -285,6 +285,10 @@ namespace RevGame.Pvp
             return (seconds / 60).ToString("00") + ":" + (seconds % 60).ToString("00")
                 + (periods > 0 && _goClock.MainRemaining(side) <= elapsed ? " · 读秒 " + periods : "");
         }
+        /// <summary>复盘记录了提交过的动作数，包含落子、停手和终局动作。</summary>
+        private string ReplayProgressText => "复盘 " + ReplayStep + " / " + _moves.Count;
+
+        /// <summary>读取指定棋谱步数，加载成功后才更新当前复盘显示。</summary>
         public void Replay(int step)
         {
             if (Core == null || Core.Phase != GoPhase.Finished)
@@ -305,7 +309,7 @@ namespace RevGame.Pvp
             }
             ReplayStep = requestedStep;
             _replay = replay;
-            Status = "复盘 " + ReplayStep + " / " + _moves.Count;
+            Status = ReplayProgressText;
             Revision++;
         }
         public void ExitReplay()

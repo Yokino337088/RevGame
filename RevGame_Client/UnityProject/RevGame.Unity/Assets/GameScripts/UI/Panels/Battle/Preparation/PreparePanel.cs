@@ -206,7 +206,7 @@ namespace RevGame.UI
             bool eye = battle.EyeStoneSelected;
             string prompt = eye ? "点击金色亮格补眼；没有亮格时可保留眼位石"
                 : battle.SelectedPieceId != 0 ? "点空格调整位置（免费）"
-                : battle.SelectedCardId == 0 ? "选手牌落子，或点己方棋子换位" : "全盘空格均可落子";
+                : battle.SelectedCardId == 0 ? "选手牌落子，或点己方棋子换位" : "点可落子的高亮格放置棋子";
             var stamp = (remaining: eye ? 0 : battle.CardsRemaining, prompt, error: eye ? "" : battle.LastError ?? "");
             if (_hintStamp == stamp)
             {

@@ -976,7 +976,10 @@ namespace RevGame.Pvp
             }
             if (Core.Phase == GoPhase.Scoring)
             {
-                Submit(GoAction.ToggleDead, x, y);
+                if (!Submit(GoAction.ToggleDead, x, y))
+                {
+                    PublishRejectedBoardPoint();
+                }
                 return;
             }
             if (!IsHumanTurn())
@@ -994,12 +997,18 @@ namespace RevGame.Pvp
             }
             if (!Submit(GoAction.Play, x, y))
             {
-                // UI不能把禁入点、劫、等待回执等拒绝都表现成“点了没反应”。保留规则给出的真实原因。
-                PreviewText = Status;
-                NotifyBoard(Status);
-                Revision++;
+                PublishRejectedBoardPoint();
             }
         }
+
+        /// <summary>将规则拒绝的原因交给棋盘提示。落子与标记死子共用，拒绝不推进棋谱。</summary>
+        private void PublishRejectedBoardPoint()
+        {
+            PreviewText = Status;
+            NotifyBoard(Status);
+            Revision++;
+        }
+
         public void Preview(int x, int y)
         {
             if (Core == null || Core.Phase != GoPhase.Playing)

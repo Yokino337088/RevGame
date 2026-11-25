@@ -250,7 +250,8 @@ namespace RevGame.Pvp
                     _ => string.Empty
                 };
                 int lineEnd = ResultText.IndexOf('\n');
-                string turnText = !HasGame ? "选择一种对战方式" : lineEnd >= 0 ? ResultText.Substring(0, lineEnd) : ResultText;
+                string turnText = !HasGame ? "选择一种对战方式" : service.ReplayStep >= 0 ? service.ReplayProgressText
+                    : lineEnd >= 0 ? ResultText.Substring(0, lineEnd) : ResultText;
                 TurnText = syncingText.Length == 0 || (Phase == GoPhase.Finished && !MissingCriticalState) ? turnText : syncingText;
                 PassLabel = Phase == GoPhase.Playing && core.ConsecutivePasses == 1 ? "停手并数子" : "停一手";
                 ConfirmScoreLabel = ResolveConfirmScoreLabel(service, core, local);

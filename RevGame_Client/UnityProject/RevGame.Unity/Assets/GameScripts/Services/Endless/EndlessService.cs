@@ -253,13 +253,10 @@ namespace RevGame.Endless
             Run.slowMoves = N("SlowMoves");
             return true;
         }
-        /// <summary>
-        /// 能否操作棋盘（选牌、落子、移动棋子）。战斗中也可以：无尽模式全程不暂停，玩家随时调整阵型、随时放牌。
-        /// 只有暂停、结算等弹窗状态下不能操作。
-        /// </summary>
-        private bool CanArrange()
+        /// <summary>布阵、整备与战斗允许选牌和操作棋盘。服务与 HUD 共用，弹窗阶段暂停操作指引。</summary>
+        public bool CanArrange()
         {
-            return Run.phase == EndlessPhase.Formation || Run.phase == EndlessPhase.Preparation || Run.phase == EndlessPhase.Fighting;
+            return Run != null && (Run.phase == EndlessPhase.Formation || Run.phase == EndlessPhase.Preparation || Run.phase == EndlessPhase.Fighting);
         }
         public bool SelectCard(int index)
         {

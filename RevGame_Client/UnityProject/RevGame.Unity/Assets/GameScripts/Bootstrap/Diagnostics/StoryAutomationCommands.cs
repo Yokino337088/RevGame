@@ -43,7 +43,7 @@ namespace RevGame.Bootstrap
             RevRuntimeAutomation.Register("story.state", "查询剧情、教学与隔离进度", Empty, _ => State(), readOnly: true, owner: Owner);
             RevRuntimeAutomation.Register("yaya.portrait-bundles", "只读鸦鸦差分的图集租约与实际已加载 AB", Empty, _ =>
                 RevServices.GetRequired<RevGame.View.GameSpriteAtlasService>().PortraitSnapshot(), readOnly: true, owner: Owner);
-            RevRuntimeAutomation.Register("story.next", "点击剧情下一句", Empty, _ => new Dictionary<string, object> { ["accepted"] = RevServices.GetRequired<GameFlow>().AdvanceStory() }, owner: Owner);
+            RevRuntimeAutomation.Register("story.next", "直接推进到下一句，玩家点击效果通过 ui.click 验证", Empty, _ => new Dictionary<string, object> { ["accepted"] = RevServices.GetRequired<GameFlow>().AdvanceStory() }, owner: Owner);
             RevRuntimeAutomation.Register("story.skip", "与右上角跳过按钮共用正式剧情收尾", Empty, _ => new Dictionary<string, object> { ["accepted"] = RevServices.GetRequired<GameFlow>().SkipStory() }, owner: Owner);
             RevRuntimeAutomation.Register("story.yaya-state", "只读鸦鸦立绘/表情、全屏背景、层级与文本布局", Empty, _ => RevGame.UI.StoryPanel.YayaSnapshot(), readOnly: true, owner: Owner);
             const string backgroundSchema = "{\"type\":\"object\",\"properties\":{\"chapter\":{\"type\":\"integer\",\"minimum\":1,\"maximum\":6}},\"required\":[\"chapter\"],\"additionalProperties\":false}";

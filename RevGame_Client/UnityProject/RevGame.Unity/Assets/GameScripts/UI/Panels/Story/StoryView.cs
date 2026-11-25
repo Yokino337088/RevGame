@@ -36,6 +36,10 @@ namespace RevGame.UI
         private int _normalDialogueFontSize;
         /// <summary>本次正在打字的整句，只在换句或关闭时更新。</summary>
         private string _fullDialogue = string.Empty;
+        /// <summary>本句完整的 Unicode 文字元素数，用于瞬间显示整句时保持观察值一致。</summary>
+        private int _dialogueElementCount;
+        /// <summary>当前页码，换句后生成一次，打字完成时只更新阅读提示。</summary>
+        private string _counterPrefix = string.Empty;
         private bool _layoutReady;
         /// <summary>只保存自己创建的Tween/音效句柄，换句、关闭、销毁均收尾，绝不KillAll。</summary>
         private Tween _typing;
@@ -63,7 +67,7 @@ namespace RevGame.UI
                 return _typingSound.Started;
             }
         }
-        /// <summary>打字Tween仍存活时为true；只影响表现，不影响翻页许可。</summary>
+        /// <summary>打字仍在进行时为真，点击先显示整句，阅读完毕后才通知宿主翻页。</summary>
         public bool IsTyping
         {
             get
@@ -190,7 +194,8 @@ namespace RevGame.UI
             var line = frame.Episode.Lines[frame.Index];
             _title.text = frame.Episode.Title;
             _speaker.text = line.Speaker;
-            _counter.text = (frame.Index + 1) + " / " + frame.Episode.Lines.Length + "    点击任意处 · 下一句";
+            _counterPrefix = (frame.Index + 1) + " / " + frame.Episode.Lines.Length + "    ";
+            _counter.text = _counterPrefix + "点击任意处 · 显示整句";
             // 每句配置明确指定表情，不把六张不同情绪当序列帧循环；立绘缩放保留原图比例。
             _guide.sprite = frame.Portrait;
             GuideFrame = frame.ExpressionIndex;
@@ -200,7 +205,13 @@ namespace RevGame.UI
             _dialogue.text = string.Empty;
             FitDialogue();
             int[] ends = StringInfo.ParseCombiningCharacters(line.Text);
+            _dialogueElementCount = ends.Length;
             VisibleCharacters = 0;
+            if (_dialogueElementCount == 0)
+            {
+                ShowCompleteLine();
+                return;
+            }
             _typing = DOTween.To(() => VisibleCharacters, count =>
             {
                 if (count == VisibleCharacters)
@@ -213,12 +224,31 @@ namespace RevGame.UI
 
                 _typingSound.OnTextWritten();
             }, ends.Length, ends.Length / frame.Book.CharactersPerSecond).SetEase(Ease.Linear).SetUpdate(true)
-                .OnComplete(() => _typing = null);
+                .OnComplete(() =>
+                {
+                    _typing = null;
+                    ShowCompleteLine();
+                });
         }
-        /// <summary>整屏点击通知宿主，宿主把下一句请求交给GameFlow。</summary>
+
+        /// <summary>自然播完和提前读完都使用同一份完整正文与页脚。</summary>
+        private void ShowCompleteLine()
+        {
+            VisibleCharacters = _dialogueElementCount;
+            _dialogue.text = _fullDialogue;
+            _counter.text = _counterPrefix + "点击任意处 · 下一句";
+        }
+
+        /// <summary>第一下补完仍在打字的文本。正文已经完整时，由宿主推进剧情。</summary>
         [RevButtonClick("btnNext")]
         private void OnNext()
         {
+            if (IsTyping)
+            {
+                StopTyping(resetSound: false);
+                ShowCompleteLine();
+                return;
+            }
             NotifyHost();
         }
         /// <summary>右上角跳过由宿主交给唯一GameFlow收尾，不能只隐藏UI留下剧情锁。</summary>
@@ -233,6 +263,8 @@ namespace RevGame.UI
             StopTyping();
             _guide.sprite = null;
             _fullDialogue = string.Empty;
+            _dialogueElementCount = 0;
+            _counterPrefix = string.Empty;
             _version = -1;
             _index = -1;
         }
@@ -242,12 +274,19 @@ namespace RevGame.UI
             StopTyping();
             base.OnDestroy();
         }
-        /// <summary>只停止当前视图拥有的表现句柄，换句、关闭和销毁可以重复调用。</summary>
-        private void StopTyping()
+        /// <summary>停止当前字效。显式补全文字时保留本句已经播过声音的观察状态。</summary>
+        private void StopTyping(bool resetSound = true)
         {
             _typing?.Kill(false);
             _typing = null;
-            _typingSound.Reset();
+            if (resetSound)
+            {
+                _typingSound.Reset();
+            }
+            else
+            {
+                _typingSound.Stop();
+            }
         }
     }
 }

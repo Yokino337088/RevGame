@@ -361,10 +361,10 @@ namespace RevGame.Endless
             _startShown = arranging;
             if (arranging)
             {
-                Set(_startLabel, run.phase == EndlessPhase.Formation ? "开战 " + Mathf.CeilToInt(run.formationLeft) : "开战");
+                Set(_startLabel, run.phase == EndlessPhase.Formation ? "开战 · " + Mathf.CeilToInt(run.formationLeft) + "秒后自动" : "立即开战");
             }
         }
-        /// <summary>从每次真实拒绝开始计时，然后显示领主预警与当前点选或拖放的操作引导。</summary>
+        /// <summary>保留本次拒绝提示。棋盘操作锁定期间收起出牌、换位和战斗引导。</summary>
         private void RefreshTip(EndlessRun run)
         {
             if (Service.RejectionSerial != _seenRejectionSerial)
@@ -377,6 +377,10 @@ namespace RevGame.Endless
             if (Time.unscaledTime < _errorUntil)
             {
                 tip = _lastError;
+            }
+            else if (!Service.CanArrange())
+            {
+                tip = "";
             }
             else if (Service.BossBanner.Length > 0)
             {
