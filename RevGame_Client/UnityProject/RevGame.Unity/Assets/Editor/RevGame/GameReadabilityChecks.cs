@@ -80,9 +80,9 @@ namespace RevGame.Editor
         /// <summary>验证同一画幅下几何铺满和采样铺满，检查裁切区仍在原图集范围内。</summary>
         private static void CheckBackgroundCover(Vector2 viewport, Vector2 art)
         {
-            Vector2 covered = GameBackgroundLayout.CoverSize(viewport, art);
+            Vector2 covered = RevUIViewport.FitArtworkSize(viewport, art, RevUIArtworkFit.Cover);
             Rect source = Rect.MinMaxRect(.13f, .21f, .79f, .91f);
-            Rect crop = GameBackgroundLayout.CoverUv(viewport, art.x / art.y, source);
+            Rect crop = RevUIViewport.CoverArtworkUv(viewport, art.x / art.y, source);
             float cropAspect = (art.x * crop.width / source.width) / (art.y * crop.height / source.height);
             const float tolerance = .0001f;
             if (covered.x < viewport.x - .01f || covered.y < viewport.y - .01f ||

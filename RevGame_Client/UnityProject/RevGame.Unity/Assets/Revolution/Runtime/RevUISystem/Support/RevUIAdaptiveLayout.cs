@@ -29,6 +29,9 @@ namespace Revolution
         [SerializeField] private RevUIAdaptiveLayoutMode mode = RevUIAdaptiveLayoutMode.SafeArea;
         [Tooltip("等比设计框的尺寸。留零时跟随根 CanvasScaler 的参考分辨率。")]
         [SerializeField] private Vector2 designResolution;
+        /// <summary>可选的同画布内容边界。可引用独立原画节点，使控件使用原画与安全区的交集。</summary>
+        [Tooltip("可选内容边界。和安全区相交后决定内容可用范围。请引用独立于内容的节点。")]
+        [SerializeField] private RectTransform contentBounds;
 
         // 由本组件接管的内容节点，停用后重新读取其预制体布局。
         private RectTransform _content;
@@ -39,12 +42,12 @@ namespace Revolution
         // 等比模式未指定设计尺寸时读取当前根画布的参考尺寸。
         private CanvasScaler _scaler;
         // 本次接管前的布局，用于停用和画布不可用时还原。
-        private RectState _original;
+        private RevUIViewport.RectState _original;
         // Canvas 或父级可能已经变化，下一次布局前重新找到它们。
         private bool _needsBinding = true;
         // 当前是否已经接管 RectTransform，同时标识布局缓存是否有效。
         private bool _applied;
-        // 上一次写入布局使用的归一化安全区。
+        // 上一次写入布局使用的父级归一化可用区域。
         private Rect _lastSafeArea;
         // 上一次根画布的像素范围，同宽高比的分辨率变化也能派发通知。
         private Rect _lastPixels;
@@ -65,11 +68,18 @@ namespace Revolution
         /// <summary>布局已写入。窗口像素尺寸、可用区域或布局配置变化时派发，归一化矩形相同时也可重新取像素尺寸。</summary>
         public event Action<Rect> ViewportChanged;
 
-        /// <summary>设置布局策略和可选设计尺寸。对已启用的组件立即应用，复用面板可在装配时调用一次。</summary>
+        /// <summary>设置布局策略和设计尺寸，沿用当前指定的内容边界。对已启用的组件立即应用。</summary>
         public void Configure(RevUIAdaptiveLayoutMode layoutMode, Vector2 referenceResolution = default)
+        {
+            Configure(layoutMode, referenceResolution, contentBounds);
+        }
+
+        /// <summary>设置布局策略、设计尺寸和独立内容边界。传空边界时使用父级与设备安全区的交集。</summary>
+        public void Configure(RevUIAdaptiveLayoutMode layoutMode, Vector2 referenceResolution, RectTransform bounds)
         {
             mode = layoutMode;
             designResolution = referenceResolution;
+            contentBounds = bounds;
             RefreshLayout();
         }
 
@@ -120,7 +130,7 @@ namespace Revolution
             if (_content == null)
             {
                 _content = (RectTransform)transform;
-                _original = new RectState(_content);
+                _original = new RevUIViewport.RectState(_content);
                 _needsBinding = true;
             }
 
@@ -142,13 +152,11 @@ namespace Revolution
             }
 
             Vector2 size = _parent.rect.size;
-            if (!RevUIViewport.HasSize(size))
+            if (!RevUIViewport.HasSize(size) || !TryReadViewport(out Rect pixels, out Rect safe))
             {
                 return;
             }
 
-            Rect safe = ReadSafeArea(_canvas);
-            Rect pixels = _canvas.pixelRect;
             Vector2 reference = mode == RevUIAdaptiveLayoutMode.FitDesignFrame ? ResolveDesignResolution() : Vector2.zero;
             if (_applied && !bindingChanged && safe == _lastSafeArea && pixels == _lastPixels &&
                 size == _lastParentSize && reference == _lastDesignResolution && mode == _lastMode)
@@ -190,18 +198,35 @@ namespace Revolution
             return _scaler == null ? RevUISetting.ReferenceResolution : _scaler.referenceResolution;
         }
 
-        // 输入为根画布，返回该画布当前输出中的归一化安全区。
-        private static Rect ReadSafeArea(Canvas canvas)
+        /// <summary>把相机输出、设备安全区和可选内容边界统一到屏幕像素，再换算到内容父级。</summary>
+        private bool TryReadViewport(out Rect pixels, out Rect safe)
         {
-            Camera camera = canvas.renderMode == RenderMode.ScreenSpaceCamera ? canvas.worldCamera : null;
-            int display = camera == null ? canvas.targetDisplay : camera.targetDisplay;
-            // 副屏与纹理相机沿用自己的完整画幅。主屏相机的安全区转换到相机的局部视口。
-            if (display != 0 || (camera != null && camera.targetTexture != null))
+            Camera camera = _canvas.renderMode == RenderMode.ScreenSpaceCamera ? _canvas.worldCamera : null;
+            pixels = camera == null ? _canvas.pixelRect : camera.pixelRect;
+            safe = default;
+            if (!RevUIViewport.HasArea(pixels))
             {
-                return RevUIViewport.Full;
+                return false;
             }
-            Rect safe = RevUIViewport.GetScreenSafeArea();
-            return camera == null ? safe : RevUIViewport.NormalizeSafeArea(safe, camera.rect);
+
+            // 副屏与 RenderTexture 使用自己的输出画幅。主屏相机先把设备安全区映射到相机视口。
+            Rect relative = RevUIViewport.Full;
+            int display = camera == null ? _canvas.targetDisplay : camera.targetDisplay;
+            if (display == 0 && (camera == null || camera.targetTexture == null) &&
+                !RevUIViewport.TryNormalizeSafeArea(RevUIViewport.GetScreenSafeArea(),
+                    camera == null ? RevUIViewport.Full : camera.rect, out relative))
+            {
+                return false;
+            }
+            var allowed = new Rect(pixels.position + Vector2.Scale(relative.position, pixels.size),
+                Vector2.Scale(relative.size, pixels.size));
+            Rect parentPixels = _parent == _canvas.transform ? pixels : RevUIViewport.GetScreenBounds(_parent, camera);
+            if (contentBounds != null && !contentBounds.IsChildOf(_content) && contentBounds.IsChildOf(_canvas.transform))
+            {
+                // 独立边界由美术或另一层布局负责，避免内容依赖自己的结果形成循环。
+                allowed = RevUIViewport.Intersect(allowed, RevUIViewport.GetScreenBounds(contentBounds, camera));
+            }
+            return RevUIViewport.TryNormalizeSafeArea(allowed, parentPixels, out safe);
         }
 
         // 放弃接管后释放布局缓存，下一次可用时会重新应用。
@@ -215,39 +240,5 @@ namespace Revolution
             Viewport = RevUIViewport.Full;
         }
 
-        // 只记录由本组件接管的属性，停用或池化归还时恢复当前这次启用前的布局。
-        private readonly struct RectState
-        {
-            // 布局归还时使用接管前的锚点下界。
-            private readonly Vector2 _anchorMin;
-            // 布局归还时使用接管前的锚点上界。
-            private readonly Vector2 _anchorMax;
-            // 原父级布局单位里的锚点偏移。
-            private readonly Vector2 _position;
-            // 原尺寸增量，由原始锚点配合恢复可拉伸的尺寸。
-            private readonly Vector2 _size;
-            // 原缩放，安全区布局沿用其中的 Z 分量。
-            public readonly Vector3 Scale;
-
-            // 在第一次写入前保存一份布局快照。
-            public RectState(RectTransform target)
-            {
-                _anchorMin = target.anchorMin;
-                _anchorMax = target.anchorMax;
-                _position = target.anchoredPosition;
-                _size = target.sizeDelta;
-                Scale = target.localScale;
-            }
-
-            // 恢复时先还原锚点，再写入当时的偏移和尺寸。
-            public void Restore(RectTransform target)
-            {
-                target.anchorMin = _anchorMin;
-                target.anchorMax = _anchorMax;
-                target.anchoredPosition = _position;
-                target.sizeDelta = _size;
-                target.localScale = Scale;
-            }
-        }
     }
 }

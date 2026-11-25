@@ -113,6 +113,23 @@ SetData(new DetailData { Id = Data.Id, Count = Data.Count + 1 });   // 写法 B�
 - **用同一坐标口径，从源值重算。** 安装版提供 `RevUIViewport` 时，用 `GetScreenSafeArea()` 取主窗归一化安全区，再用 `FitDesignFrame(viewportSize, safeArea, designResolution)` 求内容框。先换算到目标父级对应的视口，再用 `ApplyDesignFrame` 放置容器。边缘偏移等于安全边与内容框边缘的像素差除以每设计单位的像素数。设备尺寸与安全区从同一接口读取。等父级尺寸有效并生成动态按钮后读取设计位置。窗口、安全区、相机视口或背景资源变化时从设计位置与源图采样区重算。稳定时跳过写入。过场、拖拽与布局协调写入时序，面板复用时按当前尺寸恢复。
 - **全量任务先核对正式入口。** 从面板注册、场景 Canvas 和真实玩家路径建立清单，追到对应预制体、运行时创建的控件，以及剧情、弹窗和独立 HUD。逐个核对背景、内容框、边缘控件与遮罩。记录已核对的面板范围，按受影响入口安排实际回归。
 
+#### 使用框架布局组件
+
+面板根覆盖当前视口并管理转场。原画、内容和遮罩用独立节点，保持各自的变换和点按职责。
+
+1. 给内容节点挂 `RevUIAdaptiveLayout`。 `SafeArea` 延展到父级与设备安全区的交集，子控件沿用锚点。 `FitDesignFrame` 在同一区域内居中内接设计尺寸，留零时读取 CanvasScaler 的参考分辨率。组件用实际父级边界换算安全区，局部面板和屏幕相机同样可用。
+2. 给单图 `Image` 或 `RawImage` 挂 `RevUIArtworkLayout`，在 Inspector 选择 `Cover` 或 `Contain`。父级是原画的画幅。局部 `Cover` 使用父级的 `RectMask2D` 裁边， `Contain` 的余量显示父级底色。纯色遮罩和九宫格继续用自己的锚点。组件按实际 Sprite 或采样尺寸响应换图和窗体变化，停用时恢复原始布局。
+3. 控件需要留在原画里时，将内容组件的 `Content Bounds` 指向同一 Canvas 下的独立原画节点。可用范围取父级、设备安全区与原画显示范围的交集。运行时可用 `Configure(mode, resolution, bounds)` 指定或清除边界。已有两参数调用沿用 Inspector 的边界设置。
+4. 需要保持固定 RawImage 矩形时，可从原始采样区调用 `RevUIViewport.CoverArtworkUv`。场景原画可用 `FitArtworkSize` 复用同一等比计算。明确需要跨设计框的 HUD 控件，可以从 `GetSafeEdgeOffsets` 读取设计单位位移，再按自己的边距应用到对应轴。
+
+以下调用适用于内容要留在完整原画之内的面板。沿用现有业务绑定和转场入口。
+
+```csharp
+artwork.Configure(RevUIArtworkFit.Contain);
+content.Configure(RevUIAdaptiveLayoutMode.FitDesignFrame, new Vector2(1920f, 1080f),
+    (RectTransform)artwork.transform);
+```
+
 #### 排查文字与越界
 
 | 现象 | 证据与改法 |

@@ -210,8 +210,8 @@ namespace RevGame.View
             lobbyCamera.transform.position = new Vector3(0, 0, -10);
             Texture texture = cottageRenderer.sharedMaterial.GetTexture("_ChapterTex");
             const float cameraHeight = 12f;
-            Vector2 cover = GameBackgroundLayout.CoverSize(
-                new Vector2(cameraHeight * lobbyCamera.aspect, cameraHeight), new Vector2(texture.width, texture.height));
+            Vector2 cover = RevUIViewport.FitArtworkSize(new Vector2(cameraHeight * lobbyCamera.aspect, cameraHeight),
+                new Vector2(texture.width, texture.height), RevUIArtworkFit.Cover);
             cottageRenderer.transform.localScale = new Vector3(cover.x, cover.y, 1f);
             cottageRenderer.transform.position = new Vector3(0, 0, 5);
             FitYaya(cover.x, cover.y, GameLobbyLayout.PortraitViewport(pixels, safeArea));

@@ -38,7 +38,7 @@ description: 使用或维护 Revolution Unity 框架时选择公开门面、FSM�
 - 资源通过 `RevResPath.*` 或两段式逻辑路径加载，引用成对释放。首次真机加载用异步。普通业务异步用 `RevTask`；过场、冷启动和资源验证采用目标项目的实际加载模式。
 - 导入前先查项目已有资源。相同资源沿用原资产、逻辑路径和 AB，每个目标平台只保留一份包体。确实缺少的资源才导入。按 [资源复用与单包归属](references/resource-and-ab.md#61-资源复用与单包归属) 检查图集及隐式依赖。
 - `RevUIPanel` 的 `OnBindView` 装配，`OnRefreshView` 落屏，点击回调转发业务。关闭自身用 `CloseSelf()`，业务侧用 `SetData` 送数据。原地改数据后需要 `RefreshView()`。
-- 新建或修改 UI 预制体、面板和控件布局时，默认完成目标画幅的适配。先明确项目的背景显示策略，再给控件指定实际内容框或安全边缘，设置锚点。按 [多画幅自适应布局](references/ui-and-layering.md#多画幅自适应布局) 实施。
+- 新建或修改 UI 预制体、面板和控件布局时，默认完成目标画幅的适配。优先用 `RevUIAdaptiveLayout` 实现内容区约束，用 `RevUIArtworkLayout` 实现背景等比布局。结合项目实际版本和构图，按 [框架布局组件](references/ui-and-layering.md#使用框架布局组件) 实施。
 - 策划数值按项目现有配置链管理。Excel 业务沿用导表、强类型读取和装配校验。代码使用独立大括号。
 - 写代码前读 [新手注释规范](references/code-style.md#3-面向新手的中文注释是交付门禁)。新增或修改的类、接口、字段、属性及方法逐项写中文契约，私有成员、构造函数及回调也覆盖。方法内关键步骤解释原因、顺序、边界与清理。简单行为一句话，复杂契约分段说明。
 - 完整约定见 [技术规则](references/technical-rules.md) 和 [代码与注释](references/code-style.md)。涉及框架源码时，先查安装版与源仓库的差异、CHANGELOG 和 [历史故障](references/pitfalls.md)。从框架源仓库维护，再同步生成分支和项目快照。

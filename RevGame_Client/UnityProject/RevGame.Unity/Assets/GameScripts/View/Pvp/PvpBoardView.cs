@@ -169,7 +169,7 @@ namespace RevGame.Pvp
             float height = _camera.orthographicSize * 2f;
             Texture texture = backgroundRenderer.sharedMaterial.GetTexture("_MainTex");
             Vector2 art = texture == null ? RevGame.UI.GameBattleLayout.DesignResolution : new Vector2(texture.width, texture.height);
-            Vector2 cover = RevGame.UI.GameBackgroundLayout.CoverSize(new Vector2(height * aspect, height), art);
+            Vector2 cover = RevUIViewport.FitArtworkSize(new Vector2(height * aspect, height), art, RevUIArtworkFit.Cover);
             backgroundRenderer.transform.localScale = new Vector3(cover.x, cover.y, 1f);
             _backgroundBlock.SetFloat("_Aspect", art.x / art.y);
             backgroundRenderer.SetPropertyBlock(_backgroundBlock);

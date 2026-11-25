@@ -2,7 +2,6 @@
 // 只负责展示与等比铺满；关闭先解除UI引用，再归还本面板的资源。
 using System;
 using RevGame.Data;
-using RevGame.UI;
 using Revolution;
 using UnityEngine;
 using UnityEngine.Sprites;
@@ -155,7 +154,7 @@ namespace RevGame.View
             {
                 return;
             }
-            _image.uvRect = GameBackgroundLayout.CoverUv(_image.rectTransform.rect.size, _sourceAspect, _sourceUv);
+            _image.uvRect = RevUIViewport.CoverArtworkUv(_image.rectTransform.rect.size, _sourceAspect, _sourceUv);
         }
         /// <summary>窗口大小改变时重新裁切现有纹理，不产生加载或材质副本。</summary>
         private void OnRectTransformDimensionsChange()

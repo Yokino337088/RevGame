@@ -43,6 +43,6 @@ GitHub Actions 使用 `--format github` 生成原生注解。PR 的 **Checks →
 
 ## 同步来源
 
-通用技能基线来自 Revolution 的 `skill` 发布提交 `0ac0d40`。框架的多画幅 UI 约定同步自 `skill` 发布提交 `33e488c`。`revolution-wiki` 同步自 `skill` 发布提交 `10c535f`。Codex 插件市场清单固定到 `codex-plugin` 发布 `fd0dba1`。RevGame 专用技能由本仓库维护。
+通用技能基线来自 Revolution 的 `skill` 发布提交 `0ac0d40`。框架的多画幅 UI 约定同步自 `skill` 发布提交 `f06386c`。`revolution-wiki` 同步自 `skill` 发布提交 `10c535f`。Codex 插件市场清单固定到 `codex-plugin` 发布 `33f4b25`。RevGame 专用技能由本仓库维护。
 
 `tools/RevPolicy` 是 Revolution 插件检查器的源码副本。`tools/RevPolicy/SOURCE.txt` 记录来源提交。更新时从同一个 Revolution 提交同步检查器及框架技能，保留项目自己的 `.codex/rev-policy.json`。插件目录的 Git 来源也固定到已验证的提交。

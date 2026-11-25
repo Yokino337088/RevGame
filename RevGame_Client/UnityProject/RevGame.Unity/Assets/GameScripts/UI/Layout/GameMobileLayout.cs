@@ -611,7 +611,8 @@ namespace RevGame.UI
                     rect.pivot = Vector2.one * .5f;
                     rect.anchoredPosition = Vector2.zero;
                     image.preserveAspect = sprite != null;
-                    rect.sizeDelta = sprite == null ? Vector2.zero : GameBackgroundLayout.CoverSize(viewport, sprite.rect.size) - viewport;
+                    rect.sizeDelta = sprite == null ? Vector2.zero
+                        : Revolution.RevUIViewport.FitArtworkSize(viewport, sprite.rect.size, Revolution.RevUIArtworkFit.Cover) - viewport;
                     backdrop.LastSprite = sprite;
                 }
             }
@@ -626,7 +627,7 @@ namespace RevGame.UI
                 return;
             }
             float aspect = texture.width * uv.width / (texture.height * uv.height);
-            backdrop.Artwork.uvRect = GameBackgroundLayout.CoverUv(viewport, aspect, uv);
+            backdrop.Artwork.uvRect = Revolution.RevUIViewport.CoverArtworkUv(viewport, aspect, uv);
         }
 
         private void ApplySceneHud(RectTransform root)

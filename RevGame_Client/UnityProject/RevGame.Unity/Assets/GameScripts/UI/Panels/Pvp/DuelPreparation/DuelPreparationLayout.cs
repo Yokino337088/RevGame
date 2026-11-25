@@ -16,52 +16,68 @@ namespace RevGame.Pvp
         [SerializeField] private Image backdrop;
         // 运行时由框架接管内容层，选角和加载页复用同一种布局策略。
         private RevUIAdaptiveLayout _adaptiveLayout;
+        /// <summary>运行时由框架按实际素材铺满面板背景，独立于内容安全区。</summary>
+        private RevUIArtworkLayout _artworkLayout;
         // 底图随面板画幅改变而裁切。
         private Vector2 _lastSize;
         /// <summary>上次已铺满的底图。AB 异步绑定后即使尺寸相同也要重新裁切。</summary>
         private Sprite _lastBackdrop;
 
-        // 内容加入安全设计框，底图继续覆盖整个面板。
+        /// <summary>运行时使用框架接管内容与背景，Prefab 编辑态使用本地预览。</summary>
         private void OnEnable()
         {
             _lastSize = Vector2.zero;
-            if (design != null && Application.IsPlaying(gameObject))
+            if (Application.IsPlaying(gameObject))
             {
-                _adaptiveLayout = design.GetComponent<RevUIAdaptiveLayout>() ?? design.gameObject.AddComponent<RevUIAdaptiveLayout>();
-                _adaptiveLayout.Configure(RevUIAdaptiveLayoutMode.FitDesignFrame, GameBattleLayout.DesignResolution);
-                _adaptiveLayout.enabled = true;
+                if (design != null)
+                {
+                    _adaptiveLayout = design.GetComponent<RevUIAdaptiveLayout>() ?? design.gameObject.AddComponent<RevUIAdaptiveLayout>();
+                    _adaptiveLayout.Configure(RevUIAdaptiveLayoutMode.FitDesignFrame, GameBattleLayout.DesignResolution);
+                    _adaptiveLayout.enabled = true;
+                }
+                if (backdrop != null)
+                {
+                    _artworkLayout = backdrop.GetComponent<RevUIArtworkLayout>() ?? backdrop.gameObject.AddComponent<RevUIArtworkLayout>();
+                    _artworkLayout.Configure(RevUIArtworkFit.Cover);
+                    _artworkLayout.enabled = true;
+                }
+                return;
             }
-            Apply();
+            ApplyPreview();
         }
 
-        // 面板停用时归还原布局，供下次打开面板使用。
+        /// <summary>面板停用时由框架归还原内容和背景布局，供下次打开。</summary>
         private void OnDisable()
         {
             if (_adaptiveLayout != null)
             {
                 _adaptiveLayout.enabled = false;
             }
-        }
-
-        // Prefab Stage 与运行时的底图均随父画幅尺寸更新。
-        private void OnRectTransformDimensionsChange()
-        {
-            Apply();
-        }
-
-        /// <summary>编辑预览和运行时都能收到迟到的图片，未换图时跳过布局。</summary>
-        private void LateUpdate()
-        {
-            if (backdrop != null && backdrop.overrideSprite != _lastBackdrop)
+            if (_artworkLayout != null)
             {
-                Apply();
+                _artworkLayout.enabled = false;
             }
         }
 
-        /// <summary>编辑时预览设计框。底图按原画铺满整个面板，以窗口尺寸和当前 Sprite 为基准。</summary>
-        private void Apply()
+        /// <summary>Prefab Stage 的画幅变化时刷新预览。</summary>
+        private void OnRectTransformDimensionsChange()
         {
-            if (!isActiveAndEnabled || !gameObject.scene.IsValid())
+            ApplyPreview();
+        }
+
+        /// <summary>编辑预览换图时从新 Sprite 重算，运行时布局由框架处理。</summary>
+        private void LateUpdate()
+        {
+            if (!Application.IsPlaying(gameObject) && backdrop != null && backdrop.overrideSprite != _lastBackdrop)
+            {
+                ApplyPreview();
+            }
+        }
+
+        /// <summary>使用框架的几何函数预览完整画幅中的内容与原画。</summary>
+        private void ApplyPreview()
+        {
+            if (!isActiveAndEnabled || Application.IsPlaying(gameObject) || !gameObject.scene.IsValid())
             {
                 return;
             }
@@ -75,7 +91,7 @@ namespace RevGame.Pvp
             _lastSize = size;
             _lastBackdrop = sprite;
 
-            if (design != null && !Application.IsPlaying(gameObject))
+            if (design != null)
             {
                 Vector2 reference = GameBattleLayout.DesignResolution;
                 Rect frame = RevUIViewport.FitDesignFrame(size, RevUIViewport.Full, reference);
@@ -84,7 +100,8 @@ namespace RevGame.Pvp
 
             if (backdrop != null)
             {
-                backdrop.rectTransform.sizeDelta = sprite == null ? size : GameBackgroundLayout.CoverSize(size, sprite.rect.size);
+                backdrop.rectTransform.sizeDelta = sprite == null ? size
+                    : RevUIViewport.FitArtworkSize(size, sprite.rect.size, RevUIArtworkFit.Cover);
             }
         }
     }
