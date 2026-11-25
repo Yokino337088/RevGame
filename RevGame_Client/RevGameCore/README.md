@@ -31,7 +31,7 @@ Unity 2022.3.15f1c1 的 Android Mono 测试包使用 ARMv7。用该 Unity 自带
 
 Unity 自带 AGP 7.1.2 的本地测试包可用 Android API 32 组装。如果自动选择 API 35 后 D8 读取 `android.jar` 失败，可在副本的 `Library/Bee/Android/Prj/Mono2x/Gradle` 中让 launcher 和 unityLibrary 都使用 API 32，再运行 `:launcher:assembleDebug`。验包时检查 Manifest 横屏声明、Mono 和 ARMv7 原生库，以及 APK 只含 Android AB。
 
-开发版客户端在兼容且已连接的服务器或局域网棋局中显示「决斗测试」。服务器测试入口使用 Debug Gate，默认匹配地址为 `192.168.10.3:20000`。点击会请求权威直接切场，双方 Ready 后开始封帧。
+开发版客户端在兼容且已连接的服务器或局域网棋局中显示「决斗测试」。服务器测试入口使用 Debug Gate，在「服务器地址」填写部署方提供的域名或公网 IP 加 KCP 端口。点击会请求权威直接切场，双方 Ready 后开始封帧。
 
 内置决斗场景引用 `GameRes/Art/Pvp/Duel/Animations` 的动画和角色图集、`GameRes/Material/Pvp/DuelScene` 的材质及 `GameRes/Effects/Pvp/DuelScene` 的粒子预制体。选角、加载和战斗 HUD 通过 RevUI 打开，选角与加载共用的材质在 `GameRes/Material/UI/PvpDuelPrep`。HUD 与准备页各有资源包。
 

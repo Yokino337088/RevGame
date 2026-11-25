@@ -147,16 +147,16 @@ namespace RevGame.Pvp
                 return Result(accepted, accepted ? string.Empty : Service.Status);
             }, owner: Owner);
 
-            const string connectSchema = "{\"type\":\"object\",\"properties\":{\"endpoint\":{\"type\":\"string\",\"minLength\":3,\"maxLength\":128},\"nickname\":{\"type\":\"string\",\"minLength\":1,\"maxLength\":24}},\"required\":[\"endpoint\",\"nickname\"],\"additionalProperties\":false}";
-            RevRuntimeAutomation.Register("pvp.connect", "使用真实Fantasy客户端连接指定开发服务器；本机测试填本机IP:端口，等待connected后匹配", connectSchema, json =>
+            const string connectSchema = "{\"type\":\"object\",\"properties\":{\"endpoint\":{\"type\":\"string\",\"maxLength\":260},\"nickname\":{\"type\":\"string\",\"minLength\":1,\"maxLength\":24}},\"required\":[\"endpoint\",\"nickname\"],\"additionalProperties\":false}";
+            RevRuntimeAutomation.Register("pvp.connect", "用实际填写的域名或 IP 和端口发起连接，业务接单后等待 connected", connectSchema, json =>
             {
                 if (!Ready(out string reason))
                 {
                     return Result(false, reason);
                 }
                 var input = JsonUtility.FromJson<ConnectArgs>(json);
-                Service.StartServer(input.endpoint, input.nickname);
-                return Result(true, "已发起连接，请查询connected/status确认结果");
+                bool accepted = Service.StartServer(input.endpoint, input.nickname);
+                return Result(accepted, accepted ? "已发起连接，请查询 connected 确认结果" : Service.Status);
             }, owner: Owner);
             RevRuntimeAutomation.Register("pvp.match", "与玩家按钮一致：开始匹配，已排队时取消匹配", Empty, _ =>
             {

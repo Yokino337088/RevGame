@@ -6,17 +6,26 @@ namespace RevGame.Pvp
     [RevUIPanel("UI/Panel/Pvp/Menu", RevUILayer.Popup, ExclusiveGroup = "PvpMenu", Mask = RevUIMaskMode.None)]
     public sealed class PvpServerPanel : RevUIPanel
     {
-        // 本次联机测试使用开发机的局域网入口，仍允许在面板中输入其他地址。
-        public const string DefaultEndpoint = "192.168.10.3:20000";
-        /// <summary>首次装配时让漩涡铺满屏幕，菜单底板和控件仍使用设备安全框。</summary>
+        /// <summary>服务器地址字段的正式名称，旧资源包打开时也使用此文案。</summary>
+        public const string ServerAddressLabel = "服务器地址";
+        /// <summary>未连接时显示的填写说明，填写示意不会进入输入值。</summary>
+        public const string ServerAddressHint = "请输入服务器域名或公网 IP 和端口号（域名:端口 或 IP:端口）";
+        /// <summary>输入框上限容纳最长域名、末尾点、冒号和五位端口。</summary>
+        public const int ServerAddressLimit = 260;
+        /// <summary>首次装配时适配安全框，并更新旧资源包中的服务器输入控件。</summary>
         protected override void OnBindView()
         {
             RevGame.UI.GameMobileLayout.EnableSafePanel(transform, "screenBackground");
-            // 视图由RevBind装配；控件路由使用RevButtonClick，不在刷新时重复注册。
+            _endpointLabel.text = ServerAddressLabel;
+            _endpoint.characterLimit = ServerAddressLimit;
+            _endpoint.onValueChanged.AddListener(ClearAddressError);
         }
 
         [RevBind("nickname")] private InputField _nickname;
+        /// <summary>玩家输入要连接的域名或 IP 和端口，首次打开时为空。</summary>
         [RevBind("endpoint")] private InputField _endpoint;
+        /// <summary>已有预制体内的地址字段标签，兼容旧 AB 的节点名称。</summary>
+        [RevBind("endpointLabel")] private Text _endpointLabel;
         [RevBind("state")] private Text _state;
         [RevBind("duration")] private Text _duration;
         [RevBind("connect")] private Button _connect;
@@ -27,19 +36,23 @@ namespace RevGame.Pvp
         [RevBind("back")] private Button _back;
         [RevBind("match/label")] private Text _matchLabel;
         [RevBind("mode/label")] private Text _modeLabel;
+        /// <summary>本次输入的拒绝原因，修改地址或重新打开面板后清除。</summary>
+        private string _addressError;
         private PvpService Service { get { return RevServices.GetRequired<PvpService>(); } }
+        /// <summary>读取当前会话用过的地址，空会话不预填任何主机和端口。</summary>
         protected override void OnOpen()
         {
             _nickname.text = string.IsNullOrEmpty(Service.Nickname) ? "棋友" : Service.Nickname;
-            _endpoint.text = string.IsNullOrEmpty(Service.Endpoint) ? DefaultEndpoint : Service.Endpoint;
+            _addressError = null;
+            _endpoint.SetTextWithoutNotify(Service.Endpoint ?? string.Empty);
             RevTimer.Every(.2f, RefreshView, domain: RevTimeDomain.Unscaled, owner: this);
         }
-        /// <summary>按共享房间快照设置提示、队列文字和联机入口门禁。</summary>
+        /// <summary>展示当前连接状态，未连接时在原队列说明处提示地址格式。</summary>
         protected override void OnRefreshView()
         {
             PvpService.PvpRoomSnapshot room = Service.RoomSnapshot;
-            _state.text = room.ServerStatusText;
-            _duration.text = room.QueueText;
+            _state.text = _addressError ?? room.ServerStatusText;
+            _duration.text = Service.Connected && _addressError == null ? room.QueueText : ServerAddressHint;
             _match.interactable = room.Allows(PvpRoomAction.Match);
             _connect.interactable = room.Allows(PvpRoomAction.Connect);
             _mode.interactable = room.Allows(PvpRoomAction.ChangeMode);
@@ -47,10 +60,17 @@ namespace RevGame.Pvp
             _matchLabel.text = room.MatchLabel;
             _modeLabel.text = room.ModeLabel;
         }
+        /// <summary>只提交玩家当前填写的地址，立即展示输入拒绝或正在连接的状态。</summary>
         [RevButtonClick("connect")]
         private void Connect()
         {
-            Service.StartServer(_endpoint.text, _nickname.text);
+            _addressError = Service.StartServer(_endpoint.text, _nickname.text) ? null : Service.Status;
+            RefreshView();
+        }
+        /// <summary>地址有改动时撤下上一次输入对应的错误。</summary>
+        private void ClearAddressError(string value)
+        {
+            _addressError = null;
         }
         [RevButtonClick("match")]
         private void Match()
@@ -71,6 +91,11 @@ namespace RevGame.Pvp
         protected override void OnClose()
         {
             RevTimer.CancelAllOf(this);
+        }
+        /// <summary>释放面板时移除首次绑定的地址编辑监听。</summary>
+        protected override void OnRelease()
+        {
+            _endpoint.onValueChanged.RemoveListener(ClearAddressError);
         }
     }
 }

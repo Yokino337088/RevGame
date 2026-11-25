@@ -1,11 +1,9 @@
 using System;
 using System.IO;
 using System.Linq;
-using RevGame.Pvp;
 using UnityEditor;
 using UnityEditor.Build.Reporting;
 using UnityEngine;
-using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 
 namespace RevGame.Editor
@@ -15,7 +13,6 @@ namespace RevGame.Editor
         // Unity 2022 的安卓 Mono Player 只有 ARMv7。目录和导入器都明确限定对应 ABI。
         private const string AndroidDuelLibrary = "Assets/Plugins/Android/libs/armeabi-v7a/libRevGameCore.so";
         private const string AndroidReleaseLibrary = "Assets/Plugins/Android/libs/arm64-v8a/libRevGameCore.so";
-        private const string ServerMenuPrefab = "Assets/GameRes/UI/Panel/Pvp/Menu/PvpServerPanel.prefab";
 
         // 异步切换平台。调用端通过编辑器状态等待重导入和编译结束，不依赖磁盘工单。
         public static string SelectAndroidDuelTarget()
@@ -177,7 +174,7 @@ namespace RevGame.Editor
             public int warnings;
         }
 
-        // 装配测试包需要的原生库和连接面板默认地址。只更新已有 Prefab 字段，保留 GUID 和布局。
+        /// <summary>校验并装配安卓 Mono 决斗测试所需的 ARMv7 库和网络权限。</summary>
         public static string PrepareAndroidDuelTest()
         {
             if (EditorApplication.isPlayingOrWillChangePlaymode ||
@@ -197,30 +194,11 @@ namespace RevGame.Editor
                 plugin.SaveAndReimport();
             }
 
-            GameObject root = PrefabUtility.LoadPrefabContents(ServerMenuPrefab);
-            try
-            {
-                InputField endpoint = root.transform.Find("endpoint").GetComponent<InputField>();
-                if (endpoint.text != PvpServerPanel.DefaultEndpoint)
-                {
-                    endpoint.SetTextWithoutNotify(PvpServerPanel.DefaultEndpoint);
-                    PrefabUtility.SaveAsPrefabAsset(root, ServerMenuPrefab, out bool saved);
-                    if (!saved)
-                    {
-                        throw new InvalidOperationException("服务器地址预设保存失败。");
-                    }
-                }
-            }
-            finally
-            {
-                PrefabUtility.UnloadPrefabContents(root);
-            }
-
             // Fantasy 和 UTP 都用原生网络，不依赖 Unity 自动从业务脚本推断网络权限。
             PlayerSettings.Android.forceInternetPermission = true;
             EditorUserBuildSettings.buildAppBundle = false;
             AssetDatabase.SaveAssets();
-            return "ARMv7 原生插件、网络权限和局域网默认地址已装配，输出 APK。";
+            return "已装配 ARMv7 原生插件和网络权限，可输出 APK。";
         }
     }
 }

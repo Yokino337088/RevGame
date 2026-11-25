@@ -150,12 +150,24 @@ namespace RevGame.Pvp
             Status = computer ? "本地人机 · 你执黑先行" : "本地双人练习 · 双方轮流落子";
         }
 
-        /// <summary>建立新会话或恢复同地址的旧房，回调只交给当前连接。</summary>
-        public void StartServer(string endpoint, string nickname)
+        /// <summary>预检地址后建立或恢复连接。返回 true 表示已发起请求，握手结果由 Connected 表示。</summary>
+        public bool StartServer(string endpoint, string nickname)
         {
+            if (_leaving)
+            {
+                return false;
+            }
+            if (!FantasyGoTransport.TryParseEndpoint(endpoint, out string host, out int port))
+            {
+                // 格式检查在切换连接之前，错填地址时仍可沿用当前会话。
+                Status = "服务器地址格式有误，请填写域名:端口或 IP:端口（端口 1–65535）";
+                Revision++;
+                return false;
+            }
             FantasyGoTransport connection = PrepareServerConnection(endpoint, nickname);
-            connection?.Connect(Endpoint, Nickname, Config.RulesJson, Config.rookie ? "rookie" : "advanced",
+            connection.Connect(host, port, Nickname, Config.RulesJson, Config.rookie ? "rookie" : "advanced",
                 _resumeToken, allowNewIdentity: !_recoveringServer);
+            return true;
         }
 
         /// <summary>

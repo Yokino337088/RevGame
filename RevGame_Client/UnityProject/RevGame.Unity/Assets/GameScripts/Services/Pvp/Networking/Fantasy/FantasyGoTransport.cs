@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using Fantasy;
 using Fantasy.Async;
 using Fantasy.Network;
@@ -60,19 +61,14 @@ namespace RevGame.Pvp.Networking
         }
 #endif
 
-        /// <summary>只在用户进入服务器模式后调用；失败不阻断游戏启动。</summary>
-        public void Connect(string endpoint, string nickname, string rulesJson, string matchKind = "rookie", string resumeToken = "", bool allowNewIdentity = false)
+        /// <summary>用业务预检通过的主机与端口发起 KCP 握手。失败通过本次连接的错误回调交付。</summary>
+        internal void Connect(string host, int port, string nickname, string rulesJson, string matchKind = "rookie", string resumeToken = "", bool allowNewIdentity = false)
         {
             Disconnect(false);
             _disposed = false;
             if (Active != null && Active != this)
             {
                 Error?.Invoke("已有一个在线围棋连接，请先退出原对局。");
-                return;
-            }
-            if (!TryEndpoint(endpoint, out string host, out int port))
-            {
-                Error?.Invoke("服务器地址格式不正确，请填写 IP:端口，例如 127.0.0.1:20000。");
                 return;
             }
             Active = this;
@@ -452,29 +448,31 @@ namespace RevGame.Pvp.Networking
             RequestRejected = null;
         }
 
-        private static bool TryEndpoint(string endpoint, out string host, out int port)
+        /// <summary>拆出显式填写的主机和端口。格式预检无网络副作用，域名交由 Fantasy 在连接时解析。</summary>
+        internal static bool TryParseEndpoint(string endpoint, out string host, out int port)
         {
-            host = "";
-            port = 20000;
-            if (string.IsNullOrWhiteSpace(endpoint))
+            host = string.Empty;
+            port = 0;
+            string value = (endpoint ?? string.Empty).Trim();
+            int separator = value.LastIndexOf(':');
+            if (separator <= 0 || separator > 254 ||
+                !ushort.TryParse(value.Substring(separator + 1), NumberStyles.None, CultureInfo.InvariantCulture, out ushort parsedPort) ||
+                parsedPort == 0)
             {
                 return false;
             }
-            var value = endpoint.Trim();
-            int separator = value.LastIndexOf(':');
-            if (separator >= 0)
+
+            // IPv6 必须带方括号以区分地址中的冒号，保留括号供 Fantasy 拼接网络地址。
+            string candidate = value.Substring(0, separator);
+            UriHostNameType hostType = Uri.CheckHostName(candidate);
+            if (hostType != UriHostNameType.Dns && hostType != UriHostNameType.IPv4 &&
+                !(hostType == UriHostNameType.IPv6 && candidate[0] == '[' && candidate[candidate.Length - 1] == ']'))
             {
-                if (!int.TryParse(value.Substring(separator + 1), out port) || port < 1 || port > 65535)
-                {
-                    return false;
-                }
-                host = value.Substring(0, separator);
+                return false;
             }
-            else
-            {
-                host = value;
-            }
-            return host.Length > 0 && host.Length <= 253;
+            host = candidate;
+            port = parsedPort;
+            return true;
         }
     }
 }

@@ -1139,7 +1139,8 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: "\u51C6\u5907\u597D\u540E\u5F00\u59CB\u5339\u914D"
+  m_Text: "\u8BF7\u8F93\u5165\u670D\u52A1\u5668\u57DF\u540D\u6216\u516C\u7F51 IP
+    \u548C\u7AEF\u53E3\u53F7\uFF08\u57DF\u540D:\u7AEF\u53E3 \u6216 IP:\u7AEF\u53E3\uFF09"
 --- !u!1 &5775640610733371602
 GameObject:
   m_ObjectHideFlags: 0
@@ -1218,7 +1219,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: "\u5BF9\u6218\u5730\u5740"
+  m_Text: "\u670D\u52A1\u5668\u5730\u5740"
 --- !u!1 &6410759239006391141
 GameObject:
   m_ObjectHideFlags: 0
@@ -1649,7 +1650,7 @@ MonoBehaviour:
   m_LineType: 0
   m_HideMobileInput: 0
   m_CharacterValidation: 0
-  m_CharacterLimit: 100
+  m_CharacterLimit: 260
   m_OnSubmit:
     m_PersistentCalls:
       m_Calls: []
@@ -1662,7 +1663,7 @@ MonoBehaviour:
   m_CaretColor: {r: 0.19607843, g: 0.19607843, b: 0.19607843, a: 1}
   m_CustomCaretColor: 0
   m_SelectionColor: {r: 0.65882355, g: 0.80784315, b: 1, a: 0.7529412}
-  m_Text: 192.168.10.3:20000
+  m_Text: 
   m_CaretBlinkRate: 0.85
   m_CaretWidth: 1
   m_ReadOnly: 0

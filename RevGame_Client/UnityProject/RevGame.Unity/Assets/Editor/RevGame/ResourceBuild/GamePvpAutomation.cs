@@ -170,8 +170,8 @@ namespace RevGame.Editor
             return new Result { text = result };
         }
 
-        /// <summary>固定安卓测试包准备动作，绑定 ARMv7 原生插件与服务器地址。</summary>
-        [RevAutomationAction("game.pvp.android-duel-prepare", Environment = "edit", Keys = new string[0], Description = "装配安卓 Mono 决斗原生库和默认地址")]
+        /// <summary>调用安卓测试包装配入口，检查 ARMv7 原生插件和网络权限。</summary>
+        [RevAutomationAction("game.pvp.android-duel-prepare", Environment = "edit", Keys = new string[0], Description = "装配安卓 Mono 决斗原生库和网络权限")]
         public static object PrepareAndroidDuel(RevAutomationRequest request)
         {
             string result = (string)Type.GetType("RevGame.Editor.GamePvpBuild, Assembly-CSharp-Editor", true)

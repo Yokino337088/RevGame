@@ -59,11 +59,11 @@ namespace RevGame.Editor
                 Label("heading", root, "服务器匹配", .2f, .8f, .8f, .91f, 44, true);
                 Label("nameLabel", root, "棋友昵称", .13f, .65f, .32f, .75f, 27, true);
                 Input("nickname", root, "棋友", .34f, .65f, .86f, .75f, 16);
-                Label("endpointLabel", root, "对战地址", .13f, .53f, .32f, .63f, 27, true);
-                Input("endpoint", root, PvpServerPanel.DefaultEndpoint, .34f, .53f, .86f, .63f, 100);
+                Label("endpointLabel", root, PvpServerPanel.ServerAddressLabel, .13f, .53f, .32f, .63f, 27, true);
+                Input("endpoint", root, string.Empty, .34f, .53f, .86f, .63f, PvpServerPanel.ServerAddressLimit);
                 MenuButton("mode", root, "新手场 · 二次确认落子", .23f, .41f, .77f, .51f, 25);
                 Label("state", root, "准备连接", .13f, .31f, .87f, .40f, 27, true);
-                Label("duration", root, "准备好后开始匹配", .15f, .22f, .85f, .31f, 26, true);
+                Label("duration", root, PvpServerPanel.ServerAddressHint, .15f, .22f, .85f, .31f, 26, true);
                 MenuButton("connect", root, "连接 / 重连", .29f, .06f, .53f, .16f, 27);
                 MenuButton("match", root, "开始匹配", .56f, .06f, .80f, .16f, 27);
             });
