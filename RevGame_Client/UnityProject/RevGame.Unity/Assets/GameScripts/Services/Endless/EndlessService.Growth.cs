@@ -412,6 +412,10 @@ namespace RevGame.Endless
             Save();
             return true;
         }
+        /// <summary>当前结算存在尚未成功写入的文件，允许保留结算界面重试。</summary>
+        public bool HasPendingResultSave => Run?.phase == EndlessPhase.Result && (RunSavePending || RecordSavePending);
+
+        /// <summary>冻结成绩并执行一次结算；写档失败时由结算页重试该写入。</summary>
         public void Finish()
         {
             if (Run == null || Run.settled)
@@ -423,6 +427,24 @@ namespace RevGame.Endless
             Run.bankedScore = Run.score;
             RecordProgress();
             Save();
+        }
+
+        /// <summary>重写本次结算失败的文件。成功的文件不重复写入，分数也不会再次记入。</summary>
+        public bool RetryResultSave()
+        {
+            if (Run?.phase != EndlessPhase.Result)
+            {
+                return false;
+            }
+            if (RecordSavePending)
+            {
+                RecordProgress();
+            }
+            if (RunSavePending)
+            {
+                Save();
+            }
+            return !HasPendingResultSave;
         }
     }
 }

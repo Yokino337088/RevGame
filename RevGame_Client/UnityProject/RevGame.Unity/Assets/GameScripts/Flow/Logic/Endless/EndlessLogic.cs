@@ -28,12 +28,17 @@ namespace RevGame.Endless
             // 正常返回前保存由按钮显式决定；退出不覆盖已经写入的完整快照。
             RevServices.Get<EndlessService>()?.Dispose();
         }
-        /// <summary>后台或退出时只保存已经交付的局。过场中的候选仍由 GameFlow 持有。</summary>
+        /// <summary>后台时保存已交付的可玩局，结算只补写失败文件，避免覆盖已归档的旧版存档。</summary>
         private void OnSuspending()
         {
             var service = RevServices.GetRequired<EndlessService>();
             if (RevServices.GetRequired<GameFlow>().IsTransitioning || service.Run == null)
             {
+                return;
+            }
+            if (service.Run.phase == EndlessPhase.Result)
+            {
+                service.RetryResultSave();
                 return;
             }
             if (service.Run.phase == EndlessPhase.Fighting)

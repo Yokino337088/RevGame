@@ -26,6 +26,8 @@ namespace RevGame.Endless
         private bool _preserveRunBackup;
         /// <summary>新局首屏还在交割时冻结续档槽写入，直到本次流程提交或释放候选。</summary>
         private bool _awaitingFirstSave;
+        /// <summary>本局最近一次快照写入失败。写入成功或切换棋局后清除，HUD 据此保留重试入口。</summary>
+        public bool RunSavePending { get; private set; }
         private string SavePath => Path.Combine(_saveDirectory, RunFileName);
 
         public EndlessService() : this(Application.persistentDataPath)
@@ -145,18 +147,24 @@ namespace RevGame.Endless
                 if (Isolated)
                 {
                     _isolatedSave = encoded;
-                    return true;
                 }
-                // 编码与棋局规则不变，临时写入、读回校验、备份替换由框架提交。
-                RevFileSave.Write(SavePath, encoded, value => Decode(value), _preserveRunBackup);
-                _preserveRunBackup = false;
+                else
+                {
+                    // 编码与棋局规则不变，临时写入、读回校验、备份替换由框架提交。
+                    RevFileSave.Write(SavePath, encoded, value => Decode(value), _preserveRunBackup);
+                    _preserveRunBackup = false;
+                }
+                RunSavePending = false;
                 return true;
             }
             catch (Exception e)
             {
+                // 保存中生成的外围数据仅供序列化，失败也要归还这份临时快照。
+                Run.horde = null;
+                RunSavePending = true;
                 Run.scoreStopped = true;
                 Run.error = "保存失败，已停止计分；旧档保留：" + e.Message;
-                return Reject(Run.error);
+                return Reject("存档未写入，本局已停止新增计分");
             }
         }
         /// <summary>验证存档原文的校验和，再读取当前业务字段。Unity 忽略旧版多出的保持计时，原坐标继续用于恢复占格。</summary>
@@ -248,7 +256,7 @@ namespace RevGame.Endless
 
         /// <summary>
         /// 校验快照后重建模型、保留随机源和选择。玩家从大厅续玩时保留手动暂停，
-        /// 也会让战斗中的自动存档先暂停，待玩家看清棋盘后再推进。
+        /// 也会让布阵、整备和战斗档先暂停，待玩家确认继续后再推进计时。
         /// </summary>
         public bool Restore(bool isolated, bool pauseOnEntry = false)
         {
@@ -292,7 +300,7 @@ namespace RevGame.Endless
                 }
                 RefreshRules();
                 // 暂停记录中的来源阶段供继续按钮恢复。已结算和待选择的界面按快照落屏。
-                if (pauseOnEntry && Run.phase == EndlessPhase.Fighting)
+                if (pauseOnEntry && CanArrange())
                 {
                     Pause();
                 }

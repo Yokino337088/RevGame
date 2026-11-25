@@ -115,6 +115,7 @@ namespace RevGame.UI
                 ["speaker"] = card.Find("speaker").GetComponent<UnityEngine.UI.Text>().text,
                 ["text"] = line.Text,
                 ["displayedText"] = dialogue.text,
+                ["readingHint"] = card.Find("counter").GetComponent<UnityEngine.UI.Text>().text,
                 ["textFits"] = required <= dialogue.rectTransform.rect.height + 1,
                 ["dialogueHeight"] = dialogue.rectTransform.rect.height,
                 ["requiredTextHeight"] = required,

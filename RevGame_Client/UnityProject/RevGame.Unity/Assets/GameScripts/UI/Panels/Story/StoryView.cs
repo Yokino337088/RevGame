@@ -40,6 +40,10 @@ namespace RevGame.UI
         private int _dialogueElementCount;
         /// <summary>当前页码，换句后生成一次，打字完成时只更新阅读提示。</summary>
         private string _counterPrefix = string.Empty;
+        /// <summary>当前句是否为本篇末句，完整显示后用于说明下一次点击的实际结果。</summary>
+        private bool _isLastLine;
+        /// <summary>跳过确认仅属于本次阅读，关窗或销毁时释放整屏遮挡。</summary>
+        private GameConfirmation _skipConfirmation;
         private bool _layoutReady;
         /// <summary>只保存自己创建的Tween/音效句柄，换句、关闭、销毁均收尾，绝不KillAll。</summary>
         private Tween _typing;
@@ -194,6 +198,7 @@ namespace RevGame.UI
             var line = frame.Episode.Lines[frame.Index];
             _title.text = frame.Episode.Title;
             _speaker.text = line.Speaker;
+            _isLastLine = frame.Index == frame.Episode.Lines.Length - 1;
             _counterPrefix = (frame.Index + 1) + " / " + frame.Episode.Lines.Length + "    ";
             _counter.text = _counterPrefix + "点击任意处 · 显示整句";
             // 每句配置明确指定表情，不把六张不同情绪当序列帧循环；立绘缩放保留原图比例。
@@ -231,18 +236,22 @@ namespace RevGame.UI
                 });
         }
 
-        /// <summary>自然播完和提前读完都使用同一份完整正文与页脚。</summary>
+        /// <summary>自然播完和提前读完更新同一份正文；末句明确说明下次点击会结束阅读。</summary>
         private void ShowCompleteLine()
         {
             VisibleCharacters = _dialogueElementCount;
             _dialogue.text = _fullDialogue;
-            _counter.text = _counterPrefix + "点击任意处 · 下一句";
+            _counter.text = _counterPrefix + (_isLastLine ? "点击任意处 · 完成阅读" : "点击任意处 · 下一句");
         }
 
-        /// <summary>第一下补完仍在打字的文本。正文已经完整时，由宿主推进剧情。</summary>
+        /// <summary>先补齐正在打字的正文，再由宿主翻页；确认打开后也拦截键盘提交。</summary>
         [RevButtonClick("btnNext")]
         private void OnNext()
         {
+            if (_skipConfirmation?.IsOpen == true)
+            {
+                return;
+            }
             if (IsTyping)
             {
                 StopTyping(resetSound: false);
@@ -251,15 +260,29 @@ namespace RevGame.UI
             }
             NotifyHost();
         }
-        /// <summary>右上角跳过由宿主交给唯一GameFlow收尾，不能只隐藏UI留下剧情锁。</summary>
+        /// <summary>右上角先确认跳过剩余正文，确认后仅让当前播放代次走正式剧情收尾。</summary>
         [RevButtonClick("btnSkip")]
         private void OnSkip()
         {
-            RevServices.GetRequired<RevGame.Flow.GameFlow>().SkipStory();
+            if (_skipConfirmation?.IsOpen == true || _version < 0)
+            {
+                return;
+            }
+            int version = _version;
+            _skipConfirmation = new GameConfirmation(_skip.GetComponent<Button>(), "跳过剩余剧情？",
+                "跳过后将结束这一段阅读。", "跳过剧情", "继续阅读", () =>
+                {
+                    if (_version == version)
+                    {
+                        RevServices.GetRequired<RevGame.Flow.GameFlow>().SkipStory();
+                    }
+                });
         }
         /// <summary>面板关闭释放打字、声音与立绘，同时清掉上一句的排版内容。</summary>
         protected override void OnPartClose()
         {
+            _skipConfirmation?.Dispose();
+            _skipConfirmation = null;
             StopTyping();
             _guide.sprite = null;
             _fullDialogue = string.Empty;
@@ -271,6 +294,7 @@ namespace RevGame.UI
         /// <summary>真正销毁时仍执行同一收尾，绝不停止其它UI的Tween或声音。</summary>
         protected override void OnDestroy()
         {
+            _skipConfirmation?.Dispose();
             StopTyping();
             base.OnDestroy();
         }

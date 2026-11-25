@@ -238,8 +238,13 @@ namespace RevGame.Pvp
                 WhiteName = string.IsNullOrWhiteSpace(service.WhiteName) ? "白方" : service.WhiteName;
                 string connection = online ? "服务器匹配" : local ? (service.IsComputerGame ? "本地人机" : "本地双人") : "局域网直连";
                 Title = HasGame ? "九路围棋 · " + connection : "九路围棋";
-                BlackText = HasGame ? "● " + BlackName + "\n" + service.ClockText(GoSide.Black) + "   提子 " + core.BlackCaptures : "黑先白后";
-                WhiteText = HasGame ? "○ " + WhiteName + "\n" + service.ClockText(GoSide.White) + "   提子 " + core.WhiteCaptures : "同样规则 · 公平落子";
+                // 复盘侧栏以实际回放棋面为准，终局时钟只在显示真实对局结果时出现。
+                bool replaying = service.ReplayStep >= 0;
+                GoCore visibleBoard = replaying ? service.DisplayCore : core;
+                BlackText = HasGame ? "● " + BlackName + "\n" + (replaying ? "" : service.ClockText(GoSide.Black) + "   ")
+                    + "提子 " + visibleBoard.BlackCaptures : "黑先白后";
+                WhiteText = HasGame ? "○ " + WhiteName + "\n" + (replaying ? "" : service.ClockText(GoSide.White) + "   ")
+                    + "提子 " + visibleBoard.WhiteCaptures : "同样规则 · 公平落子";
                 ResultText = service.ResultText();
                 string block = service.RoomBlockReason();
                 string syncingText = block switch
@@ -250,7 +255,7 @@ namespace RevGame.Pvp
                     _ => string.Empty
                 };
                 int lineEnd = ResultText.IndexOf('\n');
-                string turnText = !HasGame ? "选择一种对战方式" : service.ReplayStep >= 0 ? service.ReplayProgressText
+                string turnText = !HasGame ? "选择一种对战方式" : replaying ? service.ReplayProgressText
                     : lineEnd >= 0 ? ResultText.Substring(0, lineEnd) : ResultText;
                 TurnText = syncingText.Length == 0 || (Phase == GoPhase.Finished && !MissingCriticalState) ? turnText : syncingText;
                 PassLabel = Phase == GoPhase.Playing && core.ConsecutivePasses == 1 ? "停手并数子" : "停一手";

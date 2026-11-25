@@ -96,6 +96,18 @@ namespace RevGame.Endless
                     "首屏成功后的提交可继续到新局", checks);
                 Check(!replacement.DescribeSavedRun(false).Settled, "未结束的新档提供续玩入口", checks);
 
+                // 布阵和整备的倒计时也要等玩家主动继续，避免续档一打开就跳过阵容操作。
+                float savedFormationLeft = replacement.Run.formationLeft;
+                Check(restored.Restore(false, pauseOnEntry: true) && restored.Run.phase == EndlessPhase.Paused
+                    && restored.Run.previousPhase == EndlessPhase.Formation, "自动布阵档在暂停页交付", checks);
+                restored.Tick(0.5f);
+                Check(restored.Run.formationLeft == savedFormationLeft && restored.Pause()
+                    && restored.Run.phase == EndlessPhase.Formation, "布阵倒计时只在确认继续后恢复", checks);
+                replacement.Run.phase = EndlessPhase.Preparation;
+                Check(replacement.Save() && restored.Restore(false, pauseOnEntry: true) && restored.Run.phase == EndlessPhase.Paused
+                    && restored.Run.previousPhase == EndlessPhase.Preparation && restored.Pause()
+                    && restored.Run.phase == EndlessPhase.Preparation, "整备档暂停交付并回到原阶段", checks);
+
                 // 战斗中的自动档也要等玩家查看棋盘再推进；保持本局身份、时间与棋心。
                 Check(replacement.StartWave() && replacement.Save(), "保存未暂停的战斗快照", checks);
                 float savedSeconds = replacement.Run.seconds;
@@ -114,6 +126,7 @@ namespace RevGame.Endless
                 var archive = replacement.DescribeSavedRun(false);
                 Check(archive.Settled && archive.Description.Contains("战绩 36") && File.ReadAllText(path) == settledFile,
                     "结束的局提供只读战绩摘要，保留原始结算存档", checks);
+                CheckResultSaveRetry(Path.Combine(directory, "blocked-result"), checks);
                 return new Dictionary<string, object> { ["success"] = true, ["passed"] = checks.Count, ["checks"] = checks };
             }
             finally
@@ -123,6 +136,60 @@ namespace RevGame.Endless
                     File.Delete(file);
                 }
                 Directory.Delete(directory);
+            }
+        }
+
+        /// <summary>临时目录制造两个实际写入冲突，逐一解除，验证只补写失败文件且不重复入账。</summary>
+        private static void CheckResultSaveRetry(string directory, List<string> checks)
+        {
+            string runPath = Path.Combine(directory, RunFileName);
+            string recordsPath = Path.Combine(directory, RecordFileName);
+            try
+            {
+                // 写目标同名目录令原子移动稳定失败，文件碰撞仅发生在测试目录。
+                Directory.CreateDirectory(runPath);
+                Directory.CreateDirectory(recordsPath);
+                using var retry = new EndlessService(directory);
+                retry.Begin(0, 0, 1105, deferFirstSave: true);
+                retry.CommitFirstSave();
+                Check(retry.RunSavePending && retry.Run.scoreStopped, "首存失败保留待写状态并停止新增计分", checks);
+                Check(retry.Pause() && !retry.Save() && retry.Run.phase == EndlessPhase.Paused,
+                    "暂停保存失败仍保留暂停棋局", checks);
+                retry.Run.score = 20;
+                retry.Finish();
+                Check(retry.HasPendingResultSave && retry.RunSavePending && retry.RecordSavePending,
+                    "结算能识别两份文件各自的写入失败", checks);
+
+                Directory.Delete(runPath);
+                Check(!retry.RetryResultSave() && !retry.RunSavePending && retry.RecordSavePending,
+                    "续档补写成功后仍提示待保存战绩", checks);
+                string settledFile = File.ReadAllText(runPath);
+                Directory.Delete(recordsPath);
+                Check(retry.RetryResultSave() && retry.RetryResultSave() && File.ReadAllText(runPath) == settledFile,
+                    "只重试未写入文件，成功的结算档字节保持一致", checks);
+                EndlessRecordBook result = ReadRecords(recordsPath, out _);
+                Check(result.records.Count == 1 && result.records[0].runId == retry.Run.runId && result.records[0].score == 20,
+                    "重复确认不重复记录已结算收益", checks);
+            }
+            finally
+            {
+                // 只清理上述两个确定的占位目录和本夹具创建的文件。
+                if (Directory.Exists(runPath))
+                {
+                    Directory.Delete(runPath);
+                }
+                if (Directory.Exists(recordsPath))
+                {
+                    Directory.Delete(recordsPath);
+                }
+                if (Directory.Exists(directory))
+                {
+                    foreach (string file in Directory.GetFiles(directory))
+                    {
+                        File.Delete(file);
+                    }
+                    Directory.Delete(directory);
+                }
             }
         }
 

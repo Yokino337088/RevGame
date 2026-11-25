@@ -36,10 +36,13 @@ namespace RevGame.Endless
         private readonly Image[] _formations = new Image[3];
         /// <summary>当前选中的棋阵序号。</summary>
         private int _formation;
+        /// <summary>本次打开时读取的个人战绩，用于入口展示历史最高分。</summary>
         private EndlessRecordBook _records;
-        /// <summary>弹窗打开：回弹弹入（六章弹窗默认手感）；onDone 交给动画，播完框架才算打开完成。</summary>
+        /// <summary>本轮快照先落屏，再开始弹入，让动画中可见的按钮已经对应当前续档。</summary>
         protected override void PlayOpenTransition(Action onDone)
         {
+            ReadEntrySnapshot();
+            RefreshView();
             RevUIAnim.Play(this, RevUIAnimPreset.PopIn, .3f, onDone, owner: this);
         }
         /// <summary>弹窗关闭：弹出收起（六章设置面板同款），播完才真正隐藏。</summary>
@@ -57,8 +60,8 @@ namespace RevGame.Endless
                 _formations[i] = transform.Find("formation" + i).GetComponent<Image>();
             }
         }
-        /// <summary>打开时读出本地战绩；隔离会话使用其独立的内存续玩槽。</summary>
-        protected override void OnOpen()
+        /// <summary>为每次进场读取当前续档与战绩；隔离会话只看到自己的内存续玩槽。</summary>
+        private void ReadEntrySnapshot()
         {
             bool isolated = Isolated;
             _savedRun = RevServices.GetRequired<EndlessService>().DescribeSavedRun(isolated);

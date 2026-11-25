@@ -32,14 +32,28 @@ namespace RevGame.UI
         private Text _titleText;
         [RevBind]
         private Text _detailText;
+        /// <summary>仍停在本回合时，使用原有结算按钮重试推进。</summary>
         [RevBind]
         private Button _btnContinue;
+        /// <summary>复用结算按钮样式的退场入口，由本面板随预制体实例持有。</summary>
+        private Button _btnHome;
+
+        /// <summary>沿用已发布预制体，在同一安全框内同时提供重试和退场。</summary>
         protected override void OnBindView()
         {
             GameMobileLayout.SeparateViewportVeil(transform);
             GameMobileLayout.EnableSafePanel(transform, GameMobileLayout.ViewportVeil);
+            _btnHome = Instantiate(_btnContinue, _btnContinue.transform.parent, false);
+            _btnHome.name = "btnHome";
+            ((RectTransform)_btnContinue.transform).anchoredPosition += Vector2.left * 165f;
+            ((RectTransform)_btnHome.transform).anchoredPosition += Vector2.right * 165f;
+            _btnContinue.GetComponentInChildren<Text>(true).text = "重试推进";
+            _btnHome.GetComponentInChildren<Text>(true).text = "返回大厅";
+            _btnHome.onClick = new Button.ButtonClickedEvent();
+            _btnHome.onClick.AddListener(OnHomeClick);
         }
 
+        /// <summary>显示停住的回合与最近失败原因，重试失败时仍保留两个入口。</summary>
         protected override void OnRefreshView()
         {
             if (Data == null)
@@ -50,15 +64,16 @@ namespace RevGame.UI
 
             if (_titleText != null)
             {
-                _titleText.text = win ? "胜" : "负";
+                _titleText.text = $"第 {Data.Chapter} 章 · 第 {Data.Round} 回合{(win ? "胜利" : "战败")}";
             }
             if (_detailText != null)
             {
                 string error = RevServices.GetRequired<IBattleService>().LastError;
-                _detailText.text = string.IsNullOrEmpty(error) ? (win ? "重试进入下一阶段" : "重试返回上一回合") : error;
+                _detailText.text = string.IsNullOrEmpty(error) ? (win ? "暂未进入下一阶段，可以重试。" : "暂未回到准备阶段，可以重试。") : error;
             }
         }
 
+        /// <summary>通过战斗逻辑重试。接单失败时刷新原因，玩家可以继续选择退场。</summary>
         [RevButtonClick("btnContinue")]
         private void OnContinueClick()
         {
@@ -74,14 +89,15 @@ namespace RevGame.UI
             if (logic != null && logic.ContinueToNextRound())
             {
                 CloseSelf();
+                return;
             }
-            else
+            RefreshView();
+        }
 
-                if (_detailText != null)
-                {
-                    // 下一回合出生空间不足时保留结算页并说明原因，不能关闭后留下无法操作的空界面。
-                    _detailText.text = battle.LastError;
-                }
+        /// <summary>通过远征共用退场确认离场，取消时保留结算窗口和当前回合。</summary>
+        private void OnHomeClick()
+        {
+            RevServices.GetRequired<Flow.GameFlow>().RequestBattleExit(_btnHome);
         }
     }
 }

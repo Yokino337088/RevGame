@@ -46,9 +46,13 @@ namespace RevGame.UI
             }
         }
 
-        /// <summary>关闭大厅时停止收藏表现和未移交的邀请监听。</summary>
+        /// <summary>关闭大厅时收回入口提示和在途请求，再停止收藏表现及邀请监听。</summary>
         protected override void OnClose()
         {
+            _modeRequestVersion++;
+            RestoreModeLabel();
+            _modeError?.Dispose();
+            _modeError = null;
             CloseLobbyLan();
             StopMemoryPulse();
             HideMemorySpeech();
@@ -77,11 +81,11 @@ namespace RevGame.UI
             OpenLobbyBook<ProjectOpenSourcePanel>(ProjectOpenSourcePanel.ThemeAtlases).Forget();
         }
 
-        /// <summary>两个书本入口共用加载锁，避免首次加载图集时连续点击打开双层书本。</summary>
+        /// <summary>两个书本入口共享加载锁，且尊重当前在途的模式菜单。</summary>
         private async RevTask OpenLobbyBook<TBook>(string[] atlases) where TBook : RevUIPanel
         {
             var flow = RevServices.GetRequired<GameFlow>();
-            if (_openingBook || flow.IsGameplayBlocked || flow.Screen != GameScreen.Home)
+            if (_openingBook || _loadingModeLabel != null || flow.IsGameplayBlocked || flow.Screen != GameScreen.Home)
             {
                 return;
             }

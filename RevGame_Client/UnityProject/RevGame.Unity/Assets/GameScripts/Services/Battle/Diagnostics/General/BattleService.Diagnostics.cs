@@ -53,11 +53,15 @@ namespace RevGame.Services
             return true;
         }
         /// <summary>
-        /// 加载预定义的开发场景（merge / enemy-one-eye / enemy-two-eyes 等）。
+        /// 加载预定义的开发场景。blocked-next 只允许在隔离远征中复现结算后装配失败。
         /// 只用于编辑器验收与 GM 观察，正式发行包不包含本文件。
         /// </summary>
         public bool LoadDevelopmentScenario(string name)
         {
+            if (name == "blocked-next")
+            {
+                return SettleCrowdedBoardForCheck();
+            }
             if (name != "merge" && name != "large-merge" && name != "boss" && name != "events" && name != "reward" && name != "round10" && name != "enemy-one-eye" && name != "enemy-two-eyes")
             {
                 return Reject("只允许 merge / large-merge / boss / events / reward / round10 / enemy-one-eye / enemy-two-eyes 场景");
@@ -129,6 +133,35 @@ namespace RevGame.Services
             RevEvent.DispatchEvent(Events.HandChanged);
             RevEvent.DispatchEvent<int>(Events.PhaseEnterPrepare, Round);
             return true;
+        }
+
+        /// <summary>在隔离第一章铺满隔行，再由真实结算事件触发 Boss 阵容预检与恢复界面。</summary>
+        private bool SettleCrowdedBoardForCheck()
+        {
+            if (RevServices.Get<StoryProgress>()?.IsIsolated != true || Chapter != 1 || Phase != GamePhase.Prepare)
+            {
+                return Reject("需要隔离 Play 的第一章准备阶段");
+            }
+
+            // 复用正式末轮配置；固定隔行布阵让下一轮缺少完整的 Boss 出生区。
+            _playerPieces.Clear();
+            _board.Reset();
+            if (!StartRound(1, Balance.NormalRoundsPerChapter))
+            {
+                return false;
+            }
+            ClearEnemies();
+            for (int y = 0; y < Consts.BoardSize; y += 2)
+            {
+                for (int x = 0; x < Consts.BoardSize; x++)
+                {
+                    Piece placed = AddCheckPiece(GameSide.Player, PieceKind.Archer, new BoardPos(x, y));
+                    RevEvent.DispatchEvent<int>(Events.PiecePlaced, placed.Id);
+                }
+            }
+            RefreshGoState();
+            EndBattle();
+            return Phase == GamePhase.Settle;
         }
         /// <summary>
         /// 自动化专用：移除 Boss 以外的所有敌方棋子，给贴身技能腾出落点。

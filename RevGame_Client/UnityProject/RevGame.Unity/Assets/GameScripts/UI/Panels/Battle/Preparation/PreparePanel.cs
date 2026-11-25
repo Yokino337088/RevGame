@@ -169,7 +169,7 @@ namespace RevGame.UI
             _btnRefresh.interactable = !guided && handCount > 0 && !flipping;
             if (_shownHandCount != handCount)
             {
-                _refreshLabel.text = "刷新手牌（" + handCount + "张）";
+                _refreshLabel.text = handCount == 0 ? "手牌已用完" : "刷新手牌（" + handCount + "张）";
                 _shownHandCount = handCount;
             }
 
@@ -200,12 +200,14 @@ namespace RevGame.UI
             RevLogic.Get<BattleLogic>()?.SelectCard(id);
         }
 
-        /// <summary>按业务输入构造普通准备提示，眼位石模式直接显示自己的操作说明。</summary>
+        /// <summary>按业务输入构造准备提示，额度或手牌用尽后引导换位和开战。</summary>
         private void RefreshHint(IBattleService battle)
         {
             bool eye = battle.EyeStoneSelected;
+            bool handUnavailable = battle.CardsRemaining <= 0 || battle.Hand.Count == 0;
             string prompt = eye ? "点击金色亮格补眼；没有亮格时可保留眼位石"
                 : battle.SelectedPieceId != 0 ? "点空格调整位置（免费）"
+                : handUnavailable ? "可以调整棋子位置，准备好后开战"
                 : battle.SelectedCardId == 0 ? "选手牌落子，或点己方棋子换位" : "点可落子的高亮格放置棋子";
             var stamp = (remaining: eye ? 0 : battle.CardsRemaining, prompt, error: eye ? "" : battle.LastError ?? "");
             if (_hintStamp == stamp)

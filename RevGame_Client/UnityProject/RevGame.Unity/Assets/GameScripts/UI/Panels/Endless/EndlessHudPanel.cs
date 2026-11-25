@@ -81,8 +81,8 @@ namespace RevGame.Endless
         private readonly Text[] _cardNames = new Text[4];
         /// <summary>弹窗里的三个大选项。只有两个选项时用左右两张（0 和 2），只有一个时用中间（1）。</summary>
         private readonly GameObject[] _choices = new GameObject[3];
-        /// <summary>暂停页的结束确认；切出当前 HUD 时释放，避免迟到按钮结算另一局。</summary>
-        private GameConfirmation _finishConfirmation;
+        /// <summary>结束或离开未保存结算的确认，随本局 HUD 清理。</summary>
+        private GameConfirmation _runConfirmation;
         private readonly Text[] _choiceTexts = new Text[3];
         private readonly StringBuilder _text = new StringBuilder(256);
         private EndlessArena _arena;
@@ -98,7 +98,7 @@ namespace RevGame.Endless
         private int _shownLevel, _shownCards = -1, _shownSelected = -1, _shownKills;
         /// <summary>暂停等模态状态的落屏输入。状态相同直接返回，避免反复拼装祝福和选项说明。</summary>
         private (EndlessPhase phase, int first, int second, int third, int eventKind, int circuit, int rerolls,
-            int level, long score, int kills, int bosses) _modalStamp;
+            int level, long score, int kills, int bosses, bool runSavePending, bool recordSavePending, bool scoreStopped) _modalStamp;
         /// <summary>顶栏文字上次使用的波次、向上取整的棋心血量、整秒与击杀数，默认空值需要刷新。</summary>
         private (int wave, int heart, int seconds, int kills)? _statusStamp;
         private float _shownHeart = -1;
@@ -364,7 +364,7 @@ namespace RevGame.Endless
                 Set(_startLabel, run.phase == EndlessPhase.Formation ? "开战 · " + Mathf.CeilToInt(run.formationLeft) + "秒后自动" : "立即开战");
             }
         }
-        /// <summary>保留本次拒绝提示。棋盘操作锁定期间收起出牌、换位和战斗引导。</summary>
+        /// <summary>显示棋盘操作提示及自动存档失败。暂停和结算界面自行显示保存状态。</summary>
         private void RefreshTip(EndlessRun run)
         {
             if (Service.RejectionSerial != _seenRejectionSerial)
@@ -374,7 +374,12 @@ namespace RevGame.Endless
                 _errorUntil = string.IsNullOrEmpty(_lastError) ? 0 : Time.unscaledTime + 2.5f;
             }
             string tip;
-            if (Time.unscaledTime < _errorUntil)
+            if (Service.RunSavePending)
+            {
+                tip = run.phase == EndlessPhase.Paused || run.phase == EndlessPhase.Result
+                    ? "" : "存档未写入\n暂停后可重试";
+            }
+            else if (Time.unscaledTime < _errorUntil)
             {
                 tip = _lastError;
             }
@@ -483,7 +488,7 @@ namespace RevGame.Endless
             Show(_boon, false);
             _boonRect.localScale = Vector3.one;
         }
-        /// <summary>模态界面首次展示或内容变化时才重新排版，三个选择沿既有编号纵向展示。</summary>
+        /// <summary>模态内容或保存结果变化时刷新现有编号选项，等待下一次玩家决定。</summary>
         private void RefreshModal(EndlessRun run)
         {
             bool modal = run.phase == EndlessPhase.Upgrade || run.phase == EndlessPhase.Event || run.phase == EndlessPhase.Circuit || run.phase == EndlessPhase.Paused || run.phase == EndlessPhase.Result;
@@ -494,7 +499,8 @@ namespace RevGame.Endless
                 return;
             }
             var stamp = (run.phase, run.choices[0], run.choices[1], run.choices[2], run.eventKind, run.circuit,
-                run.rerolls, run.level, run.score, run.kills + run.invaderKills, run.bossKills);
+                run.rerolls, run.level, run.score, run.kills + run.invaderKills, run.bossKills,
+                Service.RunSavePending, Service.RecordSavePending, run.scoreStopped);
             if (_modalShown && _modalStamp.Equals(stamp))
             {
                 return;
@@ -541,7 +547,10 @@ namespace RevGame.Endless
             }
             else if (run.phase == EndlessPhase.Paused)
             {
-                title = "已暂停\n" + BuildSummary(run);
+                string summary = Service.RunSavePending ? "存档未写入 · 可重试保存"
+                    : Service.RecordSavePending ? "战绩未写入 · 结算时会重试"
+                    : run.scoreStopped ? "本局已停止新增计分" : BuildSummary(run);
+                title = "已暂停\n" + summary;
                 left = run.previousPhase switch
                 {
                     EndlessPhase.Formation => "继续布阵",
@@ -549,12 +558,17 @@ namespace RevGame.Endless
                     EndlessPhase.Fighting => "继续战斗",
                     _ => "继续本局"
                 };
-                middle = "保存并退出";
+                middle = Service.RunSavePending ? "重试保存并退出" : "保存并退出";
                 right = "结束本局";
             }
             else
             {
                 title = "本局结束\n战绩 " + run.score + "     击杀 " + (run.kills + run.invaderKills) + "     领主 " + run.bossKills;
+                if (Service.HasPendingResultSave)
+                {
+                    title += "\n本次结算未完整保存";
+                    left = "重试保存";
+                }
                 middle = "返回大厅";
             }
             Set(_modalTitle, title);
@@ -586,10 +600,10 @@ namespace RevGame.Endless
             }
             return _text.Length > 0 ? _text.ToString() : "还没有祝福";
         }
-        /// <summary>转发当前弹窗选项；暂停页的结束请求必须先得到玩家确认。</summary>
+        /// <summary>转发当前阶段选项。暂停和结算分别处理保存重试与退场确认。</summary>
         private void Choice(int index)
         {
-            if (_finishConfirmation?.IsOpen == true)
+            if (_runConfirmation?.IsOpen == true)
             {
                 return;
             }
@@ -632,7 +646,14 @@ namespace RevGame.Endless
             }
             else if (phase == EndlessPhase.Result)
             {
-                RevServices.GetRequired<GameFlow>().ReturnHome();
+                if (index == 0 && Service.HasPendingResultSave)
+                {
+                    Service.RetryResultSave();
+                }
+                else if (index == 1)
+                {
+                    LeaveResult();
+                }
             }
             RefreshView();
         }
@@ -640,7 +661,7 @@ namespace RevGame.Endless
         private void ConfirmFinish()
         {
             EndlessRun run = Service.Run;
-            _finishConfirmation = new GameConfirmation(_choices[2].GetComponent<Button>(), "结算并结束本局？",
+            _runConfirmation = new GameConfirmation(_choices[2].GetComponent<Button>(), "结算并结束本局？",
                 "结算后会保留本局战绩，此局将无法继续。", "结算本局", "取消", () =>
                 {
                     if (ReferenceEquals(Service.Run, run) && run.phase == EndlessPhase.Paused)
@@ -651,7 +672,27 @@ namespace RevGame.Endless
                 });
         }
 
-        /// <summary>保存仍可续玩的局，写入成功后才返回大厅。</summary>
+        /// <summary>已写入的结算可直接返回。仍有待写文件时确认是否接受未完整保存的结果。</summary>
+        private void LeaveResult()
+        {
+            var flow = RevServices.GetRequired<GameFlow>();
+            if (!Service.HasPendingResultSave)
+            {
+                flow.ReturnHome();
+                return;
+            }
+            EndlessRun run = Service.Run;
+            _runConfirmation = new GameConfirmation(_choices[1].GetComponent<Button>(), "结算尚未保存完整",
+                "现在返回大厅，可能无法在大厅查看本次完整战绩。", "返回大厅", "留在本页", () =>
+                {
+                    if (ReferenceEquals(Service.Run, run) && run.phase == EndlessPhase.Result)
+                    {
+                        flow.ReturnHome();
+                    }
+                });
+        }
+
+        /// <summary>保存成功后才返回。失败仍在暂停页，由刷新显示重试入口。</summary>
         private void SaveExit()
         {
             if (Service.Save())
@@ -693,7 +734,7 @@ namespace RevGame.Endless
         [RevButtonClick("modal/modalClose")] private void CloseModal()
         {
             // 暂停页的叉 = 继续战斗；其它弹窗不显示这个叉（必须做出选择）。
-            if (Service.Run.phase == EndlessPhase.Paused)
+            if (_runConfirmation?.IsOpen != true && Service.Run.phase == EndlessPhase.Paused)
             {
                 Service.Pause();
             }
@@ -839,8 +880,8 @@ namespace RevGame.Endless
         /// <summary>退出时先关闭确认遮挡，再停止输入、计时和持有的棋盘表现。</summary>
         protected override void OnClose()
         {
-            _finishConfirmation?.Dispose();
-            _finishConfirmation = null;
+            _runConfirmation?.Dispose();
+            _runConfirmation = null;
             CancelCardDrag();
             SetCardDragBinding(false);
             _opening = false;

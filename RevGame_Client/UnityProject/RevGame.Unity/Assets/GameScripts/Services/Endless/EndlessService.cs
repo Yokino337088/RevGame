@@ -494,6 +494,7 @@ namespace RevGame.Endless
             _saveAtStepEnd = false;
             _preserveRunBackup = false;
             _awaitingFirstSave = false;
+            RunSavePending = RecordSavePending = false;
             _targets.Clear();
             _consumed.Clear();
             Run = null;

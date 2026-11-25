@@ -472,7 +472,7 @@ namespace RevGame.Bootstrap
                     }
                     return BattleResult(RevServices.GetRequired<IBattleService>().TriggerBattleEvent((BattleEventKind)id));
                 }, RevGMArg.Int("事件编号"));
-                RevGame.Bootstrap.GameGmCommands.RegisterCommand("RevGame/载入验收场景", "预定义场景；enemy-one-eye/ enemy-two-eyes观察真实敌阵", args =>
+                RevGame.Bootstrap.GameGmCommands.RegisterCommand("RevGame/载入验收场景", "预定义场景；blocked-next 仅隔离第一章模拟结算后无法进入 Boss 回合", args =>
                 {
                     Logic();
                     var battle = (BattleService)RevServices.GetRequired<IBattleService>();

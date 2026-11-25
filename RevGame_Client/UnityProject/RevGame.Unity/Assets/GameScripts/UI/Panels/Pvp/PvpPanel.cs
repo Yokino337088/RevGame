@@ -174,6 +174,8 @@ namespace RevGame.Pvp
         [RevBind("result")] private GameObject _result;
         [RevBind("result/text")] private Text _resultText;
         [RevBind("result/replayPrevious")] private Button _previous;
+        /// <summary>终局时提供独立的复盘入口，进入复盘后才显示上一步。</summary>
+        [RevBind("result/replayPrevious/label")] private Text _previousLabel;
         [RevBind("result/replayNext")] private Button _next;
         [RevBind("result/replayExit")] private Button _replayExit;
         [RevBind("result/newGame")] private Button _newGame;
@@ -376,8 +378,7 @@ namespace RevGame.Pvp
             _matchPortraits = null;
         }
 
-        /// <summary>应用房间快照的显示与按钮门禁，动画和复盘继续使用各自的表现状态。</summary>
-        /// <summary>依据当前对战或教学快照落屏，两种模式各自管理控件和输入提示。</summary>
+        /// <summary>依据对战或教学快照落屏，并区分终局入口、复盘导航和正式对局的操作许可。</summary>
         protected override void OnRefreshView()
         {
             if (_battleVisible && Menu == "Tutorial" && Service.Tutorial != null)
@@ -399,6 +400,8 @@ namespace RevGame.Pvp
             bool playing = room.Phase == GoPhase.Playing;
             bool scoring = room.Phase == GoPhase.Scoring;
             bool finished = room.Phase == GoPhase.Finished;
+            bool localGame = service.Mode == PvpConnectionMode.Local;
+            Show(_agent.gameObject, !localGame);
             _agent.interactable = room.Allows(PvpRoomAction.Agent);
             Set(_agentLabel, room.AgentLabel);
             RefreshMatchFeedback(service, playing);
@@ -420,12 +423,12 @@ namespace RevGame.Pvp
             Set(_toggleLabel, service.HintsVisible ? "隐藏辅助" : "显示辅助");
             Set(_scoringText, room.ResultText);
             _resume.interactable = room.Allows(PvpRoomAction.Resume);
-            Show(_previous.gameObject, !_settling);
-            Show(_next.gameObject, !_settling);
-            bool localGame = service.Mode == PvpConnectionMode.Local;
             bool replaying = service.ReplayStep >= 0;
+            Show(_previous.gameObject, !_settling && service.Moves.Count > 0);
+            Show(_next.gameObject, !_settling && replaying);
             Show(_replayExit.gameObject, !_settling && (replaying || localGame));
-            Show(_newGame.gameObject, !_settling);
+            Show(_newGame.gameObject, !_settling && !replaying);
+            Set(_previousLabel, replaying ? "上一步" : "复盘棋局");
             Set(_replayExitLabel, replaying ? "返回终局" : "切换对战方式");
             Set(_newGameLabel, localGame ? "再来一局" : "切换对战方式");
             _previous.interactable = finished && !_settling && service.Moves.Count > 0 && service.ReplayStep != 0;
@@ -566,10 +569,11 @@ namespace RevGame.Pvp
             Run(() => Service.Submit(GoAction.Resume));
         }
 
+        /// <summary>进入复盘从空棋盘开始；已在复盘时退回前一条记录。</summary>
         [RevButtonClick("replayPrevious")]
         private void Previous()
         {
-            Run(() => Service.Replay(Service.ReplayStep < 0 ? Service.Moves.Count - 1 : Service.ReplayStep - 1));
+            Run(() => Service.Replay(Service.ReplayStep < 0 ? 0 : Service.ReplayStep - 1));
         }
 
         [RevButtonClick("replayNext")]
@@ -628,13 +632,16 @@ namespace RevGame.Pvp
             ShowDestination("Entry");
         }
 
-        /// <summary>对局期间排队确认离场；无进行中的棋局则直接返回。</summary>
+        /// <summary>对局中按实际模式说明退场后果；无进行中的棋局可直接返回。</summary>
         [RevButtonClick("back")]
         private void Back()
         {
             if (Service.Core != null && Service.Core.Phase != GoPhase.Finished)
             {
-                Ask("leave", "确认离开当前对局并返回大厅？\n对手将收到离开提示。", ReturnHome, priority: 1);
+                string consequence = Service.Mode == PvpConnectionMode.Local
+                    ? "离开后，本地棋局将结束。"
+                    : "离开后，将退出当前房间。";
+                Ask("leave", "确认离开当前对局并返回大厅？\n" + consequence, ReturnHome, priority: 1);
             }
             else
             {

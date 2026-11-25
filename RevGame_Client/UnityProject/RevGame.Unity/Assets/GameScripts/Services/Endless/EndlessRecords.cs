@@ -27,6 +27,8 @@ namespace RevGame.Endless
     public sealed partial class EndlessService
     {
         private const string RecordFileName = "endless-records-v1.json";
+        /// <summary>本局最近一次战绩记账失败，重新记账或切换棋局后清除。</summary>
+        public bool RecordSavePending { get; private set; }
 
         public static EndlessRecordBook ReadRecords()
         {
@@ -53,6 +55,7 @@ namespace RevGame.Endless
             return book;
         }
 
+        /// <summary>按本局标识更新已结算成绩。重复记账合并同一记录，失败保留待保存状态。</summary>
         private void RecordProgress()
         {
             if (Isolated)
@@ -113,9 +116,11 @@ namespace RevGame.Endless
                         throw new InvalidDataException("本地纪录写入校验失败");
                     }
                 }, fromBackup);
+                RecordSavePending = false;
             }
             catch (Exception error)
             {
+                RecordSavePending = true;
                 Run.scoreStopped = true;
                 Run.error = "纪录保存失败，停止新增计分：" + error.Message;
             }
