@@ -34,13 +34,11 @@ namespace RevGame.Pvp
         private int _tutorialSequence;
         /// <summary>已经呈现的提子总数，随练习盘重新取基线。</summary>
         private int _tutorialCaptures;
-        /// <summary>最近呈现的反馈，变化时才重新拼接对白。</summary>
+        /// <summary>最近呈现的反馈。变化时才刷新左侧提示，不影响右侧的讲解。</summary>
         private string _tutorialFeedback = string.Empty;
-        /// <summary>最近呈现的建议格号，-1 表示当前无指定交叉点。</summary>
-        private int _tutorialPoint = -1;
         /// <summary>已经取过立绘和台词的课程编号，变更后切换表情。</summary>
         private string _tutorialCue = string.Empty;
-        /// <summary>当前课程的 Excel 原句。同一步中的操作反馈刷新不会推进台词轮换。</summary>
+        /// <summary>当前课已填入练习坐标的讲解。答题期间保持文字与换行一致。</summary>
         private string _tutorialLine = string.Empty;
         /// <summary>当前对白用于换行的实际宽度，安全区变化时重新计算。</summary>
         private float _tutorialBubbleWidth;
@@ -50,8 +48,6 @@ namespace RevGame.Pvp
         private float _tutorialFrameHeight;
         /// <summary>普通对局气泡的纵向锚点，退出教学时恢复。</summary>
         private Vector2 _regularBubbleVerticalAnchors;
-        /// <summary>普通对局立绘的顶部锚点，教学退出时恢复原来的站姿空间。</summary>
-        private float _regularPortraitTop;
         /// <summary>气泡与立绘在设计稿里的横向偏移差，入场用它清除残留动画位移。</summary>
         private float _regularBubbleOffsetFromPortrait;
         /// <summary>进入教学前的对白缩放模式，退场后还原。</summary>
@@ -60,6 +56,8 @@ namespace RevGame.Pvp
         private int _regularSpeechFontSize;
         /// <summary>普通对局的对白对齐方式，教学独立排版后恢复。</summary>
         private TextAnchor _regularSpeechAlignment;
+        /// <summary>普通对局的对白行距，课堂结束后还原。</summary>
+        private float _regularSpeechLineSpacing;
         /// <summary>当前课程已经展示数子效果，避免每次刷新重播。</summary>
         private bool _tutorialCountShown;
 
@@ -73,11 +71,11 @@ namespace RevGame.Pvp
             _normalControls = transform.Find("controls").gameObject;
             var bubble = (RectTransform)_bubble.transform;
             _regularBubbleVerticalAnchors = new Vector2(bubble.anchorMin.y, bubble.anchorMax.y);
-            _regularPortraitTop = _portrait.rectTransform.anchorMax.y;
             _regularBubbleOffsetFromPortrait = bubble.anchoredPosition.x - _portrait.rectTransform.anchoredPosition.x;
             _regularSpeechBestFit = _speech.resizeTextForBestFit;
             _regularSpeechFontSize = _speech.fontSize;
             _regularSpeechAlignment = _speech.alignment;
+            _regularSpeechLineSpacing = _speech.lineSpacing;
             RectTransform controls = PvpTutorialControls.Rect("tutorialControls", transform, 0, 0, 1, 1);
             _tutorialControls = controls.gameObject;
             // 按钮和开发态 GM 共用同一套处理，GM 另外读取返回值来判断是否被拒绝。
@@ -112,6 +110,7 @@ namespace RevGame.Pvp
                 bubble.anchoredPosition = new Vector2(_portrait.rectTransform.anchoredPosition.x + _regularBubbleOffsetFromPortrait, 0f);
                 _speech.resizeTextForBestFit = false;
                 _speech.alignment = TextAnchor.UpperLeft;
+                _speech.lineSpacing = 1f;
             }
 
             Set(_title, "围棋教学  " + tutorial.StepNumber + "/" + tutorial.StepCount);
@@ -119,10 +118,11 @@ namespace RevGame.Pvp
             Show(_tutorialConfirm.gameObject, tutorial.CanConfirmScore);
             bool lessonChanged = _tutorialCue != tutorial.Cue;
             RefreshTutorialDialogue(tutorial, lessonChanged);
+            RefreshTutorialFeedback(tutorial.Feedback);
             RefreshTutorialBoard(tutorial.Core, lessonChanged);
         }
 
-        /// <summary>读取 Excel 台词和表情。正文、反馈或可用几何变化时才重新换行。</summary>
+        /// <summary>读取 Excel 讲解和表情，换课或可用范围变化时才重新排版。</summary>
         private void RefreshTutorialDialogue(PvpTutorial tutorial, bool lessonChanged)
         {
             var rect = (RectTransform)_bubble.transform;
@@ -132,9 +132,7 @@ namespace RevGame.Pvp
                 return;
             }
             float top = TutorialStatusBottom(root) - 18f;
-            int point = tutorial.HintPoint;
-            string feedback = tutorial.Feedback;
-            if (!lessonChanged && feedback == _tutorialFeedback && point == _tutorialPoint &&
+            if (!lessonChanged &&
                 Mathf.Approximately(_tutorialBubbleTop, top) && Mathf.Approximately(_tutorialFrameHeight, root.rect.height)
                 && Mathf.Approximately(_tutorialBubbleWidth, rect.rect.width))
             {
@@ -145,25 +143,40 @@ namespace RevGame.Pvp
                 _tutorialAdvanceAt = -1;
                 var line = _yayaLines.Take(tutorial.Cue);
                 _tutorialCue = tutorial.Cue;
-                _tutorialLine = line.Line;
+                int point = tutorial.HintPoint;
+                string coord = point < 0 ? "" : PvpService.FormatPoint(point % GoCore.BoardSize, point / GoCore.BoardSize);
+                _tutorialLine = line.Line.Replace("{point}", coord);
                 _tutorialReadSeconds = line.Seconds;
                 _portrait.sprite = GetMatchPortrait(line.Expression);
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
                 LastCue = tutorial.Cue;
 #endif
             }
-            string coord = point < 0 ? "" : PvpService.FormatPoint(point % GoCore.BoardSize, point / GoCore.BoardSize);
-            string speech = _tutorialLine.Replace("{point}", coord);
-            if (!string.IsNullOrEmpty(feedback))
-            {
-                speech += "\n\n" + feedback;
-            }
-            _tutorialFeedback = feedback;
-            _tutorialPoint = point;
             _tutorialBubbleWidth = rect.rect.width;
             _tutorialBubbleTop = top;
             _tutorialFrameHeight = root.rect.height;
-            Set(_speech, LayoutTutorialDialogue(root, rect, top, speech));
+            Set(_speech, LayoutTutorialDialogue(root, rect, top, _tutorialLine));
+        }
+
+        /// <summary>作答反馈出现在棋盘左侧的既有提示栏，随练习状态更新或消失。</summary>
+        private void RefreshTutorialFeedback(string feedback)
+        {
+            if (feedback == _tutorialFeedback)
+            {
+                return;
+            }
+            _tutorialFeedback = feedback;
+            bool visible = !string.IsNullOrEmpty(feedback);
+            Show(_toast.gameObject, visible);
+            if (!visible)
+            {
+                return;
+            }
+
+            _toast.alpha = 1f;
+            var settings = _toastText.GetGenerationSettings(new Vector2(_toastText.rectTransform.rect.width, 0f));
+            settings.verticalOverflow = VerticalWrapMode.Overflow;
+            Set(_toastText, WrapTutorialPunctuation(feedback, _toastText.cachedTextGeneratorForLayout, settings));
         }
 
         /// <summary>读取顶部状态栏在面板设计坐标中的实际下边缘，气泡由这里向下排。</summary>
@@ -173,17 +186,17 @@ namespace RevGame.Pvp
             return root.InverseTransformPoint(status.TransformPoint(new Vector3(0f, status.rect.yMin, 0f))).y;
         }
 
-        /// <summary>为立绘留空间，优先按大字号布满正文，长反馈需要时才缩小字号。</summary>
+        /// <summary>在状态栏和大版立绘之间排讲解。默认 28 号，必要时微调字号，不改变立绘尺寸。</summary>
         private string LayoutTutorialDialogue(RectTransform root, RectTransform bubble, float top, string speech)
         {
-            const int MaxFont = 30;
+            const int MaxFont = 28;
             const int MinFont = 24;
             const float PortraitGap = 12f;
             float frameHeight = root.rect.height;
             RectTransform portrait = _portrait.rectTransform;
-            float portraitBottom = root.rect.yMin + portrait.anchorMin.y * frameHeight;
-            // 气泡上沿固定，最长也要保留至少四成设计高度给鸦鸦站姿。
-            float maxHeight = Mathf.Max(0f, top - portraitBottom - .40f * frameHeight - PortraitGap);
+            float portraitTop = root.InverseTransformPoint(portrait.TransformPoint(new Vector3(0f, portrait.rect.yMax, 0f))).y;
+            // 立绘沿用预制体的大版锚点。正文仅按两个现有边缘之间的空间排版。
+            float maxHeight = Mathf.Max(0f, top - portraitTop - PortraitGap);
             float padding = _speech.rectTransform.offsetMin.y - _speech.rectTransform.offsetMax.y;
             var settings = _speech.GetGenerationSettings(new Vector2(_speech.rectTransform.rect.width, 0f));
             settings.fontSize = MaxFont;
@@ -205,8 +218,6 @@ namespace RevGame.Pvp
             _speech.fontSize = settings.fontSize;
             float bottom = top - Mathf.Min(maxHeight, Mathf.Max(108f, height));
             SetVerticalAnchors(bubble, (bottom - root.rect.yMin) / frameHeight, (top - root.rect.yMin) / frameHeight);
-            SetVerticalAnchors(portrait, portrait.anchorMin.y,
-                Mathf.Min(_regularPortraitTop, (bottom - PortraitGap - root.rect.yMin) / frameHeight));
             return wrapped;
         }
 
@@ -293,7 +304,7 @@ namespace RevGame.Pvp
         }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
-        /// <summary>读已落屏的气泡和文字实际边界，用于校验状态栏间距、立绘避让和文字换行。</summary>
+        /// <summary>读取实际讲解、反馈与立绘的尺寸，供跨课、答题和安全区回归使用。</summary>
         internal object TutorialDialogueSnapshot()
         {
             if (!TutorialReady || !BubbleVisible)
@@ -306,6 +317,12 @@ namespace RevGame.Pvp
             float top = root.InverseTransformPoint(bubble.TransformPoint(new Vector3(0f, bubble.rect.yMax, 0f))).y;
             float bottom = root.InverseTransformPoint(bubble.TransformPoint(new Vector3(0f, bubble.rect.yMin, 0f))).y;
             float portraitTop = root.InverseTransformPoint(portrait.TransformPoint(new Vector3(0f, portrait.rect.yMax, 0f))).y;
+            bool feedbackVisible = _toast.gameObject.activeInHierarchy;
+            TextGenerator generator = _speech.cachedTextGeneratorForLayout;
+            var settings = _speech.GetGenerationSettings(new Vector2(_speech.rectTransform.rect.width, 0f));
+            settings.verticalOverflow = VerticalWrapMode.Overflow;
+            bool wrapsSafely = generator.Populate(_speech.text, settings) &&
+                TutorialPunctuationBreak(_speech.text, generator.lines) < 0;
             return new Dictionary<string, object>
             {
                 ["statusGap"] = TutorialStatusBottom(root) - top,
@@ -313,7 +330,15 @@ namespace RevGame.Pvp
                 ["fontSize"] = _speech.fontSize,
                 ["width"] = bubble.rect.width,
                 ["height"] = bubble.rect.height,
+                ["portraitWidth"] = portrait.rect.width,
+                ["portraitHeight"] = portrait.rect.height,
+                ["portraitSprite"] = _portrait.sprite != null ? _portrait.sprite.name : string.Empty,
+                ["instruction"] = _speech.text,
+                ["wrapsSafely"] = wrapsSafely,
                 ["speechFits"] = SpeechFits,
+                ["feedbackVisible"] = feedbackVisible,
+                ["feedbackText"] = feedbackVisible ? _toastText.text : string.Empty,
+                ["feedbackFits"] = !feedbackVisible || _toastText.preferredHeight <= _toastText.rectTransform.rect.height + 1f,
                 ["advancePending"] = _tutorialAdvanceAt >= 0
             };
         }
@@ -362,7 +387,7 @@ namespace RevGame.Pvp
                 core.Turn == GoSide.Black ? "轮到黑棋" : "轮到白棋");
         }
 
-        /// <summary>清除待推进时间，并恢复普通棋局的控件、对白和立绘尺寸。</summary>
+        /// <summary>清除答题提示和待推进计时，恢复普通对局的对白样式。</summary>
         private void HideTutorialHud()
         {
             if (_tutorialControls == null || !_tutorialControls.activeSelf)
@@ -375,10 +400,9 @@ namespace RevGame.Pvp
             _speech.resizeTextForBestFit = _regularSpeechBestFit;
             _speech.fontSize = _regularSpeechFontSize;
             _speech.alignment = _regularSpeechAlignment;
+            _speech.lineSpacing = _regularSpeechLineSpacing;
             SetVerticalAnchors((RectTransform)_bubble.transform, _regularBubbleVerticalAnchors.x, _regularBubbleVerticalAnchors.y);
-            SetVerticalAnchors(_portrait.rectTransform, _portrait.rectTransform.anchorMin.y, _regularPortraitTop);
             _tutorialFeedback = _tutorialCue = _tutorialLine = string.Empty;
-            _tutorialPoint = -1;
             ResetMatchFeedback();
         }
 
