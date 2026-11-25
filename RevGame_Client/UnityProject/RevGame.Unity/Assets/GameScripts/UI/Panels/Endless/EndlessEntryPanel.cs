@@ -1,6 +1,8 @@
 using System;
 using DG.Tweening;
 using RevGame.Flow;
+using RevGame.Services;
+using RevGame.UI;
 using Revolution;
 using UnityEngine;
 using UnityEngine.UI;
@@ -20,6 +22,12 @@ namespace RevGame.Endless
         private static readonly Color Selected = new Color(1f, .91f, .63f);
         [RevBind("best")] private Text _best;
         [RevBind("resume")] private GameObject _resume;
+        /// <summary>现有开始按钮也提供确认框的字体和按钮样式。</summary>
+        [RevBind("start")] private Button _start;
+        /// <summary>本次新开确认，取消或关闭入口时销毁，不接管续玩动作。</summary>
+        private GameConfirmation _replaceConfirmation;
+        /// <summary>隔离 Play 的新开和续玩都走内存槽，界面不会写玩家存档。</summary>
+        private static bool Isolated => RevServices.GetRequired<StoryProgress>().IsIsolated;
         /// <summary>三张棋阵卡的图片，被选中的染金。</summary>
         private readonly Image[] _formations = new Image[3];
         /// <summary>当前选中的棋阵序号。</summary>
@@ -43,11 +51,12 @@ namespace RevGame.Endless
                 _formations[i] = transform.Find("formation" + i).GetComponent<Image>();
             }
         }
+        /// <summary>打开时读出本地战绩；隔离会话使用其独立的内存续玩槽。</summary>
         protected override void OnOpen()
         {
             try
             {
-                _records = EndlessService.ReadRecords();
+                _records = Isolated ? null : EndlessService.ReadRecords();
             }
             catch (Exception error)
             {
@@ -67,7 +76,7 @@ namespace RevGame.Endless
                     _formations[i].color = color;
                 }
             }
-            bool canResume = EndlessService.HasSavedRun();
+            bool canResume = EndlessService.HasSavedRun(Isolated);
             if (_resume.activeSelf != canResume)
             {
                 _resume.SetActive(canResume);
@@ -127,13 +136,49 @@ namespace RevGame.Endless
         {
             Pick(2);
         }
-        [RevButtonClick("start")] private void StartRun()
+        /// <summary>准备新局。有续档时先显示旧局摘要，玩家确认后才提交新局请求。</summary>
+        [RevButtonClick("start")]
+        private void StartRun()
         {
-            RevServices.GetRequired<GameFlow>().EnterEndless(_formation, NormalDifficulty, Environment.TickCount);
+            if (_replaceConfirmation?.IsOpen == true)
+            {
+                return;
+            }
+            bool isolated = Isolated;
+            int formation = _formation;
+            if (!EndlessService.HasSavedRun(isolated))
+            {
+                BeginNewRun(formation, isolated);
+                return;
+            }
+
+            string previous = RevServices.GetRequired<EndlessService>().DescribeSavedRun(isolated);
+            _replaceConfirmation = new GameConfirmation(_start, "开始新的无尽挑战？",
+                previous + "\n新局成功进入战场后会替换这份续档。",
+                "开始新局", "取消", () => BeginNewRun(formation, isolated));
         }
-        [RevButtonClick("resume")] private void Resume()
+
+        /// <summary>把确认时选定的棋阵交给流程，旧槽由流程在新首屏就绪后替换。</summary>
+        private static void BeginNewRun(int formation, bool isolated)
         {
-            RevServices.GetRequired<GameFlow>().EnterEndless(0, NormalDifficulty, 1, true);
+            RevServices.GetRequired<GameFlow>().EnterEndless(formation, NormalDifficulty, Environment.TickCount, isolated: isolated);
+        }
+
+        /// <summary>从当前存档槽提交续玩，确认框开着时底层继续入口保持门禁。</summary>
+        [RevButtonClick("resume")]
+        private void Resume()
+        {
+            if (_replaceConfirmation?.IsOpen != true)
+            {
+                RevServices.GetRequired<GameFlow>().EnterEndless(0, NormalDifficulty, 1, resume: true, isolated: Isolated);
+            }
+        }
+
+        /// <summary>退出入口时释放确认框及其点击遮挡。</summary>
+        protected override void OnClose()
+        {
+            _replaceConfirmation?.Dispose();
+            _replaceConfirmation = null;
         }
         [RevButtonClick("close")] private void Back()
         {

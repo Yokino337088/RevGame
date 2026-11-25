@@ -73,16 +73,16 @@ namespace RevGame.Pvp
             RectTransform popup = plate.rectTransform;
             var heading = Instantiate(transform.Find("heading").GetComponent<Text>(), popup, false);
             PvpTutorialControls.SetRect(heading.rectTransform, .12f, .71f, .88f, .87f);
-            heading.text = "你是围棋高手吗？";
+            heading.text = "开始九路围棋";
             var subtitle = Instantiate(transform.Find("subtitle").GetComponent<Text>(), popup, false);
             PvpTutorialControls.SetRect(subtitle.rectTransform, .19f, .59f, .81f, .72f);
-            subtitle.text = "想先练几手？鸦鸦带你从第一颗棋子学起。";
+            subtitle.text = "可以先跟鸦鸦练几手，也可以直接选对战方式。";
             Button local = transform.Find("local").GetComponent<Button>();
             Button computer = transform.Find("computer").GetComponent<Button>();
             Button back = transform.Find("back").GetComponent<Button>();
-            PvpTutorialControls.Button("tutorialExpert", local, popup, "我是高手", .25f, .43f, .75f, .56f, ChooseExpert);
-            PvpTutorialControls.Button("tutorialBeginner", computer, popup, "我是菜鸡", .25f, .28f, .75f, .41f, OpenTutorial);
-            PvpTutorialControls.Button("tutorialLater", back, popup, "稍后再玩", .37f, .13f, .63f, .24f, Back);
+            PvpTutorialControls.Button("tutorialBeginner", computer, popup, "跟鸦鸦学", .25f, .43f, .75f, .56f, OpenTutorial);
+            PvpTutorialControls.Button("tutorialExpert", local, popup, "直接选对战方式", .25f, .28f, .75f, .41f, ChooseExpert);
+            PvpTutorialControls.Button("tutorialLater", back, popup, "返回大厅", .37f, .13f, .63f, .24f, Back);
             _tutorialReplay = PvpTutorialControls.Button("tutorialReplay", back, transform,
                 "围棋教学", .31f, .085f, .54f, .171f, OpenTutorial);
             _modeButtons = new[]
@@ -162,7 +162,7 @@ namespace RevGame.Pvp
             }
         }
 
-        /// <summary>关闭选择或返回大厅。稍后再玩时不提交教学选择。</summary>
+        /// <summary>关闭选择或返回大厅，关闭本次询问时保留未来的教学选择。</summary>
         [RevButtonClick("back")]
         private void Back()
         {

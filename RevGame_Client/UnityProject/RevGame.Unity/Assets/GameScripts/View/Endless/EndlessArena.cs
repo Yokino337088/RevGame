@@ -112,6 +112,10 @@ namespace RevGame.Endless
             get;
             private set;
         }
+        /// <summary>过场读取实际已绑定的棋子数量；首屏门禁完成前棋局保持静止。</summary>
+        internal int ReadyPieceCount => _pieces.Count;
+        /// <summary>外围棋子需要的图集已实际绑定纹理；随图集绑定版本变化失效。</summary>
+        internal bool IsPieceAtlasReady => _bindingVersion == GameSpriteAtlasService.BindingVersion;
         private static readonly Color[] Palette =
         {
             new Color(0.2f, 1, 1), new Color(1, 0.22f, 0.03f), new Color(1, 0.85f, 0.25f),

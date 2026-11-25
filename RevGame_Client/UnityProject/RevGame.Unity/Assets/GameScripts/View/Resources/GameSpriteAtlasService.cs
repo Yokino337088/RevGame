@@ -248,12 +248,13 @@ namespace RevGame.View
         /// <summary>
         /// 面板打开前的图集屏障。必须先等本屏所需的图集完成，再实例化UI；否则原Sprite已经被AB剥离像素，
         /// Image会暂时使用白纹理。不能把“预制体句柄已成功”当成“依赖的图集已经可渲染”。
-        /// 已驻留的图集也记入本次首屏依赖；服务持有实际资源租约，预热调用者只等待它。
+        /// 已驻留的图集也记入本次首屏依赖。每项确认可用后可向过场报告已完成比例。
         /// </summary>
-        public async RevTask PreloadAsync(string[] names, RevSceneHandoffResources trace = null)
+        public async RevTask PreloadAsync(string[] names, RevSceneHandoffResources trace = null, Action<float> progress = null)
         {
-            foreach (string name in names)
+            for (int i = 0; i < names.Length; i++)
             {
+                string name = names[i];
                 if (!_known.Contains(name))
                 {
                     throw new InvalidOperationException("未配置的图集：" + name);
@@ -272,7 +273,8 @@ namespace RevGame.View
                 {
                     throw new InvalidOperationException("图集未就绪：" + name);
                 }
-                // 即使AB已经缓存，也主动让出一帧，避免多张纹理上传挤在同一帧。
+                // 已确认的图集可以计入进度；即使缓存命中也让出一帧，供引擎与遮挡更新。
+                progress?.Invoke((i + 1f) / names.Length);
                 await RevTask.Yield();
             }
         }

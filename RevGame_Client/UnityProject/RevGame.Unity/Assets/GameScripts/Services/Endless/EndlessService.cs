@@ -101,8 +101,11 @@ namespace RevGame.Endless
             LastError = reason;
             return false;
         }
-        /// <summary>新局使用标准图鉴和自己的随机状态。seed=0也可用；内部避开xorshift的零锁死状态。</summary>
-        public void Begin(int formation, int difficulty, int seed, bool isolated = false)
+        /// <summary>
+        /// 新局使用标准图鉴和自己的随机状态，seed=0 同样可用。
+        /// 有过场的调用方延迟首存，准备后的新局由 CommitFirstSave 提交。
+        /// </summary>
+        public void Begin(int formation, int difficulty, int seed, bool isolated = false, bool deferFirstSave = false)
         {
             if (formation < 0 || formation > 2 || difficulty < 0 || difficulty > 2)
             {
@@ -110,6 +113,7 @@ namespace RevGame.Endless
             }
             Clear();
             Isolated = isolated;
+            _awaitingFirstSave = deferFirstSave;
             World = new EndlessEcsWorld(N("HordeLimit"));
             Run = new EndlessRun
             {
@@ -135,7 +139,10 @@ namespace RevGame.Endless
             Run.mains[formation] = 1;
             Run.minuteHeart = Run.heart;
             RefreshRules();
-            Save();
+            if (!deferFirstSave)
+            {
+                Save();
+            }
         }
         /// <summary>唯一随机入口。存档保存random而不只是seed，恢复后同一选择不能重抽。</summary>
         private int Next(int maximum)
@@ -488,6 +495,7 @@ namespace RevGame.Endless
             TickMilliseconds = MaxTickMilliseconds = 0;
             _saveAtStepEnd = false;
             _preserveRunBackup = false;
+            _awaitingFirstSave = false;
             _targets.Clear();
             _consumed.Clear();
             Run = null;

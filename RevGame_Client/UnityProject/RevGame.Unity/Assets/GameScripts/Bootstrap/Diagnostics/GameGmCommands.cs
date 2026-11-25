@@ -397,7 +397,7 @@ namespace RevGame.Bootstrap
                 RevGame.Bootstrap.GameGmCommands.RegisterCommand("RevGame/打开选关", "主界面进入选关", args => FlowResult(RevServices.GetRequired<GameFlow>().OpenLevels()));
                 RevGame.Bootstrap.GameGmCommands.RegisterCommand("RevGame/进入战斗", "进入已解锁章节", args => FlowResult(RevServices.GetRequired<GameFlow>().EnterBattle(args.Int(0, 1))), RevGMArg.Int("章节", 1));
                 RevGame.Bootstrap.GameGmCommands.RegisterCommand("RevGame/返回主界面", "退出当前域并返回主界面", args => FlowResult(RevServices.GetRequired<GameFlow>().ReturnHome()));
-                RevGame.Bootstrap.GameGmCommands.RegisterCommand("RevGame/过场故障", "仅开发验收：下一次过场在before-scene或after-scene失败，检查错误面板与回退", args =>
+                RevGame.Bootstrap.GameGmCommands.RegisterCommand("RevGame/过场故障", "仅开发验收：before-scene/after-scene 切场故障，或隔离大厅的 endless-before-save 故障", args =>
                 {
                     if (!RevServices.GetRequired<GameFlow>().ArmDevelopmentFailure(args.Str(0, "before-scene")))
                     {

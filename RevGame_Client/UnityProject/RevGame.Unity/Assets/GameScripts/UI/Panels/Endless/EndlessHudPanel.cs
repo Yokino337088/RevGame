@@ -175,8 +175,8 @@ namespace RevGame.Endless
             ResetAnimationState();
             RevTimer.Every(0.2f, RefreshView, owner: this);
         }
-        /// <summary>过场屏障等真实池对象与全部棋子可画；退出/失败时释放迟到的异步租约。</summary>
-        public async RevTask PrepareAsync()
+        /// <summary>等待棋盘、图集、棋心和棋子可画，向过场报告实际完成比例。迟到的借用仍归还对象池。</summary>
+        public async RevTask PrepareAsync(Action<float> progress)
         {
             int version = _version;
             bool returned = false;
@@ -196,9 +196,17 @@ namespace RevGame.Endless
                 returned = true;
             }
             );
+            int pieces = Service.Units.Count;
             float deadline = Time.realtimeSinceStartup + 30;
             while (_opening && (!returned || (_arena != null && !_arena.Ready && string.IsNullOrEmpty(_arena.Error))))
             {
+                if (_arena != null)
+                {
+                    // 部分工作可并行，逐项计入实际完成的绘制资源和已绑定棋子。
+                    float value = .36f + (_arena.IsPieceAtlasReady ? .15f : 0f) + (_arena.HeartReady ? .10f : 0f);
+                    value += .34f * (pieces == 0 ? 1f : _arena.ReadyPieceCount / (float)pieces);
+                    progress?.Invoke(value);
+                }
                 if (Time.realtimeSinceStartup > deadline)
                 {
                     throw new InvalidOperationException("无尽棋盘资源就绪超时");
@@ -210,6 +218,8 @@ namespace RevGame.Endless
                 throw new InvalidOperationException(_arena == null ? "无尽棋盘预制体加载失败" : _arena.Error);
             }
             RefreshView();
+            progress?.Invoke(1f);
+            await RevTask.Yield();
         }
         /// <summary>只在内容变化时才写文字：给 Text 赋值会让 Canvas 重建，能省则省。</summary>
         private static void Set(Text text, string value)

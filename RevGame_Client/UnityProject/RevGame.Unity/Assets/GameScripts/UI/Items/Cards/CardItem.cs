@@ -9,11 +9,13 @@ using RevGame.Core;
 using RevGame.Data;
 using RevGame.View;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace RevGame.UI
 {
-    public sealed class CardItem : MonoBehaviour
+    /// <summary>复用准备阶段的真实手牌槽，显示当前牌、操作许可和动画。</summary>
+    public sealed class CardItem : MonoBehaviour, IPointerDownHandler, IPointerClickHandler
     {
         [SerializeField]
         private Button button;
@@ -38,6 +40,12 @@ namespace RevGame.UI
         // 数据已在服务里更新，但正面需等转到 90 度才换；期间普通刷新只更新这份待显示内容。
         private HandCard _pendingCard;
         private int _pendingSelection;
+        /// <summary>当前槽位的业务选择许可，重置回合时恢复。翻牌期间仍需等待动画结束。</summary>
+        private bool _selectionAllowed = true;
+        /// <summary>拒绝触摸的反馈入口，由准备面板持有；普通手牌和回合重置时为空。</summary>
+        private Action<int> _rejectedClick;
+        /// <summary>本次触摸按下时是否受限。有效点击推进教学后，不能把同一次点击重新判为拒绝。</summary>
+        private bool _pressedWhileBlocked;
         private Vector2 _lastLayoutSize;
         /// <summary>卡牌默认保留预制体内的肖像和文字布局，不因运行时槽位尺寸变化偷偷重排。</summary>
         [Tooltip("旧版内部重排（默认关闭）。通常应直接在预制体里设置锚点和文字布局。")]
@@ -121,10 +129,11 @@ namespace RevGame.UI
             {
                 _flip = null;
                 _pendingCard = null;
-                button.interactable = true;
+                button.interactable = _selectionAllowed;
                 completed?.Invoke();
             });
         }
+        /// <summary>停止旧翻牌并恢复正面。按钮回到当前业务许可，避免停动画时解开教学门禁。</summary>
         private void StopFlip()
         {
             StopPress();
@@ -134,7 +143,7 @@ namespace RevGame.UI
             previous?.Kill(false);
             transform.localRotation = Quaternion.identity;
             transform.localScale = Vector3.one;
-            button.interactable = true;
+            button.interactable = _selectionAllowed;
             _pendingCard = null;
         }
         private void OnDisable()
@@ -189,8 +198,36 @@ namespace RevGame.UI
         /// <summary>回合交接主动复位；即使旧翻牌被暂停，也不允许旧内容覆盖新回合。</summary>
         public void ResetForRound()
         {
+            _selectionAllowed = true;
+            _rejectedClick = null;
+            _pressedWhileBlocked = false;
             StopFlip();
             CardId = 0;
+        }
+
+        /// <summary>将准备面板提供的操作许可同步到真实按钮；禁用槽位保留轻触提示。</summary>
+        internal void SetSelectionAllowed(bool allowed, Action<int> rejectedClick)
+        {
+            _selectionAllowed = allowed;
+            _rejectedClick = rejectedClick;
+            button.interactable = allowed && !IsFlipping;
+        }
+
+        /// <summary>记录按下时的许可，即使按钮先处理抬手并换了教学步骤，也能识别本次点击。</summary>
+        void IPointerDownHandler.OnPointerDown(PointerEventData eventData)
+        {
+            _pressedWhileBlocked = eventData.button == PointerEventData.InputButton.Left && !_selectionAllowed && !IsFlipping;
+        }
+
+        /// <summary>禁用牌的点击仅转发提示，有效牌继续由 PreparePanel 的正式按钮事件处理。</summary>
+        void IPointerClickHandler.OnPointerClick(PointerEventData eventData)
+        {
+            bool rejected = _pressedWhileBlocked;
+            _pressedWhileBlocked = false;
+            if (rejected && !_selectionAllowed && CardId != 0 && !IsFlipping)
+            {
+                _rejectedClick?.Invoke(CardId);
+            }
         }
         /// <summary>点击由 PreparePanel 的反射标注接收；卡片只保留表现动画，不自行注册控件事件。</summary>
         public void PlayClickFeedback()

@@ -11,7 +11,7 @@ namespace RevGame.Endless
 {
     public sealed partial class EndlessService
     {
-        /// <summary>使用独立临时目录验证正式落盘、试盘恢复与战绩读取，不触碰玩家文件。</summary>
+        /// <summary>用独立临时目录验证候选局写入门禁、正式落盘、试盘恢复与战绩读取。</summary>
         public static object CheckSaveRecovery()
         {
             string directory = Path.Combine(Path.GetTempPath(), "RevGame-Endless-" + Guid.NewGuid().ToString("N"));
@@ -30,6 +30,16 @@ namespace RevGame.Endless
                 Check(source.Save(), "第二次保存生成上一份备份", checks);
                 string savedBackup = File.ReadAllText(backup);
                 Check(restored.Restore(false) && restored.Run.score == 120, "主档有效时恢复最新棋局", checks);
+
+                // 模拟首屏未就绪时的后台写入，再丢弃候选。主档和备份都应保留原始字节。
+                string savedMain = File.ReadAllText(path);
+                using (var candidate = new EndlessService(directory))
+                {
+                    candidate.Begin(1, 0, 1103, deferFirstSave: true);
+                    Check(!candidate.Save(), "无尽候选局在首屏交割前拒绝写入", checks);
+                }
+                Check(File.ReadAllText(path) == savedMain && File.ReadAllText(backup) == savedBackup,
+                    "放弃候选局时旧续档和备份均保留", checks);
 
                 File.WriteAllText(path, "{}");
                 Check(restored.Restore(false) && restored.Run.score == 80 && restored.Run.seed == 1101
@@ -77,6 +87,13 @@ namespace RevGame.Endless
                 Check(restored.Restore(false) && restored.Run.phase == EndlessPhase.Result
                     && restored.Run.bankedScore == 90 && File.ReadAllText(backup) == legacyBackup,
                     "旧版备份安全结算可识别收益并保留原档", checks);
+
+                // 成功交付后的提交要替换同一续玩槽；无需等待下一次自动保存。
+                using var replacement = new EndlessService(directory);
+                replacement.Begin(2, 0, 1104, deferFirstSave: true);
+                replacement.CommitFirstSave();
+                Check(restored.Restore(false) && restored.Run.runId == replacement.Run.runId && restored.Run.formation == 2,
+                    "首屏成功后的提交可继续到新局", checks);
                 return new Dictionary<string, object> { ["success"] = true, ["passed"] = checks.Count, ["checks"] = checks };
             }
             finally

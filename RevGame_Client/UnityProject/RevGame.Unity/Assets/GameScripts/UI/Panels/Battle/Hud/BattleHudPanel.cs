@@ -311,13 +311,17 @@ namespace RevGame.UI
             _hudShowsEnemy = showEnemy;
         }
 
+        /// <summary>提交退场确认，玩家确认后才会交给 GameFlow 切回大厅。</summary>
         [RevButtonClick("btnHome")]
         private void OnHome()
         {
-            RevServices.GetRequired<Flow.GameFlow>().ReturnHome();
+            RevServices.GetRequired<Flow.GameFlow>().RequestBattleExit(_btnHome);
         }
+
+        /// <summary>关闭本轮 HUD，清除其退场提示、提示池和界面事件。</summary>
         protected override void OnClose()
         {
+            RevServices.Get<Flow.GameFlow>()?.DismissBattleExitConfirmation();
             CloseScore();
             RevTimer.CancelAllOf(this);
             _noticeClosed = true;

@@ -125,6 +125,7 @@ namespace RevGame.Flow
                 LastError = "当前已经离开战斗";
                 return false;
             }
+            DismissBattleExitConfirmation();
             CancelStory();
             CancelBossVictory();
             CancelBossIntro();
@@ -199,6 +200,7 @@ namespace RevGame.Flow
         public void Dispose()
         {
             _disposed = true;
+            DismissBattleExitConfirmation();
             _flowCancellation.Cancel();
             _galOpening?.Cancel();
             CloseOwnedGalPanel();

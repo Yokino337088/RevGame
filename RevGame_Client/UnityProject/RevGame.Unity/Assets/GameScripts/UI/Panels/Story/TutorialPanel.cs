@@ -83,7 +83,7 @@ namespace RevGame.UI
             // 动画由共享Shader的时间驱动，不克隆材质，也不对原按钮做缩放或透明度动画。
             RevTimer.Every(0.1f, RefreshView, owner: this);
         }
-        /// <summary>读取当前教学状态和目标，刷新提示并保留真实棋盘的下层输入。</summary>
+        /// <summary>读取当前教学状态和目标。点错时换成当前操作提示，并保留真实目标高亮。</summary>
         protected override void OnRefreshView()
         {
             var lesson = RevLogic.Get<TutorialLogic>();
@@ -94,7 +94,9 @@ namespace RevGame.UI
                 return;
             }
             var flow = RevServices.GetRequired<GameFlow>();
-            _instruction.text = flow.StoryContent.Find("lesson").Lines[(int)lesson.Step].Text;
+            _instruction.text = string.IsNullOrEmpty(lesson.LastError)
+                ? flow.StoryContent.Find("lesson").Lines[(int)lesson.Step].Text
+                : lesson.LastError;
             _progress.text = "鸦鸦的教学  " + ((int)lesson.Step + 1) + " / 5";
             _liberty.text = "敌气 " + lesson.EnemyLiberties + (lesson.EnemyLocked ? " · 封锁" : "");
             // 查询当前可见控件的实际边界，利用最大空隙放大提示；不覆盖手工调整过的真实UI布局。

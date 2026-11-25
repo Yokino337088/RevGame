@@ -24,6 +24,8 @@ namespace RevGame.Endless
         private readonly string _saveDirectory;
         // 从备份恢复后的首次写档必须保留这份可用备份。
         private bool _preserveRunBackup;
+        /// <summary>新局首屏还在交割时冻结续档槽写入，直到本次流程提交或释放候选。</summary>
+        private bool _awaitingFirstSave;
         private string SavePath => Path.Combine(_saveDirectory, RunFileName);
 
         public EndlessService() : this(Application.persistentDataPath)
@@ -55,9 +57,45 @@ namespace RevGame.Endless
             _isolatedSave = null;
         }
 
-        /// <summary>先保存完整一致性状态到临时文件并校验，再原子替换；写失败冻结计分并保留旧档。</summary>
+        /// <summary>用同一个续玩槽只读展示棋阵、时长和击破数。旧档无法读出时仍提示存在进度。</summary>
+        public string DescribeSavedRun(bool isolated)
+        {
+            try
+            {
+                EndlessRun saved = isolated ? Decode(_isolatedSave) : RevFileSave.Read(SavePath, Decode, out _);
+                string formation = saved.formation switch
+                {
+                    0 => "弩雨阵",
+                    1 => "炎环阵",
+                    _ => "守眼阵"
+                };
+                TimeSpan elapsed = TimeSpan.FromSeconds(Math.Max(0d, saved.seconds));
+                return $"原续档 · {formation} · {(int)elapsed.TotalMinutes:00}:{elapsed.Seconds:00} · 击破 {saved.kills + saved.invaderKills}";
+            }
+            catch (Exception error)
+            {
+                RevLog.Warn("无法读取旧续档摘要：" + error.Message, "RevGame");
+                return "当前已有一份无尽续档。";
+            }
+        }
+
+        /// <summary>新局首屏已交付后解除写入门禁，并使用原子保存替换当前续玩槽。</summary>
+        public void CommitFirstSave()
+        {
+            if (_awaitingFirstSave)
+            {
+                _awaitingFirstSave = false;
+                Save();
+            }
+        }
+
+        /// <summary>原子保存已交付的无尽局。加载候选禁止写入；写失败保留旧档并冻结计分。</summary>
         public bool Save()
         {
+            if (_awaitingFirstSave)
+            {
+                return false;
+            }
             if (Run == null)
             {
                 return Reject("没有可保存的无尽局");

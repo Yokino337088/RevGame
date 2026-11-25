@@ -248,7 +248,7 @@ namespace RevGame.Pvp
                     : HasGame && service.Connected ? service.Status : service.Connected ? "连接成功 · 可以开始匹配"
                     : !online ? "连接服务器，与在线棋友相遇" : service.Status;
                 int seconds = (int)service.QueueElapsedSeconds;
-                QueueText = service.Queued ? "已匹配  " + (seconds / 60).ToString("00") + ":" + (seconds % 60).ToString("00") : "准备好后开始匹配";
+                QueueText = service.Queued ? "已等待  " + (seconds / 60).ToString("00") + ":" + (seconds % 60).ToString("00") : "准备好后开始匹配";
                 MatchLabel = service.Queued ? "取消匹配" : "开始匹配";
                 ModeLabel = service.Config?.rookie != false ? "新手场 · 二次确认落子" : "进阶场 · 直接落子";
                 HintLabel = service.HintPending ? "鸦鸦思考中" : "落子建议";

@@ -36,7 +36,7 @@ namespace RevGame.Flow
         /// <summary>大厅只在九路教学尚未明确跳过或完成时询问玩家。</summary>
         public bool ShouldPromptPvpTutorial => !RevServices.GetRequired<StoryProgress>().PvpTutorialResolved;
 
-        /// <summary>玩家主动选择「我是高手」后提交选择，普通模式由原菜单启动。</summary>
+        /// <summary>玩家选择直接进入对战方式时记录选择，普通模式由原菜单启动。</summary>
         public void SkipPvpTutorial()
         {
             RevServices.GetRequired<StoryProgress>().ResolvePvpTutorial();

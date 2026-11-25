@@ -3,6 +3,7 @@
 // 装配、显示、操作分开：OnBindView 接线，OnRefreshView 读服务画屏，点击只向 Logic 提交请求。
 // 服务统一扣牌，避免「界面扣了牌，但棋盘没有落子」的两份数据不一致。
 // ============================================================
+using System;
 using RevGame.Core;
 using RevGame.Data;
 using RevGame.Flow;
@@ -17,6 +18,10 @@ namespace RevGame.UI
     {
         [RevBind]
         private Text _hintText;
+        /// <summary>普通提示的底板，教学时与普通提示一起隐藏。</summary>
+        private UnityEngine.GameObject _hintPlate;
+        /// <summary>复用的禁用手牌点击反馈，和准备面板同寿命。</summary>
+        private Action<int> _rejectedTutorialCard;
         [RevBind]
         private Button _btnReady;
         [RevBind]
@@ -64,6 +69,8 @@ namespace RevGame.UI
                 topNodes: new[] { "hintPlate", "hintText" },
                 bottomNodes: new[] { "btnReady", "btnRefresh", "btnEye", "btnSkip" });
             _cards = GetComponentsInChildren<CardItem>(true);
+            _hintPlate = transform.Find("hintPlate")?.gameObject;
+            _rejectedTutorialCard = OnRejectedTutorialCard;
             _readyLabel = _btnReady.GetComponentInChildren<Text>(true);
             _refreshLabel = _btnRefresh.GetComponentInChildren<Text>(true);
             _eyeLabel = _btnEye.GetComponentInChildren<Text>(true);
@@ -106,7 +113,23 @@ namespace RevGame.UI
         protected override void OnRefreshView()
         {
             IBattleService battle = RevServices.GetRequired<IBattleService>();
-            RefreshHint(battle);
+            var lesson = RevLogic.Get<TutorialLogic>();
+            bool guided = lesson != null && lesson.Active;
+            if (_hintText.gameObject.activeSelf == guided)
+            {
+                _hintText.gameObject.SetActive(!guided);
+            }
+            if (_hintPlate != null && _hintPlate.activeSelf == guided)
+            {
+                _hintPlate.SetActive(!guided);
+            }
+            if (!guided)
+            {
+                RefreshHint(battle);
+            }
+
+            // 教学浮层和真实按钮共用同一张可用手牌，点其他牌只显示本步提示。
+            int tutorialCard = guided ? lesson.SelectableCardId : 0;
             for (int i = 0; i < _cards.Length; i++)
             {
                 var card = i < battle.Hand.Count ? battle.Hand[i] : null;
@@ -119,9 +142,9 @@ namespace RevGame.UI
                 {
                     _cards[i].Show(card, battle.SelectedCardId);
                 }
+                _cards[i].SetSelectionAllowed(!guided || (card != null && card.Id == tutorialCard),
+                    guided ? _rejectedTutorialCard : null);
             }
-            var lesson = RevLogic.Get<TutorialLogic>();
-            bool guided = lesson != null && lesson.Active;
             bool canGuideReady = !guided || lesson.Step == TutorialStep.Ready;
             bool flipping = AnyCardFlipping;
             _btnReady.interactable = canGuideReady && battle.Phase == GamePhase.Prepare && battle.PreparationGranted && !flipping;
@@ -152,7 +175,13 @@ namespace RevGame.UI
             }
         }
 
-        /// <summary>按业务输入构造准备提示，眼位石模式直接显示自己的操作说明。</summary>
+        /// <summary>触摸禁用的教学牌时复用选牌门禁，由教学逻辑显示当前操作提示。</summary>
+        private void OnRejectedTutorialCard(int id)
+        {
+            RevLogic.Get<BattleLogic>()?.SelectCard(id);
+        }
+
+        /// <summary>按业务输入构造普通准备提示，眼位石模式直接显示自己的操作说明。</summary>
         private void RefreshHint(IBattleService battle)
         {
             bool eye = battle.EyeStoneSelected;

@@ -2,6 +2,7 @@
 // LevelSelectPanel.cs —— 六章选关。
 // 每个按钮固定提交章号；是否解锁由服务判定，禁用外观只是提示，不能替代规则校验。
 // ============================================================
+using RevGame.Data;
 using RevGame.Flow;
 using RevGame.Services;
 using Revolution;
@@ -36,7 +37,7 @@ namespace RevGame.UI
                 _chapters[i].interactable = i < unlocked;
                 _chapters[i].GetComponentInChildren<Text>().text = "第 " + (i + 1) + " 章\n" + (i < unlocked ? "开始挑战" : "通关前章解锁");
             }
-            _hint.text = "每章 10 个普通回合 + 1 个 Boss 回合\n同章保留残局，失败重开本章";
+            _hint.text = $"每章 {Balance.NormalRoundsPerChapter} 个普通回合 + 1 个 Boss 回合\n本次挑战内回合间继承棋盘，离场或失败需重开本章。";
         }
         private void OnChapter(int chapter)
         {

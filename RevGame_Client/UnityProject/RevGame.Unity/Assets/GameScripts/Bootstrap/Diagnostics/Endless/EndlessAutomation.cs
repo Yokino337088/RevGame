@@ -247,6 +247,7 @@ namespace RevGame.Endless
             {
                 ["screen"] = flow.Screen.ToString(), ["transitioning"] = flow.IsTransitioning,
                 ["error"] = flow.LastError, ["phase"] = r == null ? "None" : r.phase.ToString(),
+                ["runId"] = r?.runId ?? "", ["formation"] = r?.formation ?? -1,
                 ["seconds"] = r?.seconds ?? 0, ["heart"] = r?.heart ?? 0, ["score"] = r?.score ?? 0,
                 ["players"] = s.PlayerCount(), ["hand"] = r?.hand.Count ?? 0, ["horde"] = r == null ? 0 : s.HordeCount(),
                 ["level"] = r?.level ?? 0, ["kills"] = r?.kills ?? 0, ["circuit"] = r?.circuit ?? 0,

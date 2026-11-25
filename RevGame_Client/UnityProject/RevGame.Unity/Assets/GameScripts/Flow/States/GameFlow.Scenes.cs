@@ -10,6 +10,7 @@ using RevGame.UI;
 using RevGame.View;
 using Revolution;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace RevGame.Flow
 {
@@ -172,10 +173,34 @@ namespace RevGame.Flow
                     return true;
                 }
 #endif
-                return IsBossIntroPlaying || IsBossVictoryPlaying || IsAudioSettingsVisible || IsStoryPlaying || IsGalPlaying || IsTransitioning || _loading != null
+                return IsBossIntroPlaying || IsBossVictoryPlaying || IsAudioSettingsVisible || IsStoryPlaying || IsGalPlaying
+                    || IsTransitioning || _loading != null || _battleExitConfirmation?.IsOpen == true
                     || (Screen == GameScreen.Battle && _activePresentation != null && !_activePresentation.IsChapterBackgroundReady);
             }
         }
+        /// <summary>远征退场提示由流程持有，显示时暂停棋局输入与推进，确认或关闭后解除。</summary>
+        private GameConfirmation _battleExitConfirmation;
+
+        /// <summary>HUD 请求确认当前章节退场；重复请求沿用已打开的确认框。</summary>
+        internal void RequestBattleExit(Button style)
+        {
+            if (Screen != GameScreen.Battle || IsGameplayBlocked)
+            {
+                return;
+            }
+            var battle = RevServices.GetRequired<IBattleService>();
+            _battleExitConfirmation = new GameConfirmation(style, "返回主界面？",
+                $"第 {battle.Chapter} 章 · 第 {battle.Round} 回合\n返回大厅后，本章将从第 1 回合重新开始。",
+                "返回大厅", "继续挑战", () => ReturnHome());
+        }
+
+        /// <summary>关闭当前远征退场提示。域切换或退出 Play 的清理不提交返回请求。</summary>
+        internal void DismissBattleExitConfirmation()
+        {
+            _battleExitConfirmation?.Dispose();
+            _battleExitConfirmation = null;
+        }
+
         /// <summary>当前接管业务画面的场景表现对象；场景交接前按旧状态使用。</summary>
         private GamePresentation _activePresentation;
         /// <summary>本次交接已完成的分段工作量，范围 0~1，供诊断和面板读取。</summary>
@@ -202,10 +227,12 @@ namespace RevGame.Flow
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
         /// <summary>验收专用的一次性故障；正式包不存在此入口，不修改真实AB文件来制造失败。</summary>
         private string _developmentFault;
-        /// <summary>仅在当前无交接时预约一个真实切场边界上的故障，注入一次后消耗。</summary>
+        /// <summary>预约一次真实过场故障。无尽写档前的故障只允许在隔离大厅中使用。</summary>
         public bool ArmDevelopmentFailure(string stage)
         {
-            if (IsTransitioning || (stage != "before-scene" && stage != "after-scene"))
+            bool endless = stage == "endless-before-save" && Screen == GameScreen.Home
+                && RevServices.GetRequired<StoryProgress>().IsIsolated;
+            if (IsTransitioning || (!endless && stage != "before-scene" && stage != "after-scene"))
             {
                 return false;
             }
