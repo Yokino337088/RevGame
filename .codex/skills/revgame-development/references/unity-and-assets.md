@@ -51,7 +51,7 @@ $taskPython = (& py -3 -c "import sys; print(sys.executable)")
 
 - 先查看原 Prefab 和 `GameRes/Art/UI` / `RevGame_Client/美术` 的已有原画，复用对应用途的 Sprite。新底板/按钮必须有真实 Sprite，禁止用无 Sprite 的白膜顶替。
 - 正确导入 Sprite 与裁切：border、pivot、PPU、透明边、九宫格适配一起核对；适用底板用 `Image.Type.Sliced`。无尽同类装配参考 [GameEndlessBuild.Theme.cs](../../../../RevGame_Client/UnityProject/RevGame.Unity/Assets/Editor/RevGame/Endless/GameEndlessBuild.Theme.cs) 的导入/映射/白膜检查。
-- 布局以 `GameBattleLayout` 的 1920×1080 为设计尺子；安全区保护交互，背景覆盖视口。图片的 Raycast Target 与按钮职责匹配，检查遮罩/排序、超长中文和多个屏幕比例。
+- 新建或修改 UI 预制体和面板时，默认按 [多画幅自适应布局](../../revolution-framework/references/ui-and-layering.md#多画幅自适应布局) 实现和验收。RevGame 以 `GameBattleLayout` 的 1920×1080 为设计框，安全区保护交互，背景覆盖视口。核对图片的 Raycast Target 与按钮职责、遮罩排序、长中文和实际点按。
 - 检查 Sprite 引用与**实际图集像素绑定**。懒创建 `GameSpriteAtlasService` 可能错过首次 `atlasRequested`；继续由 Bootstrap 早装配服务，不能通过预载所有图集制造首次不白的假象。
 - 技能默认保留无尽古希腊神殿原画与不透明象牙金棋盘。用户明确重制主题时按新需求替换相应资源与配方，不把历史素材选择当永久禁止修改。
 

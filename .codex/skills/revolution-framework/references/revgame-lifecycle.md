@@ -28,6 +28,7 @@
 - 面板连接数据和输入，真实命令交领域服务。读 `GameScripts/UI/Panels/Pvp/PvpPanel.cs` 对照房间快照与按钮字段，读 `GameScripts/UI/Panels/Pvp/PvpPanel.Navigation.cs` 观察页面交割与遮挡。每轮面板关闭时收走监听、确认、动画和临时租约。
 - 把绑到哪些控件、快照字段、操作权、异步是否在途作为四件事。批量列表使用稳定数据键和行绑定版本，旧行回包按旧代次作废。对用户真正可操作的边界，用 EventSystem 走同一按钮或棋盘输入。
 - 对照 `GameScripts/UI/Layout/GameMobileLayout.cs`、`GameScripts/Services/Progression/GameDisplaySettings.cs`，分别观察安全区、棋盘相机投影、实际点击与窗口恢复。编辑器模拟器能验布局，真机档位用目标设备覆盖；比例、锚点和平台支持由项目声明。
+- 九路围棋、远征、无尽和决斗把棋盘设计框与安全区边缘控件分开。面板在绑定时声明要定位的节点，`GameBattleLayout` 计算偏移，`GameMobileLayout` 按轴重算，教学讲解靠近棋盘和立绘。4:3 平板模拟同一课的状态栏距顶从 203.52 像素降到 11.52 像素，退出键距底从 226.56 像素降到 34.56 像素。项目验收覆盖八组几何组合、实际桌面、平板与宽屏模拟。 [RevGame 适配提交](https://github.com/Yokino337088/RevGame/commit/7b1426de3b18c2f1306eadc53d6f4377613ed70d) · [屏幕分辨率实测](https://github.com/Yokino337088/RevGame/wiki/%E5%B1%8F%E5%B9%95%E5%88%86%E8%BE%A8%E7%8E%87%E5%88%86%E8%AE%BA)
 
 ## 存档设置与复位
 

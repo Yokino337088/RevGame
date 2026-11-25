@@ -4,9 +4,8 @@
 
 ## 画幅、布局和触屏
 
-- 把 1920×1080 当作设计坐标。窗口和相机按设备实际画幅工作，背景等比 cover 铺满。棋盘格、人物和 UI 保持比例，避免把整个窗口压成 16:9 或横向拉伸。若设备仍有黑边，分别读回实际窗口、合并后的启动 Activity、宽高比限制与 resizeable 元数据，再检查 Unity 相机 viewport。清除构建副本里已经移除的旧原生 Activity 和 manifest 覆盖。
-- 把 UI 划成全屏视觉、普通安全区内容、棋盘侧栏与场景独立 HUD。遮罩、剧情背景及点击拦截层占全屏；正文、按钮和跳过入口位于安全区。棋盘 HUD 以同一套棋盘屏幕投影和 SafeArea 为输入，保留棋盘设计比例，把两侧交互控件扩展到可用空间，再对最窄安全画幅做约束。独立 HUD 单独验证屏幕角落的按钮与血条，别假设它会继承 RevUI 面板适配。
-- 由预制体锚点、CanvasScaler 和原始偏移映射出新布局，在画幅、安全区或相机几何变化时重算。重复重排从原始坐标开始。UI 动画和页面重入后重验边界，读取实际点击命中对象及业务结果。
+- UI 预制体、面板、棋盘与独立 HUD 默认采用 [多画幅自适应布局](ui-and-layering.md#多画幅自适应布局)。场景自己的 Canvas 单独设置安全边缘，核对角落按钮与血条的实际站位。
+- 若设备仍有黑边，分别读回实际窗口、合并后的启动 Activity、宽高比限制与 resizeable 元数据，再检查 Unity 相机 viewport。清除构建副本里已经移除的旧原生 Activity 和 manifest 覆盖。
 - Device Simulator 使用 UnityEngine.Device 的屏幕和设备视图。平台存储、原生插件及图形能力取实际运行平台。基线对照普通 16:9 Game 与宽屏有缺口设备，验安全区、棋盘与按钮交叠、长对白、实际点按；真机再验系统栏、横屏方向、触点与相机。见 [Unity Screen.safeArea](https://docs.unity3d.com/2022.3/Documentation/ScriptReference/Screen-safeArea.html)。
 
 ## AB、动画首帧与异步场景

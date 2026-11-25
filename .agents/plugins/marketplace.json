@@ -10,7 +10,7 @@
         "source": "git-subdir",
         "url": "https://github.com/Yokino337088/Revolution.git",
         "path": "./Plugin/revolution",
-        "sha": "96cba80dab17e92c6416294a1d8ade7ad4b0eed1"
+        "sha": "f88e091f81afda44f0293b6aa867f6287e34c803"
       },
       "policy": {
         "installation": "INSTALLED_BY_DEFAULT",
@@ -24,7 +24,7 @@
         "source": "git-subdir",
         "url": "https://github.com/Yokino337088/Revolution.git",
         "path": "./Plugin/revgame",
-        "sha": "96cba80dab17e92c6416294a1d8ade7ad4b0eed1"
+        "sha": "f88e091f81afda44f0293b6aa867f6287e34c803"
       },
       "policy": {
         "installation": "INSTALLED_BY_DEFAULT",
