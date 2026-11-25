@@ -5,7 +5,7 @@
 ## 画幅、布局和触屏
 
 - UI 预制体、面板、棋盘与独立 HUD 默认采用 [多画幅自适应布局](ui-and-layering.md#多画幅自适应布局)。场景自己的 Canvas 单独设置安全边缘，核对角落按钮与血条的实际站位。
-- 若设备仍有黑边，分别读回实际窗口、合并后的启动 Activity、宽高比限制与 resizeable 元数据，再检查 Unity 相机 viewport。清除构建副本里已经移除的旧原生 Activity 和 manifest 覆盖。
+- 若设备有黑边，先比较实际窗口、Unity 相机视口和原画落屏范围，确认背景策略是否留边。窗口本身受限时，核对合并后的启动 Activity、宽高比限制与 resizeable 元数据，清除构建副本里残留的旧原生 Activity 和 manifest 覆盖。
 - Device Simulator 使用 UnityEngine.Device 的屏幕和设备视图。平台存储、原生插件及图形能力取实际运行平台。基线对照普通 16:9 Game 与宽屏有缺口设备，验安全区、棋盘与按钮交叠、长对白、实际点按；真机再验系统栏、横屏方向、触点与相机。见 [Unity Screen.safeArea](https://docs.unity3d.com/2022.3/Documentation/ScriptReference/Screen-safeArea.html)。
 
 ## AB、动画首帧与异步场景

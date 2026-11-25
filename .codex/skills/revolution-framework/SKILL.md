@@ -38,7 +38,7 @@ description: 使用或维护 Revolution Unity 框架时选择公开门面、FSM�
 - 资源通过 `RevResPath.*` 或两段式逻辑路径加载，引用成对释放。首次真机加载用异步。普通业务异步用 `RevTask`；过场、冷启动和资源验证采用目标项目的实际加载模式。
 - 导入前先查项目已有资源。相同资源沿用原资产、逻辑路径和 AB，每个目标平台只保留一份包体。确实缺少的资源才导入。按 [资源复用与单包归属](references/resource-and-ab.md#61-资源复用与单包归属) 检查图集及隐式依赖。
 - `RevUIPanel` 的 `OnBindView` 装配，`OnRefreshView` 落屏，点击回调转发业务。关闭自身用 `CloseSelf()`，业务侧用 `SetData` 送数据。原地改数据后需要 `RefreshView()`。
-- 新建或修改 UI 预制体、面板和控件布局时，默认在本次改动范围内完成目标画幅的适配。先定设计分辨率、父区域、安全区和锚点，再分别安排等比内容、边缘控件与全屏视觉。按 [多画幅自适应布局](references/ui-and-layering.md#多画幅自适应布局) 实施。
+- 新建或修改 UI 预制体、面板和控件布局时，默认完成目标画幅的适配。先明确项目的背景显示策略，再给控件指定实际内容框或安全边缘，设置锚点。按 [多画幅自适应布局](references/ui-and-layering.md#多画幅自适应布局) 实施。
 - 策划数值按项目现有配置链管理。Excel 业务沿用导表、强类型读取和装配校验。代码使用独立大括号。
 - 写代码前读 [新手注释规范](references/code-style.md#3-面向新手的中文注释是交付门禁)。新增或修改的类、接口、字段、属性及方法逐项写中文契约，私有成员、构造函数及回调也覆盖。方法内关键步骤解释原因、顺序、边界与清理。简单行为一句话，复杂契约分段说明。
 - 完整约定见 [技术规则](references/technical-rules.md) 和 [代码与注释](references/code-style.md)。涉及框架源码时，先查安装版与源仓库的差异、CHANGELOG 和 [历史故障](references/pitfalls.md)。从框架源仓库维护，再同步生成分支和项目快照。
@@ -50,7 +50,7 @@ description: 使用或维护 Revolution Unity 框架时选择公开门面、FSM�
 
 - 项目有 `.codex/rev-policy.json` 时，通过项目入口检查本次 diff，按文件行号和规则 ID 修复。长任务恢复时重读项目 `AGENTS.md` 与当前专题。插件与规范检查见 [项目规范检查](references/project-policy.md)。
 - 玩法、跨帧场景、资源和设备各按实际目标验收。关键业务在开发态留受控 GM 或 `RevRuntimeAutomation` 入口，复用玩家路径，核对成功、拒绝和退出。真实自动化先发现，按断言和清理判结果。见 [RevGame 交付实践](references/revgame-ai-workflow.md)。
-- UI 布局改动默认核对基准画幅，以及项目支持的较宽、较窄或带内缩的安全画幅。通过实际开窗检查落屏、文本与点按。验收口径见 [多画幅自适应布局](references/ui-and-layering.md#多画幅自适应布局)。
+- UI 布局改动核对基准画幅及项目支持的较宽、较窄或带内缩的画幅。在正式入口确认控件落在所属区域、文字实际绘制、点按命中。验收口径见 [排查文字与越界](references/ui-and-layering.md#排查文字与越界)。
 - 功能验收和修 Bug 使用 [缺陷闭环](../revolution-ai-automation/references/defect-closure.md)。按需求明确覆盖，失败用实测和当前源码定位。任务包含修复时落实最小改动，并用原失败断言与受影响的回归确认结果。
 - 修改框架公开行为时同步模块使用说明和架构文档的 Markdown/HTML。按现有源仓库工作流导出 `package`、`demo`、`hotupdate`、`skill` 或自动化工具分支。只在用户要求时提交或发布。
 

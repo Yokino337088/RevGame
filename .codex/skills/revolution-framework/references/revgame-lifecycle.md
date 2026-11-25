@@ -29,6 +29,7 @@
 - 把绑到哪些控件、快照字段、操作权、异步是否在途作为四件事。批量列表使用稳定数据键和行绑定版本，旧行回包按旧代次作废。对用户真正可操作的边界，用 EventSystem 走同一按钮或棋盘输入。
 - 对照 `GameScripts/UI/Layout/GameMobileLayout.cs`、`GameScripts/Services/Progression/GameDisplaySettings.cs`，分别观察安全区、棋盘相机投影、实际点击与窗口恢复。编辑器模拟器能验布局，真机档位用目标设备覆盖；比例、锚点和平台支持由项目声明。
 - 九路围棋、远征、无尽和决斗把棋盘设计框与安全区边缘控件分开。面板在绑定时声明要定位的节点，`GameBattleLayout` 计算偏移，`GameMobileLayout` 按轴重算，教学讲解靠近棋盘和立绘。4:3 平板模拟同一课的状态栏距顶从 203.52 像素降到 11.52 像素，退出键距底从 226.56 像素降到 34.56 像素。项目验收覆盖八组几何组合、实际桌面、平板与宽屏模拟。 [RevGame 适配提交](https://github.com/Yokino337088/RevGame/commit/7b1426de3b18c2f1306eadc53d6f4377613ed70d) · [屏幕分辨率实测](https://github.com/Yokino337088/RevGame/wiki/%E5%B1%8F%E5%B9%95%E5%88%86%E8%BE%A8%E7%8E%87%E5%88%86%E8%AE%BA)
+- 大厅标题旧框高 151.2 个设计单位，106 号字约需 153.5 个单位，画布缩放取整会触发整行截断。读 `GameLobbyLayout.cs` 和 `LobbySceneView.cs`，对照单行标题、鸦鸦的屏幕投影与按钮各自的范围。恢复背景等比铺满后，设置仍与标题同属大厅内容框。1338 × 986 的 Unity Game 窗口中，标题实际生成五个字形，9 个可见控件都在内容框内，设置打开、关闭和返回大厅通过。全量排查覆盖 26 个游戏面板和 1 个 Gal 面板，运行证据按实际入口记录。 [大厅修复提交](https://github.com/Yokino337088/RevGame/commit/28faf2f1f35c736473221d949cf36222d778d1df) · [大厅实测](https://github.com/Yokino337088/RevGame/wiki/%E5%B1%8F%E5%B9%95%E5%88%86%E8%BE%A8%E7%8E%87%E5%88%86%E8%AE%BA#-大厅的标题立绘和设置按钮)
 
 ## 存档设置与复位
 
