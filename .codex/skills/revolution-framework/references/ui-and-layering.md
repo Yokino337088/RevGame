@@ -130,6 +130,8 @@ content.Configure(RevUIAdaptiveLayoutMode.FitDesignFrame, new Vector2(1920f, 108
     (RectTransform)artwork.transform);
 ```
 
+窗口、父级尺寸和换图的通知由 `RevUILayoutScheduler` 合并到 Canvas 排版前，原画先更新，内容再读取落屏边界。设备安全区、没有回调的外部位移和原地调整纹理尺寸由一个共享的 250 毫秒真实秒检查覆盖。输入稳定时跳过矩形投影与布局写入。业务布局可在启用时订阅 `CheckForChanges`，用 `RequestRefresh` 合并事件，同一回调不重复排队。停用时退订并用 `CancelRefresh` 撤销待处理请求。
+
 #### 排查文字与越界
 
 | 现象 | 证据与改法 |

@@ -57,6 +57,18 @@ namespace Revolution
         private Vector2 _lastDesignResolution;
         // 上一次生效的策略，保证模式切换会重新计算。
         private RevUIAdaptiveLayoutMode _lastMode;
+        /// <summary>合并尺寸、原画和设备变化时复用的布局回调。</summary>
+        private Action _refresh;
+        /// <summary>内容布局写入中，忽略自己引发的尺寸通知。</summary>
+        private bool _writing;
+        /// <summary>缓存稳定输入，屏幕投影只在输入有实际变化时执行。</summary>
+        private LayoutInputs _lastInputs;
+        /// <summary>是否已经采集当前父级的输入。</summary>
+        private bool _haveInputs;
+        /// <summary>最近绑定的独立边界，边界换图时更新订阅。</summary>
+        private RectTransform _observedBounds;
+        /// <summary>由框架管理的原画直接通知边界变化，和内容在同一批刷新。</summary>
+        private RevUIArtworkLayout _observedArtwork;
 
         /// <summary>内容相对父级画幅的归一化矩形。适配组件停用时为完整画幅。</summary>
         public Rect Viewport
@@ -80,6 +92,7 @@ namespace Revolution
             mode = layoutMode;
             designResolution = referenceResolution;
             contentBounds = bounds;
+            RevUILayoutScheduler.CancelRefresh(_refresh);
             RefreshLayout();
         }
 
@@ -87,14 +100,23 @@ namespace Revolution
         protected override void OnEnable()
         {
             base.OnEnable();
+            _refresh ??= RefreshLayout;
+            RevUILayoutScheduler.CheckForChanges += RequestRefresh;
             RefreshLayout();
         }
 
         // 停用时归还布局，待下次显示重新取当时的预制体属性。
         protected override void OnDisable()
         {
+            RevUILayoutScheduler.CheckForChanges -= RequestRefresh;
+            RevUILayoutScheduler.CancelRefresh(_refresh);
+            ObserveArtwork(null);
             RestoreLayout();
             _content = null;
+            _parent = null;
+            _canvas = null;
+            _scaler = null;
+            _lastInputs = default;
             _needsBinding = true;
             base.OnDisable();
         }
@@ -104,6 +126,7 @@ namespace Revolution
         {
             base.OnTransformParentChanged();
             _needsBinding = true;
+            RequestRefresh();
         }
 
         // RevUI 换画布时刷新相机、屏幕和 CanvasScaler 的引用。
@@ -111,18 +134,30 @@ namespace Revolution
         {
             base.OnCanvasHierarchyChanged();
             _needsBinding = true;
+            RequestRefresh();
         }
 
-        // 窗口拖动、设备旋转和刘海变化均在这里比较。输入稳定时保留当前 RectTransform。
-        private void LateUpdate()
+        /// <summary>父级与容器尺寸变化时，安排一轮 Canvas 更新。</summary>
+        protected override void OnRectTransformDimensionsChange()
         {
-            RefreshLayout();
+            base.OnRectTransformDimensionsChange();
+            RequestRefresh();
+        }
+
+        /// <summary>合并引擎事件和低频检查，避免在事件内部递归重排。</summary>
+        private void RequestRefresh()
+        {
+            if (!_writing && isActiveAndEnabled)
+            {
+                _refresh ??= RefreshLayout;
+                RevUILayoutScheduler.RequestRefresh(_refresh);
+            }
         }
 
         // 先绑定宿主和读输入，再一次写入内容，最后通知订阅者读取新的结果。
         private void RefreshLayout()
         {
-            if (!isActiveAndEnabled)
+            if (!isActiveAndEnabled || _writing)
             {
                 return;
             }
@@ -147,17 +182,31 @@ namespace Revolution
             // 屏幕安全区作用于屏幕空间内容。Canvas 脱离显示上下文时归还已接管的布局。
             if (_parent == null || _canvas == null || !_canvas.isActiveAndEnabled || _canvas.renderMode == RenderMode.WorldSpace)
             {
+                ObserveArtwork(null);
                 RestoreLayout();
                 return;
             }
 
             Vector2 size = _parent.rect.size;
-            if (!RevUIViewport.HasSize(size) || !TryReadViewport(out Rect pixels, out Rect safe))
+            if (!RevUIViewport.HasSize(size))
             {
                 return;
             }
 
             Vector2 reference = mode == RevUIAdaptiveLayoutMode.FitDesignFrame ? ResolveDesignResolution() : Vector2.zero;
+            LayoutInputs inputs = ReadInputs(reference);
+            ObserveArtwork(inputs.Bounds);
+            if (_haveInputs && !bindingChanged && inputs.Matches(in _lastInputs))
+            {
+                return;
+            }
+            _lastInputs = inputs;
+            _haveInputs = true;
+            if (!TryReadViewport(in inputs, out Rect safe))
+            {
+                return;
+            }
+            Rect pixels = inputs.Pixels;
             if (_applied && !bindingChanged && safe == _lastSafeArea && pixels == _lastPixels &&
                 size == _lastParentSize && reference == _lastDesignResolution && mode == _lastMode)
             {
@@ -170,21 +219,28 @@ namespace Revolution
             _lastDesignResolution = reference;
             _lastMode = mode;
 
-            if (mode == RevUIAdaptiveLayoutMode.FitDesignFrame && RevUIViewport.HasSize(reference))
+            _writing = true;
+            try
             {
-                Viewport = RevUIViewport.FitDesignFrame(size, safe, reference);
-                RevUIViewport.ApplyDesignFrame(_content, Viewport, reference);
+                if (mode == RevUIAdaptiveLayoutMode.FitDesignFrame && RevUIViewport.HasSize(reference))
+                {
+                    Viewport = RevUIViewport.FitDesignFrame(size, safe, reference);
+                    RevUIViewport.ApplyDesignFrame(_content, Viewport, reference);
+                }
+                else
+                {
+                    Viewport = safe;
+                    _content.anchorMin = safe.min;
+                    _content.anchorMax = safe.max;
+                    _content.offsetMin = _content.offsetMax = Vector2.zero;
+                    _content.localScale = new Vector3(1f, 1f, _original.Scale.z);
+                }
+                _applied = true;
             }
-            else
+            finally
             {
-                Viewport = safe;
-                _content.anchorMin = safe.min;
-                _content.anchorMax = safe.max;
-                _content.offsetMin = _content.offsetMax = Vector2.zero;
-                _content.localScale = new Vector3(1f, 1f, _original.Scale.z);
+                _writing = false;
             }
-
-            _applied = true;
             ViewportChanged?.Invoke(Viewport);
         }
 
@@ -198,33 +254,56 @@ namespace Revolution
             return _scaler == null ? RevUISetting.ReferenceResolution : _scaler.referenceResolution;
         }
 
-        /// <summary>把相机输出、设备安全区和可选内容边界统一到屏幕像素，再换算到内容父级。</summary>
-        private bool TryReadViewport(out Rect pixels, out Rect safe)
+        /// <summary>读取用于检测变化的原始值，稳定时省去画布和原画的屏幕投影。</summary>
+        private LayoutInputs ReadInputs(Vector2 reference)
         {
             Camera camera = _canvas.renderMode == RenderMode.ScreenSpaceCamera ? _canvas.worldCamera : null;
-            pixels = camera == null ? _canvas.pixelRect : camera.pixelRect;
-            safe = default;
-            if (!RevUIViewport.HasArea(pixels))
-            {
-                return false;
-            }
-
-            // 副屏与 RenderTexture 使用自己的输出画幅。主屏相机先把设备安全区映射到相机视口。
-            Rect relative = RevUIViewport.Full;
+            Rect pixels = camera == null ? _canvas.pixelRect : camera.pixelRect;
             int display = camera == null ? _canvas.targetDisplay : camera.targetDisplay;
-            if (display == 0 && (camera == null || camera.targetTexture == null) &&
-                !RevUIViewport.TryNormalizeSafeArea(RevUIViewport.GetScreenSafeArea(),
-                    camera == null ? RevUIViewport.Full : camera.rect, out relative))
+            bool useDeviceSafeArea = display == 0 && (camera == null || camera.targetTexture == null);
+            Rect screenSafe = useDeviceSafeArea ? RevUILayoutScheduler.GetScreenSafeArea() : RevUIViewport.Full;
+            Rect output = useDeviceSafeArea && camera != null ? camera.rect : RevUIViewport.Full;
+            RectTransform bounds = contentBounds != null && !contentBounds.IsChildOf(_content) &&
+                contentBounds.IsChildOf(_canvas.transform) ? contentBounds : null;
+            return new LayoutInputs(camera, pixels, screenSafe, output, _parent, bounds, reference, mode);
+        }
+
+        /// <summary>边界由原画组件控制时，换图和尺寸改变由原画组件主动通知。</summary>
+        private void ObserveArtwork(RectTransform bounds)
+        {
+            if (ReferenceEquals(bounds, _observedBounds))
+            {
+                return;
+            }
+            if (!ReferenceEquals(_observedArtwork, null))
+            {
+                _observedArtwork.BoundsChanged -= RequestRefresh;
+            }
+            _observedBounds = bounds;
+            _observedArtwork = bounds == null ? null : bounds.GetComponent<RevUIArtworkLayout>();
+            if (_observedArtwork != null)
+            {
+                _observedArtwork.BoundsChanged += RequestRefresh;
+            }
+        }
+
+        /// <summary>仅在检测到变化时把副屏、纹理或主屏安全区与父级和原画的投影统一到像素坐标。</summary>
+        private bool TryReadViewport(in LayoutInputs inputs, out Rect safe)
+        {
+            safe = default;
+            Rect pixels = inputs.Pixels;
+            if (!RevUIViewport.HasArea(pixels) ||
+                !RevUIViewport.TryNormalizeSafeArea(inputs.ScreenSafe, inputs.Output, out Rect relative))
             {
                 return false;
             }
+            Camera camera = inputs.Camera;
             var allowed = new Rect(pixels.position + Vector2.Scale(relative.position, pixels.size),
                 Vector2.Scale(relative.size, pixels.size));
             Rect parentPixels = _parent == _canvas.transform ? pixels : RevUIViewport.GetScreenBounds(_parent, camera);
-            if (contentBounds != null && !contentBounds.IsChildOf(_content) && contentBounds.IsChildOf(_canvas.transform))
+            if (inputs.Bounds != null)
             {
-                // 独立边界由美术或另一层布局负责，避免内容依赖自己的结果形成循环。
-                allowed = RevUIViewport.Intersect(allowed, RevUIViewport.GetScreenBounds(contentBounds, camera));
+                allowed = RevUIViewport.Intersect(allowed, RevUIViewport.GetScreenBounds(inputs.Bounds, camera));
             }
             return RevUIViewport.TryNormalizeSafeArea(allowed, parentPixels, out safe);
         }
@@ -237,8 +316,69 @@ namespace Revolution
                 _original.Restore(_content);
             }
             _applied = false;
+            _haveInputs = false;
             Viewport = RevUIViewport.Full;
         }
 
+        /// <summary>一轮布局的坐标输入。矩阵仅用于低频或事件触发的变更检测。</summary>
+        private readonly struct LayoutInputs
+        {
+            /// <summary>屏幕相机。Overlay 画布使用空引用。</summary>
+            public readonly Camera Camera;
+            /// <summary>相机或画布输出的屏幕像素范围。</summary>
+            public readonly Rect Pixels;
+            /// <summary>归一化的主屏安全区。</summary>
+            public readonly Rect ScreenSafe;
+            /// <summary>屏幕相机的归一化输出区域，Overlay 使用完整范围。</summary>
+            public readonly Rect Output;
+            /// <summary>已校验同属根画布的独立内容边界。</summary>
+            public readonly RectTransform Bounds;
+            /// <summary>父级局部矩形，尺寸和锚点偏移变化均可检测。</summary>
+            private readonly Rect _parentRect;
+            /// <summary>原画或另一个内容框的局部范围。</summary>
+            private readonly Rect _boundsRect;
+            /// <summary>父级变换，补查平移或缩放等不触发尺寸回调的变化。</summary>
+            private readonly Matrix4x4 _parentTransform;
+            /// <summary>原画节点的世界变换。</summary>
+            private readonly Matrix4x4 _boundsTransform;
+            /// <summary>相机投影矩阵，识别固定尺寸内的投影参数变化。</summary>
+            private readonly Matrix4x4 _projection;
+            /// <summary>相机视图矩阵，屏幕空间相机变化时参与检测。</summary>
+            private readonly Matrix4x4 _view;
+            /// <summary>内容当前使用的设计尺寸。</summary>
+            private readonly Vector2 _design;
+            /// <summary>当前选择的布局策略。</summary>
+            private readonly RevUIAdaptiveLayoutMode _mode;
+
+            /// <summary>在访问屏幕投影前一次性采集各变换与属性。</summary>
+            public LayoutInputs(Camera camera, Rect pixels, Rect screenSafe, Rect output, RectTransform parent,
+                RectTransform bounds, Vector2 design, RevUIAdaptiveLayoutMode mode)
+            {
+                Camera = camera;
+                Pixels = pixels;
+                ScreenSafe = screenSafe;
+                Output = output;
+                Bounds = bounds;
+                _parentRect = parent.rect;
+                _parentTransform = parent.localToWorldMatrix;
+                _boundsRect = bounds == null ? default : bounds.rect;
+                _boundsTransform = bounds == null ? default : bounds.localToWorldMatrix;
+                _projection = camera == null ? default : camera.projectionMatrix;
+                _view = camera == null ? default : camera.worldToCameraMatrix;
+                _design = design;
+                _mode = mode;
+            }
+
+            /// <summary>逐个比较原始输入。变化为零时跳过坐标投影与布局计算。</summary>
+            public bool Matches(in LayoutInputs previous)
+            {
+                return Camera == previous.Camera && Bounds == previous.Bounds && Pixels.Equals(previous.Pixels) &&
+                    ScreenSafe.Equals(previous.ScreenSafe) && Output.Equals(previous.Output) &&
+                    _parentRect.Equals(previous._parentRect) && _boundsRect.Equals(previous._boundsRect) &&
+                    _parentTransform.Equals(previous._parentTransform) && _boundsTransform.Equals(previous._boundsTransform) &&
+                    _projection.Equals(previous._projection) && _view.Equals(previous._view) &&
+                    _design.Equals(previous._design) && _mode == previous._mode;
+            }
+        }
     }
 }

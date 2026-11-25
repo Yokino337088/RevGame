@@ -4,6 +4,7 @@
 // ============================================================
 using UnityEngine;
 using UnityEngine.UI;
+using System;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
 using System.Collections.Generic;
 #endif
@@ -34,6 +35,10 @@ namespace RevGame.UI
         private EdgeNode[] _bottomAnchors;
         private FullBleedNode[] _fullBleed;
         private SafeHudNode[] _sceneHud;
+        /// <summary>复用的 Canvas 刷新回调，设备尺寸和界面事件共用。</summary>
+        private Action _refresh;
+        /// <summary>已启用布局的面板才加入共享低频检查。</summary>
+        private bool _watching;
         public bool HasBoardFrame => _boardFrame;
 
         /// <summary>保存控件绑定时的设计位置，换设备或改窗口时从原值重算。</summary>
@@ -75,7 +80,7 @@ namespace RevGame.UI
             layout._boardFrame = true;
             layout._lastSize = Vector2.zero;
             layout._fullBleed = ReadFullBleed(panel, fullBleedPaths);
-            layout.ApplyLayout();
+            layout.ActivateLayout();
         }
 
         /// <summary>把面板原本用 Image 绘制的全屏底色和点击面放到独立子节点。</summary>
@@ -117,7 +122,7 @@ namespace RevGame.UI
                     };
                 }
             }
-            layout.ApplyLayout();
+            layout.ActivateLayout();
         }
 
         /// <summary>决斗状态贴向安全区顶边，两侧触控和键盘指引贴向底边，按键仍等比缩放。</summary>
@@ -191,7 +196,7 @@ namespace RevGame.UI
                 layout._leftSidebar = ReadEdgeNodes(panel, "scoreFrame", "assistPlate", "assistText");
                 layout._rightSidebar = ReadEdgeNodes(panel, "infoPlate", "btnHome", "btnSettings", "btnRemovePiece");
             }
-            layout.ApplyLayout();
+            layout.ActivateLayout();
         }
 
         // 记录全屏底图的原始 UV，窗口反复切换时由该值重算裁切。
@@ -316,9 +321,14 @@ namespace RevGame.UI
                 aspect = texture.width * uv.width / (texture.height * uv.height);
             }
             else if (backdrop.SpriteArtwork != null && backdrop.SpriteArtwork.enabled &&
-                backdrop.SpriteArtwork.type == Image.Type.Simple && backdrop.SpriteArtwork.overrideSprite is Sprite sprite)
+                backdrop.SpriteArtwork.type == Image.Type.Simple)
             {
-                aspect = sprite.rect.width / sprite.rect.height;
+                Sprite sprite = backdrop.SpriteArtwork.overrideSprite;
+                if (sprite != null)
+                {
+                    // 使用 Unity 的对象比较，纯色遮罩可以持有空 Sprite 序列化引用。
+                    aspect = sprite.rect.width / sprite.rect.height;
+                }
             }
             return aspect > 0f;
         }
@@ -393,25 +403,64 @@ namespace RevGame.UI
         }
 #endif
 
+        /// <summary>设置编辑器生成的面板名并应用当前布局策略。</summary>
         public void Configure(string value)
         {
             panelName = value;
             _lastSize = Vector2.zero;
-            ApplyLayout();
+            ActivateLayout();
         }
+
+        /// <summary>打开或回池重用时按当前画幅重新布局。</summary>
         private void OnEnable()
         {
             _lastSize = Vector2.zero;
-            ApplyLayout();
+            ActivateLayout();
         }
+
+        /// <summary>停用后撤销排队请求，解除共享观察。</summary>
+        private void OnDisable()
+        {
+            if (_watching)
+            {
+                Revolution.RevUILayoutScheduler.CheckForChanges -= RequestRefresh;
+                _watching = false;
+            }
+            Revolution.RevUILayoutScheduler.CancelRefresh(_refresh);
+        }
+
+        /// <summary>Canvas 尺寸变化时合并运行时布局，编辑预览仍现场更新。</summary>
         private void OnRectTransformDimensionsChange()
         {
+            if (Application.isPlaying)
+            {
+                RequestRefresh();
+            }
+            else
+            {
+                ApplyLayout();
+            }
+        }
+
+        /// <summary>注册可用布局并立即应用，初次绑定保持真实按钮和背景可用。</summary>
+        private void ActivateLayout()
+        {
+            if (Application.isPlaying && isActiveAndEnabled && !_watching && (_boardFrame || _sceneHud != null || useLegacyLayout))
+            {
+                _refresh ??= ApplyLayout;
+                _watching = true;
+                Revolution.RevUILayoutScheduler.CheckForChanges += RequestRefresh;
+            }
             ApplyLayout();
         }
-        // 刘海/模拟器旋转可能只改变安全区，不改变 RectTransform 尺寸，因此还要轻量比较一次。
-        private void LateUpdate()
+
+        /// <summary>窗口通知、转场收尾或迟到的图片由同一个队列检查。</summary>
+        private void RequestRefresh()
         {
-            ApplyLayout();
+            if (_watching && !_applying && isActiveAndEnabled)
+            {
+                Revolution.RevUILayoutScheduler.RequestRefresh(_refresh);
+            }
         }
         /// <summary>只在尺寸变化时重排；防止设置子节点尺寸触发递归排版。</summary>
         private void ApplyLayout()
@@ -435,7 +484,7 @@ namespace RevGame.UI
                 return;
             }
             Vector2 size = root.rect.size;
-            Rect safe = GameBattleLayout.SafeViewport();
+            Rect safe = Revolution.RevUILayoutScheduler.GetScreenSafeArea();
 
             if (size.x < 10f || size.y < 10f || (size == _lastSize && safe == _lastSafe))
             {
@@ -526,15 +575,14 @@ namespace RevGame.UI
                 return;
             }
             Vector2 size = parent.rect.size;
-            Rect safe = GameBattleLayout.SafeViewport();
+            Rect safe = Revolution.RevUILayoutScheduler.GetScreenSafeArea();
             if (size.x <= 0f || size.y <= 0f)
             {
                 return;
             }
             if (size == _lastSize && safe == _lastSafe && Mathf.Approximately(root.localScale.x, _frameScale))
             {
-                // 普通面板没有全屏蒙层或异步图，布局完全稳定时无需再查动画状态。
-                // 有底图的面板继续等待转场结束，并在地址换图后更新 UV。
+                // 共享低频检查只给有底图的面板比对迟到的图片。布局稳定时跳过坐标写入。
                 if (_fullBleed != null && !Revolution.RevUIAnim.IsPlaying(this))
                 {
                     FitFullBleedArtwork(size / _frameScale, force: false);
@@ -637,7 +685,7 @@ namespace RevGame.UI
                 return;
             }
             Vector2 size = root.rect.size;
-            Rect safe = GameBattleLayout.SafeViewport();
+            Rect safe = Revolution.RevUILayoutScheduler.GetScreenSafeArea();
             if (size.x <= 0f || size.y <= 0f || (size == _lastSize && safe == _lastSafe))
             {
                 return;

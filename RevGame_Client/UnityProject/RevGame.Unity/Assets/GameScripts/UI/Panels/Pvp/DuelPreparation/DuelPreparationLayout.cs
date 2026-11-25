@@ -43,12 +43,20 @@ namespace RevGame.Pvp
                 }
                 return;
             }
+            if (backdrop != null)
+            {
+                backdrop.RegisterDirtyVerticesCallback(ApplyPreview);
+            }
             ApplyPreview();
         }
 
         /// <summary>面板停用时由框架归还原内容和背景布局，供下次打开。</summary>
         private void OnDisable()
         {
+            if (backdrop != null)
+            {
+                backdrop.UnregisterDirtyVerticesCallback(ApplyPreview);
+            }
             if (_adaptiveLayout != null)
             {
                 _adaptiveLayout.enabled = false;
@@ -63,15 +71,6 @@ namespace RevGame.Pvp
         private void OnRectTransformDimensionsChange()
         {
             ApplyPreview();
-        }
-
-        /// <summary>编辑预览换图时从新 Sprite 重算，运行时布局由框架处理。</summary>
-        private void LateUpdate()
-        {
-            if (!Application.IsPlaying(gameObject) && backdrop != null && backdrop.overrideSprite != _lastBackdrop)
-            {
-                ApplyPreview();
-            }
         }
 
         /// <summary>使用框架的几何函数预览完整画幅中的内容与原画。</summary>
