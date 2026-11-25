@@ -45,6 +45,7 @@ description: 使用或维护 Revolution Unity 框架时选择公开门面、FSM�
 
 ## 验收
 
+- 日常 Unity 编辑器操作、编译和 Console 使用 [RevCLI](../revolution-unity-editor/SKILL.md)，玩家路径和断言回归使用 [RevMCP](../revolution-ai-automation/SKILL.md)。能力缺项时沿本框架诊断或补受控接线。桌面控制仅用于用户另行明确要求的任务。
 - 交付代码前逐文件读实际 diff 和新文件，核对受改动影响的声明及关键实现。注释缺失、过期或漏掉失败契约时直接补齐，再按 [审查清单](REFERENCE_GUIDELINES.md#新手注释检查) 复查。
 - 完成功能后，凡改动会影响 Unity 脚本编译，最后一次写入后必须在目标编辑器主动完整重编译并验证通过，再进入 Play 或交付。已有 Play 先结束本次测试并退出；用户正在进行的对局需先交接。按 [编辑器技能](../revolution-unity-editor/SKILL.md) 核对本次编译工单。
 

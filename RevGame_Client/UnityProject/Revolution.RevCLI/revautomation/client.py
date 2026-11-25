@@ -10,6 +10,7 @@ import time
 import uuid
 
 from .errors import RevCancelled, RevError  # noqa: F401  保持 `from revautomation.client import RevError` 可用
+from .errors import RevCompilationError
 
 _COMMANDS_CACHE = {}
 # 文件桥的控制文件由调用方消费后回收。截图、构建清单和 Test Runner 结果有独立的调用契约。
@@ -446,7 +447,7 @@ class RevClient:
         raise TimeoutError(f"Unity 桥接尚未就绪；编辑器保留运行，PID={process.pid}，日志 {log}")
 
     def wait_ready(self):
-        """Compilation/import barrier, also across the bridge's domain reload."""
+        """等导入与脚本域重载稳定。编译失败时保留当前进程的真实诊断。"""
         if self.mode == "batch":
             raise RevError("editor.wait 需要在线编辑器。batch 请求由子编辑器自行完成编译。")
         end, stable, session = time.monotonic() + self.timeout, None, None
@@ -470,12 +471,27 @@ class RevClient:
                 # 至少跨过两个心跳，避免 refresh 回执早于实际开始编译。
                 if time.monotonic() - stable >= 2 and endpoint.get("heartbeatUnix", 0) > first_heartbeat:
                     if endpoint.get("compilationFailed"):
-                        raise RevError(f"Unity 脚本编译失败；读取 editor.console/editor.compilation 或 {self.root / 'compilation.json'}")
+                        raise RevCompilationError(self._failed_compilation(endpoint))
                     return dict(success=True, endpoint=endpoint, message="资源导入与脚本编译已稳定就绪")
             else:
                 stable = None
             time.sleep(.1)
         raise TimeoutError(f"等待 Unity 就绪超时；请检查 {self.root / 'endpoint.json'} 与 editor.console")
+
+    def _failed_compilation(self, endpoint):
+        """仅交付当前编辑器会话完成的失败快照，避免上次启动的错误混入本次结果。"""
+        session_id = endpoint.get("sessionId")
+        if not session_id:
+            return None
+        try:
+            result = read_json_settled(self.root / "compilation.json")
+        except (OSError, ValueError):
+            return None
+        if (isinstance(result, dict) and result.get("sessionId") == session_id
+                and result.get("finished") is True and result.get("compiling") is False
+                and result.get("failed") is True and isinstance(result.get("messages"), list)):
+            return result
+        return None
 
     def job(self, request_id, cancel=False, wait=False):
         """查询或取消后台请求。领取终态时回收自己负责的临时文件。"""

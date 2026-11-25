@@ -27,6 +27,18 @@ python Revolution.RevCLI/rev.py --project $project --mode live scene list
 python Revolution.RevCLI/rev.py --project $project --mode live gameobject find --query Canvas
 ```
 
+## Unity Console 与编译
+
+```powershell
+python Revolution.RevCLI/rev.py --project $project --mode live editor console --severity error --limit 50
+python Revolution.RevCLI/rev.py --project $project --mode live editor console --severity warning --query Config --offset 0 --limit 20
+python Revolution.RevCLI/rev.py --project $project --mode live editor compilation
+```
+
+`editor console` 读取 Console 保留的消息。按级别、消息或源文件筛选后分页，返回 Unity 原文、文件、行列和级别。Unity 面板的搜索、级别过滤和折叠不会限制这项查询。每页都保留完整 JSON，`data.total` 是匹配总数，`data.truncated` 表示还有下一页。
+
+`editor wait` 等待导入与域重载稳定。Unity 报告编译失败时命令以非零退出，本次编辑器进程内已完成的诊断随错误 JSON 一并返回，包含 `data.messages`。用 `editor compilation` 核对 `requestId`、`finished`、`compiling`、`failed` 以及每条诊断。修复后重新执行同一项目的刷新、重编和等待，再核对新的工单。
+
 多步同步操作走 `batch.call`，一次往返顺序执行最多 64 步。支持 `payload` 对象，并兼容已有的 `payloadJson`。用 `id` 命名步骤，通过 `{"$ref":"前序ID#/data/字段"}` 传入结果值，数组、对象和布尔值保留原类型。`expect` 支持 JSON Pointer 的 `equals` 与 `exists`。返回每步 `elapsedMs` 和 `dataJson`。
 
 ```powershell

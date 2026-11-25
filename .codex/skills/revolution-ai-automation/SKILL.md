@@ -19,6 +19,7 @@ description: 在 Revolution Unity 项目中执行真实测试、检查功能完�
 
 ## 找到并连接真实入口
 
+- 日常 Unity 调试和验收通过 Revolution 工具链执行。编辑器状态、Console 与编译优先用 RevCLI，真实游戏流程通过 RevMCP 发现、调用和断言。遇到编译失败，用 `editor compilation` 和 `editor console --severity error` 核对文件、行列与本次回执，修复后再进 Play。桌面控制仅用于用户另行明确要求的任务。
 - 定位 Unity 工程、`Revolution.RevMCP/rev_mcp.py` 和相邻 `Revolution.RevCLI/rev.py`。始终显式传目标工程，不能默认运行框架 Demo。
 - Codex 插件首次连接用 `rev_bind` 指定工程绝对路径，独立 Player 加该实例的 `runtimeEndpoint`。已有目标明确的 RevMCP 连接直接复用。先 `rev_discover`，用 `target/query/offset/limit` 缩小结果；独立启动 RevMCP 可以用 `--compact-tools`，Player 通过 `--runtime-endpoint` 连接。配置见 [连接和注册](references/connection.md)。
 - **按任务选通道**。轻量操作用 RevCLI。功能完整性、跨帧流程、多步断言、失败清理和重复回归优先 RevMCP 的 `rev_run`。纯规则可用现有离线断言。编辑器操作使用相邻 `revolution-unity-editor`。遵循用户和目标项目的通道约定，见 [按测试轻重选通道](references/channel-choice.md)。

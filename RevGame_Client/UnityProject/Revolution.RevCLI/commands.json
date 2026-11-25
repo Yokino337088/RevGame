@@ -589,7 +589,7 @@
         "query",
         "severity"
       ],
-      "description": "分页读取 Unity Console（含编译错误）",
+      "description": "按级别、消息和源文件分页读取 Unity Console（含编译诊断）",
       "environment": "either",
       "readOnly": true
     },

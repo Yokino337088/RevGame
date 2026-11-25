@@ -53,10 +53,10 @@
 | `PythonTooOld` | 用了旧解释器 | 回到第 1 步 |
 | `unity-editor` 失败 | Hub 记录里没有这个版本 | 用 `--unity <Unity.exe>` 或环境变量 `UNITY_EDITOR` 指定；成功一次后会记住 |
 | `bridge-code` 失败 | 工程没装 Revolution 编辑器代码 | 只复制 Python 不会生效，要把 `Assets/Revolution` 装进工程 |
-| `connect` 超时 | 首次导入太慢、Unity 弹窗（如安全模式、登录）或编译错误 | Unity 不会被关掉。看窗口，读 `Library/RevolutionAutomation/launch-*.log`，处理后重跑 `connect` |
+| `connect` 超时 | 首次导入慢、Unity 正等待确认或编译报错 | 用 RevCLI 区分桥接和编译状态。桥接还未就绪时读该项目 `Library/RevolutionAutomation/launch-*.log`，确认原因再重跑 `connect`。必须确认的弹窗由用户处理 |
 | `connect` 一直在等，Unity 却能正常操作 | 上次会话留下的长工单（烘焙、构建、测试）还在跑。客户端断开不会取消 Unity 里的工作 | 看 `Library/RevolutionAutomation/endpoint.json` 的 `activeRequest`，用 `job <id>` 查看；确认不需要后 `job <id> --cancel`，`connect` 会随即完成 |
 | `常驻服务正在执行另一条命令…本次没有执行` | 上一条命令还没结束 | 这条没执行，等一会儿重试即可 |
-| `state: busy` | Unity 开着但没有心跳 | 等导入完成；编译错误用 `editor compilation` 读，修好后重跑 |
+| `state: busy` | Unity 开着但没有心跳 | 等导入完成。桥接恢复后用 `editor compilation` 和 `editor console --severity error` 读取错误，修复后重跑 |
 | Unity 标题栏“未响应”，长时间没有心跳和日志 | Unity 卡死；实测在空闲内存不足 1GB 时退出 Play 出现过一次 | `connect` 不会替你结束 Unity。告诉用户哪个工程卡住了，让用户决定关不关；关掉后再 `connect`，未保存内容会丢 |
 | 动作报 `未知参数` 或 `动作不存在` | Unity 里的桥比 CLI 旧 | 看 `capabilityGap`，告诉用户需要更新工程里的框架 |
 | `常驻服务已收到请求但连接中断` | 请求可能已执行 | **不要重放**，用 `job`、`editor.console` 或读回确认副作用 |

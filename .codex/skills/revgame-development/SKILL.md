@@ -7,6 +7,8 @@ description: RevGame 玩法、UI、资源和验收的项目入口。按改动范
 
 以仓库根 [AGENTS.md](../../../AGENTS.md) 为准。需要找源码或同类入口时查 [项目地图](references/project-map.md)。只加载当前命中的专题。纯 Skill 或文档修改用链接、导出和相关工具测试验收。
 
+日常 Unity 开发使用 Revolution 工具链。编辑器操作、资源、编译和 Console 走 RevCLI，实际玩法与 UI 回归走 RevMCP。通道缺项优先修复连接或补受控接线。桌面控制仅用于用户另行明确要求的任务。 [编译与验收细则](references/project-acceptance.md)
+
 | 任务 | 读取入口 |
 | --- | --- |
 | Revolution.Gal 章节背景、面板布局、剧情编辑、路线回归和自定义界面 | [Gal Skill](../revolution-gal/SKILL.md)。用户自有界面走 Gal 会话和宿主现有流程。项目既有 StoryBook 沿原入口。 |

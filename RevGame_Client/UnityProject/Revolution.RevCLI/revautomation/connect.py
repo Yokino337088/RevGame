@@ -88,7 +88,8 @@ def inspect(project, unity=None, timeout=120.0) -> dict:
         steps.append(_step("editor", False, "发现上次异常退出残留的 Temp/UnityLockfile，没有 Unity 持有它", "connect 启动时 Unity 会自行接管；不要手动删除工程文件"))
     elif client._editor_open():
         state = "busy"
-        steps.append(_step("editor", False, "Unity 已打开但桥接没有心跳：可能在导入、编译报错或卡在弹窗", "看 Unity 窗口；编译错误用 editor compilation，修好后重跑 connect"))
+        steps.append(_step("editor", False, "Unity 已打开但桥接没有心跳：可能在导入、编译失败或等待确认",
+                           "读本工程的启动日志。桥接恢复后用 editor compilation 和 editor console --severity error 定位，再重跑 connect"))
     else:
         state = "offline"
         steps.append(_step("editor", False, "Unity 没有打开", "运行 connect 自动打开"))

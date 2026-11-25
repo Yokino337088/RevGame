@@ -10,6 +10,7 @@ import sys
 import time
 
 from .client import RevClient, RevError, atomic_json, read_json
+from .errors import RevCompilationError
 from .media import write_gif
 from .report import export_evidence, export_report
 from .storage import check_revmcp_output_path
@@ -38,6 +39,7 @@ def parser():
 
 
 def _build_parser():
+    """为注册动作生成命令组，为常用参数补直接可输入的选项。"""
     p = argparse.ArgumentParser(description="Revolution 编辑器与 GM 自动化（Python 3.10+，无需 pip）")
     p.add_argument("--project", type=Path, default=DEFAULT_PROJECT)
     p.add_argument("--mode", choices=("auto", "live", "batch"), default="auto")
@@ -196,6 +198,8 @@ def _build_parser():
                 action.add_argument("--report-dir", type=Path, help="明确要求报告时，写入指定的文档目录")
             if family == "editor" and operation == "play":
                 action.add_argument("--scene")
+            if family == "editor" and operation == "console":
+                action.add_argument("--severity", choices=("error", "warning", "log"), help="只读取指定级别的 Unity Console 消息")
             if family == "editor" and operation == "menu":
                 action.add_argument("path", help="菜单全路径，不带快捷键")
             if not (family == "editor" and operation == "menu"):
@@ -231,6 +235,7 @@ def _build_parser():
 
 
 def payload_of(args):
+    """统一合并 JSON、--set 和命令组选项，让它们走同一动作契约。"""
     data = read_json(args.json) if getattr(args, "json", None) else {}
     if not isinstance(data, dict):
         raise RevError("动作参数必须是 JSON 对象。")
@@ -245,7 +250,7 @@ def payload_of(args):
     for attr, key in (("backend", "backend"), ("development", "development"), ("automation", "automation"), ("frame_timing", "frameTiming"), ("command", "command"), ("scene", "scene"), ("path", "path"), ("target", "target"),
                       ("source", "sources"), ("prefab", "prefab"), ("class_name", "className"),
                       ("name_space", "nameSpace"), ("output_folder", "outputFolder"), ("test_mode", "mode"), ("script", "script"), ("base_class", "baseClass"), ("object_path", "objectPath"),
-                      *((key, key) for key in ("id", "query", "type", "name", "destination", "parent", "property", "text", "value", "kind", "offset", "limit", "index", "tag", "layer"))):
+                      *((key, key) for key in ("id", "query", "type", "name", "destination", "parent", "property", "text", "value", "kind", "offset", "limit", "index", "severity", "tag", "layer"))):
         value = getattr(args, attr, None)
         if value is not None:
             data[key] = value
@@ -603,6 +608,7 @@ def main(argv=None):
         except (OSError, ValueError) as error:
             cli_parser.error(str(error))
     progress = print_progress if args.full else None
+    action = None
     try:
         if args.timeout <= 0 or not args.timeout < 604800:
             raise RevError("--timeout 必须大于 0 且小于 604800 秒。")
@@ -736,7 +742,8 @@ def main(argv=None):
                     atomic_json(args.out, json.loads(document))
         if args.output:
             atomic_json(args.output, result)
-        visible = result if args.full else summarize(result)
+        # Console 已由 Unity 分页；编译结果的行列和整条报错用于直接修复，两者都保留完整响应。
+        visible = result if args.full or action in ("editor.console", "editor.compilation") else summarize(result)
         # 默认摘要只从当前响应提取。只有显式 --output 才提供可再次打开的路径。
         if visible is not result and args.output:
             visible["detailsPath"] = str(args.output)
@@ -747,6 +754,8 @@ def main(argv=None):
         return 130
     except (RevError, OSError, ValueError, TimeoutError) as exc:
         result = dict(success=False, error=type(exc).__name__, message=str(exc))
+        if isinstance(exc, RevCompilationError) and exc.diagnostics is not None:
+            result["data"] = exc.diagnostics
         if args.output:
             atomic_json(args.output, result)
         print(json.dumps(result, ensure_ascii=False), file=sys.stderr)

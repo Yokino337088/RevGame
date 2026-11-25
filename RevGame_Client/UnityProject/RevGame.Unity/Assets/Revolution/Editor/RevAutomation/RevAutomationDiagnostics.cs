@@ -15,15 +15,49 @@ using UnityEngine;
 
 namespace Revolution.Editor
 {
+    /// <summary>在 Unity 主线程读取 Console 与编译证据，并提供播放控制动作。</summary>
     [InitializeOnLoad]
     public static class RevAutomationDiagnostics
     {
-        [Serializable] private sealed class LogRow { public string message, file; public int line, mode; }
-        [Serializable] private sealed class ConsoleResult { public int total, offset; public bool truncated; public LogRow[] entries; }
+        /// <summary>一条原始 Console 行，供 CLI 过滤、定位和显示完整消息。</summary>
+        [Serializable]
+        private sealed class LogRow
+        {
+            /// <summary>Unity 原文，可能含多行堆栈。</summary>
+            public string message;
+            /// <summary>消息关联的源文件，无来源时为空。</summary>
+            public string file;
+            /// <summary>源文件行号，从 1 开始，未知时为 0。</summary>
+            public int line;
+            /// <summary>源文件列号，从 1 开始，未知时为 0。</summary>
+            public int column;
+            /// <summary>Unity 原始消息位掩码，保留给现有调用方。</summary>
+            public int mode;
+            /// <summary>按 Unity 消息类型归类的 error、warning 或 log。</summary>
+            public string severity;
+        }
+
+        /// <summary>对本次匹配结果的分页视图。日志仍由 Unity Console 持有。</summary>
+        [Serializable]
+        private sealed class ConsoleResult
+        {
+            /// <summary>过滤后匹配的总数，包含其它页。</summary>
+            public int total;
+            /// <summary>该页从匹配结果的第几个位置开始，从 0 计数。</summary>
+            public int offset;
+            /// <summary>本页之后仍有匹配项时为真。</summary>
+            public bool truncated;
+            /// <summary>当前页的完整消息，按 Console 原始顺序排列。</summary>
+            public LogRow[] entries;
+        }
+
         [Serializable] private sealed class Diagnostic { public string assembly, message, file, type; public int line, column; }
+        /// <summary>一次脚本编译收集的诊断，由编译事件更新并跨脚本域保存。</summary>
         [Serializable]
         private sealed class CompilationResult
         {
+            /// <summary>产出此记录的编辑器会话，CLI 用它排除上一次启动的快照。</summary>
+            public string sessionId;
             // 工单 ID 只关联本次主动编译。自动编译留空，调用方可据此排除旧结果。
             public string requestId;
             // finished 由 Unity 编译结束事件写入，不能用编辑器暂时空闲代替。
@@ -37,6 +71,15 @@ namespace Revolution.Editor
         private static string _activeCompilation;
         private static readonly List<Diagnostic> Diagnostics = new List<Diagnostic>();
         private static string CompilePath => Path.Combine(RevAutomationBridge.Root, "compilation.json");
+        /// <summary>Unity Console 折叠开关。查询时临时展开，读取完成后还原。</summary>
+        private const int CollapseFlag = 1 << 0;
+        /// <summary>Unity Console 的日志、警告和错误可见位，只在本次读取期间全部开启。</summary>
+        private const int VisibilityFlags = (1 << 7) | (1 << 8) | (1 << 9);
+        /// <summary>Unity 消息位中的错误、断言、导入错误、编译错误和脚本异常等类型。</summary>
+        private const int ErrorModes = (1 << 0) | (1 << 1) | (1 << 4) | (1 << 6) | (1 << 8)
+            | (1 << 11) | (1 << 17) | (1 << 20) | (1 << 21);
+        /// <summary>Unity 消息位中的导入、脚本与编译警告。</summary>
+        private const int WarningModes = (1 << 7) | (1 << 9) | (1 << 12);
 
         static RevAutomationDiagnostics()
         {
@@ -77,9 +120,18 @@ namespace Revolution.Editor
         }
 
         /// <summary>把真实的编译事件结果写到 Library，供域重载后的桥接读取。</summary>
-        private static void SaveCompilation(bool compiling) => RevAutomationBridge.WriteJson(CompilePath,
-            new CompilationResult { requestId = _activeCompilation, finished = !compiling, compiling = compiling,
-                failed = Diagnostics.Any(d => d.type == "Error"), messages = Diagnostics.ToArray() });
+        private static void SaveCompilation(bool compiling)
+        {
+            RevAutomationBridge.WriteJson(CompilePath, new CompilationResult
+            {
+                sessionId = RevAutomationBridge.SessionId,
+                requestId = _activeCompilation,
+                finished = !compiling,
+                compiling = compiling,
+                failed = Diagnostics.Any(d => d.type == "Error"),
+                messages = Diagnostics.ToArray()
+            });
+        }
 
         [RevAutomationAction("editor.compilation", Environment = "either", Keys = new string[0], Description = "上次编译诊断及当前编译失败状态")]
         public static object Compilation(RevAutomationRequest request)
@@ -90,7 +142,8 @@ namespace Revolution.Editor
             return result;
         }
 
-        [RevAutomationAction("editor.console", Environment = "either", Keys = new[] { "offset", "limit", "query", "severity" }, Description = "分页读取 Unity Console（含编译错误）")]
+        /// <summary>读取 Console 保留的真实日志，查询和分页独立于编辑器窗口的筛选设置。</summary>
+        [RevAutomationAction("editor.console", Environment = "either", Keys = new[] { "offset", "limit", "query", "severity" }, Description = "按级别、消息和源文件分页读取 Unity Console（含编译诊断）")]
         public static object Console(RevAutomationRequest request)
         {
             var p = RevAutomationEditorOptions.Read(request);
@@ -99,32 +152,108 @@ namespace Revolution.Editor
             Type rowType = typeof(EditorApplication).Assembly.GetType("UnityEditor.LogEntry", true);
             const BindingFlags statics = BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
             const BindingFlags fields = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
-            var start = entries.GetMethod("StartGettingEntries", statics);
-            var end = entries.GetMethod("EndGettingEntries", statics);
-            var get = entries.GetMethod("GetEntryInternal", statics);
-            if (start == null || end == null || get == null) { throw new NotSupportedException("当前 Unity 不提供 Console 读取接口"); }
+            MethodInfo start = entries.GetMethod("StartGettingEntries", statics);
+            MethodInfo end = entries.GetMethod("EndGettingEntries", statics);
+            MethodInfo get = entries.GetMethod("GetEntryInternal", statics);
+            MethodInfo getFilter = entries.GetMethod("GetFilteringText", statics);
+            MethodInfo setFilter = entries.GetMethod("SetFilteringText", statics);
+            PropertyInfo flags = entries.GetProperty("consoleFlags", statics);
+            FieldInfo messageField = rowType.GetField("message", fields);
+            FieldInfo fileField = rowType.GetField("file", fields);
+            FieldInfo lineField = rowType.GetField("line", fields);
+            FieldInfo columnField = rowType.GetField("column", fields);
+            FieldInfo modeField = rowType.GetField("mode", fields);
+            if (start == null || end == null || get == null || getFilter == null || setFilter == null || flags?.CanWrite != true
+                || messageField == null || fileField == null || lineField == null || columnField == null || modeField == null)
+            {
+                throw new NotSupportedException("当前 Unity 不提供所需的 Console 快照接口");
+            }
+
+            // 原生读取的是 Console 的可见列表。先隔离窗口筛选，等本次读取结束再原样恢复。
+            int originalFlags = (int)flags.GetValue(null);
+            int allFlags = (originalFlags | VisibilityFlags) & ~CollapseFlag;
+            string originalFilter = (string)getFilter.Invoke(null, null);
             var rows = new List<LogRow>();
-            start.Invoke(null, null);
+            int total = 0;
+            object[] arguments = { 0, Activator.CreateInstance(rowType) };
             try
             {
-                int count = (int)entries.GetMethod("GetCount", statics).Invoke(null, null);
-                for (int i = 0; i < count; i++)
+                if (allFlags != originalFlags)
                 {
-                    var row = Activator.CreateInstance(rowType);
-                    if (!(bool)get.Invoke(null, new[] { (object)i, row })) { continue; }
-                    string message = (string)rowType.GetField("message", fields).GetValue(row);
-                    int mode = (int)rowType.GetField("mode", fields).GetValue(row);
-                    bool error = (mode & (1 | 2 | 16 | 64 | 256 | 2048 | 4096 | 65536)) != 0;
-                    bool warning = (mode & (128 | 512)) != 0;
-                    if (!string.IsNullOrEmpty(p.query) && message.IndexOf(p.query, StringComparison.OrdinalIgnoreCase) < 0) { continue; }
-                    if (p.severity == "error" && !error || p.severity == "warning" && !warning || p.severity == "log" && (error || warning)) { continue; }
-                    rows.Add(new LogRow { message = message, mode = mode,
-                        file = (string)rowType.GetField("file", fields).GetValue(row), line = (int)rowType.GetField("line", fields).GetValue(row) });
+                    flags.SetValue(null, allFlags);
+                }
+                if (!string.IsNullOrEmpty(originalFilter))
+                {
+                    setFilter.Invoke(null, new object[] { string.Empty });
+                }
+
+                int count = (int)start.Invoke(null, null);
+                try
+                {
+                    for (int i = 0; i < count; i++)
+                    {
+                        arguments[0] = i;
+                        if (!(bool)get.Invoke(null, arguments))
+                        {
+                            continue;
+                        }
+                        object row = arguments[1];
+                        int mode = (int)modeField.GetValue(row);
+                        string severity = ConsoleSeverity(mode);
+                        if (p.severity != null && p.severity != severity)
+                        {
+                            continue;
+                        }
+                        string message = (string)messageField.GetValue(row) ?? string.Empty;
+                        string file = (string)fileField.GetValue(row) ?? string.Empty;
+                        if (!string.IsNullOrEmpty(p.query) && message.IndexOf(p.query, StringComparison.OrdinalIgnoreCase) < 0
+                            && file.IndexOf(p.query, StringComparison.OrdinalIgnoreCase) < 0)
+                        {
+                            continue;
+                        }
+                        // 继续计数供分页，但只把本页条目装进响应。
+                        if (total++ < p.offset || rows.Count >= p.limit)
+                        {
+                            continue;
+                        }
+                        rows.Add(new LogRow
+                        {
+                            message = message,
+                            file = file,
+                            line = (int)lineField.GetValue(row),
+                            column = (int)columnField.GetValue(row),
+                            mode = mode,
+                            severity = severity
+                        });
+                    }
+                }
+                finally
+                {
+                    end.Invoke(null, null);
                 }
             }
-            finally { end.Invoke(null, null); }
-            return new ConsoleResult { total = rows.Count, offset = p.offset, truncated = rows.Count > p.offset + p.limit,
-                entries = rows.Skip(p.offset).Take(p.limit).ToArray() };
+            finally
+            {
+                if (allFlags != originalFlags)
+                {
+                    flags.SetValue(null, originalFlags);
+                }
+                if (!string.IsNullOrEmpty(originalFilter))
+                {
+                    setFilter.Invoke(null, new object[] { originalFilter });
+                }
+            }
+            return new ConsoleResult { total = total, offset = p.offset, truncated = total - p.offset > rows.Count, entries = rows.ToArray() };
+        }
+
+        /// <summary>错误位优先，编译警告只归 warning；其余条目沿用普通日志分类。</summary>
+        private static string ConsoleSeverity(int mode)
+        {
+            if ((mode & ErrorModes) != 0)
+            {
+                return "error";
+            }
+            return (mode & WarningModes) != 0 ? "warning" : "log";
         }
 
         [RevAutomationAction("editor.console-clear", Environment = "either", Keys = new string[0], Confirm = true, Description = "清空 Console；清理前先保存错误证据")]

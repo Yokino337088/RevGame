@@ -41,6 +41,8 @@ namespace Revolution.Editor
         private const string SessionKey = "Revolution.RevCLI.Session";
         public const string TestJobKey = "Revolution.RevCLI.TestJob";
         private static readonly string Session;
+        /// <summary>本次 Unity 进程的标识，脚本域重载后保持，用于核对持久化工单和编译证据。</summary>
+        internal static string SessionId => Session;
         // Session 为跨重载工单恢复而保留；域代际单独变化，防止能力缓存沿用旧程序集契约。
         private static readonly string DomainId = Guid.NewGuid().ToString("N");
         private static RevAutomationRequest _active;

@@ -7,13 +7,13 @@ description: 用 Revolution RevCLI 操作 Unity 编辑器、场景、脚本挂�
 
 编辑器制作与排错先参考 [RevGame 真实作者流程](../revolution-framework/references/revgame-content.md) 和 [交付证据](../revolution-framework/references/revgame-delivery.md)。从正式加载入口反查 Prefab、产物、依赖、GUID、构建目标和复位手续，按当前工程授权和实际注册动作执行。
 
-把“调整对象、检查资源、制作场景和 UI、定位编辑器问题、打包”落实为可验证的 Unity 操作。**默认一套 RevCLI 全搞定**，包括 Play 中调 GM、点 UI、读运行时状态；RevMCP 是可选项，用户可以自己选。不要让用户先背命令，也不要把操作成功当作业务验收通过。
+把编辑器制作、资源检查、编译、Console、打包和运行期验收落实为可验证的操作。日常 Unity 开发使用 **Revolution 工具链**，通过 RevCLI 操作编辑器，通过 RevMCP 执行实际业务回归。能力缺失时先修复连接或补齐已授权的受控入口。桌面控制仅用于用户另行明确要求的任务。
 
 ## 通道规则（CLI 优先，MCP 可选）
 
 | 任务 | 通道 |
 |---|---|
-| 场景/对象/组件/变换/RectTransform、UI 面板、Prefab、资产、材质、设置、编译、测试、打包、AB/Excel/热更/平台资源 | **RevCLI** |
+| 场景/对象/组件/变换、UI、Prefab、资源、设置、编译、Console、Test Runner、构建和工具链 | **RevCLI** |
 | 轻量运行时操作：调一两条 GM、点一下 UI、读一次状态、截一张图确认 | **RevCLI** `runtime start` → `game gm` / `game call` |
 | 重量级测试：长流程、多步断言、必须清理、要带截图和 GIF 的 HTML 报告 | **RevMCP** `rev_run`，按 `revolution-ai-automation` 执行 |
 
@@ -102,10 +102,19 @@ py -3 -c "import sys;print(sys.executable)"         找到 3.10+ 解释器，不
 
 **编译是交付门槛。** 改动 Unity C#、程序集定义、编译配置、脚本包或生成代码前先确认目标编辑器已退出 Play。遇到用户原有 Play 先交接。最后一次写入后，在同一在线工程串行调用 `editor.refresh` → 等导入稳定 → `editor.recompile` → `editor wait` → `editor.compilation`。记录重编回执的 `id`，确认诊断 `requestId` 相同、`finished=true`、`compiling=false`、`failed=false` 且无 Error；缺少这些证据时继续检查，禁止按接单或旧结果报通过。成功后重新发现能力，再进入 Play 验收。验收后若又改了脚本，重复此流程。
 
+在同一个在线工程中直接读取结构化诊断：
+
+```powershell
+python Revolution.RevCLI/rev.py --project "<工程>" --mode live editor console --severity error --limit 50
+python Revolution.RevCLI/rev.py --project "<工程>" --mode live editor compilation
+```
+
+Console 用 `--severity error|warning|log` 选级别，`--query` 匹配消息或文件，`--offset` 和 `--limit` 按匹配顺序分页。读取保留整页原文和文件行列，独立于 Unity 窗口的筛选及折叠。诊断以 `editor compilation` 的本次 `requestId` 和 `messages` 为准。若 `editor wait` 以非零退出，先读取随附的本次会话诊断和 Console，按文件行列与报错修复任务范围内的问题，再重跑完整编译和相关验收。只有完成的同一编译工单才能判定通过。
+
 1. 用目标相同的查询读回结果，断言值、数量、对象身份和资源/场景保存状态。支持 Undo 不等于可以撤销用户原本的操作，只撤销本次有清晰账本的变更。
 2. 编译/测试查看 `editor.compilation`、Console 新增错误和 Test Runner 最终结果；零测试、取消、失败清理都不能写“通过”。
 3. 临时预览/测试对象执行对应清理并恢复本次改过的选择或窗口。用户要求永久保存的编辑不撤销。
-4. 普通查询保留 JSON/活动日志；实际测试使用带断言和 `finally` 的 `rev_run` 并交付中文 HTML。视觉检查附真实截图，动态表现附真实 GIF；纯规则或只读检查明确视觉未执行。
+4. 普通查询查看 JSON 与活动日志。实际测试使用带断言和 `finally` 的 `rev_run`。用户明确要求时才导出报告及必要的真实画面。
 5. 路径写相对位置或占位符，凭据不输出、不入库。性能报告分开冷启动、稳态、窗口开启/关闭、样本数与耗时，不把工具延迟当游戏 FPS。
 
 本 Skill 只封装当前公开入口的使用纪律；不存在的能力明确报告，不承诺与任何参考工具全部功能等价。
