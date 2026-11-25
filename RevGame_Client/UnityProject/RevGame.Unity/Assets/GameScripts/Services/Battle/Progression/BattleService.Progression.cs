@@ -159,6 +159,9 @@ namespace RevGame.Services
         }
 #endif
 
+        /// <summary>战败时回退一轮。战报和实际推进都从此处取得目标回合。</summary>
+        public int DefeatRetryRound => System.Math.Max(1, Round - 1);
+
         /// <summary>结算播报后推进回合。失败回退一轮，首轮留在首轮；最终 Boss 通关只派发一次。</summary>
         public bool ContinueRound()
         {
@@ -172,7 +175,7 @@ namespace RevGame.Services
             }
             if (_lastWinner != GameSide.Player)
             {
-                return StartRound(Chapter, System.Math.Max(1, Round - 1));
+                return StartRound(Chapter, DefeatRetryRound);
             }
             if (!IsBossRound)
             {
@@ -310,20 +313,26 @@ namespace RevGame.Services
             RevEvent.DispatchEvent(Events.ProgressChanged);
             return StartRound(Chapter + 1, 1);
         }
-        /// <summary>
-        /// 最后普通回合未落子时跳过，直接挑战 Boss 并换取永久攻击加成。
-        /// 已落子会被拒绝，防止“拿满本回合收益再跳过”绕过代价。
-        /// </summary>
+        /// <summary>按钮与提交共用的判定。已经落子或离开末轮准备阶段时返回原因。</summary>
+        public string SkipRoundBlockReason
+        {
+            get
+            {
+                if (Phase != GamePhase.Prepare || Round != Balance.NormalRoundsPerChapter)
+                {
+                    return "只能在第 " + Balance.NormalRoundsPerChapter + " 回合准备阶段跳过";
+                }
+                return _cardsPlayedThisRound != 0 ? "本回合已落子，不能再跳过换强化" : string.Empty;
+            }
+        }
+
+        /// <summary>复核末轮跳过许可，进入 Boss 回合成功后才发放攻击加成。</summary>
         public bool SkipRound()
         {
-            if (Phase != GamePhase.Prepare || Round != Balance.NormalRoundsPerChapter)
+            string reason = SkipRoundBlockReason;
+            if (reason.Length > 0)
             {
-                return Reject("只能在第 " + Balance.NormalRoundsPerChapter + " 回合准备阶段跳过");
-            }
-            // 已经落牌就不能拿满收益又跳过，以免绕过「放弃本回合落子」的代价。
-            if (_cardsPlayedThisRound != 0)
-            {
-                return Reject("本回合已落子，不能再跳过换强化");
+                return Reject(reason);
             }
             if (!StartRound(Chapter, Balance.BossRoundIndex))
             {

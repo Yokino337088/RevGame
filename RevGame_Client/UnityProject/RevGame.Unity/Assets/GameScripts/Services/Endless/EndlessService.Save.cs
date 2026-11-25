@@ -57,9 +57,14 @@ namespace RevGame.Endless
             _isolatedSave = null;
         }
 
-        /// <summary>用同一个续玩槽只读展示棋阵、时长和击破数。旧档无法读出时仍提示存在进度。</summary>
-        public string DescribeSavedRun(bool isolated)
+        /// <summary>只读投影续玩槽。无档时描述为空，已结算时附带战绩；读取异常保留真实恢复入口。</summary>
+        public (string Description, bool Settled) DescribeSavedRun(bool isolated)
         {
+            if (isolated ? string.IsNullOrEmpty(_isolatedSave) : !RevFileSave.Exists(SavePath))
+            {
+                return (string.Empty, false);
+            }
+
             try
             {
                 EndlessRun saved = isolated ? Decode(_isolatedSave) : RevFileSave.Read(SavePath, Decode, out _);
@@ -70,12 +75,16 @@ namespace RevGame.Endless
                     _ => "守眼阵"
                 };
                 TimeSpan elapsed = TimeSpan.FromSeconds(Math.Max(0d, saved.seconds));
-                return $"原续档 · {formation} · {(int)elapsed.TotalMinutes:00}:{elapsed.Seconds:00} · 击破 {saved.kills + saved.invaderKills}";
+                string detail = $"{formation} · {(int)elapsed.TotalMinutes:00}:{elapsed.Seconds:00} · 击破 {saved.kills + saved.invaderKills}";
+                bool settled = saved.version == 1 && (saved.settled || saved.phase == EndlessPhase.Result);
+                return settled
+                    ? ($"{detail}\n战绩 {saved.bankedScore} · 领主 {saved.bossKills}", true)
+                    : ("原续档 · " + detail, false);
             }
             catch (Exception error)
             {
                 RevLog.Warn("无法读取旧续档摘要：" + error.Message, "RevGame");
-                return "当前已有一份无尽续档。";
+                return ("当前已有一份无尽续档。", false);
             }
         }
 

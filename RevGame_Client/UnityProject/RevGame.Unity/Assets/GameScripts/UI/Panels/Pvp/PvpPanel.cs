@@ -173,6 +173,10 @@ namespace RevGame.Pvp
         [RevBind("result/replayNext")] private Button _next;
         [RevBind("result/replayExit")] private Button _replayExit;
         [RevBind("result/newGame")] private Button _newGame;
+        /// <summary>终局左侧按钮标题，按当前是否复盘和是否为本地对局更新。</summary>
+        [RevBind("result/replayExit/label")] private Text _replayExitLabel;
+        /// <summary>终局右侧按钮标题，和可复用的对战类型保持一致。</summary>
+        [RevBind("result/newGame/label")] private Text _newGameLabel;
         [RevBind("confirm")] private GameObject _confirm;
         [RevBind("confirm/text")] private Text _confirmText;
 
@@ -412,11 +416,15 @@ namespace RevGame.Pvp
             _resume.interactable = room.Allows(PvpRoomAction.Resume);
             Show(_previous.gameObject, !_settling);
             Show(_next.gameObject, !_settling);
-            Show(_replayExit.gameObject, !_settling);
+            bool localGame = service.Mode == PvpConnectionMode.Local;
+            bool replaying = service.ReplayStep >= 0;
+            Show(_replayExit.gameObject, !_settling && (replaying || localGame));
             Show(_newGame.gameObject, !_settling);
+            Set(_replayExitLabel, replaying ? "返回终局" : "切换对战方式");
+            Set(_newGameLabel, localGame ? "再来一局" : "切换对战方式");
             _previous.interactable = finished && !_settling && service.Moves.Count > 0 && service.ReplayStep != 0;
             _next.interactable = finished && !_settling && service.ReplayStep >= 0 && service.ReplayStep < service.Moves.Count;
-            _replayExit.interactable = !_settling && service.ReplayStep >= 0;
+            _replayExit.interactable = finished && !_settling && (replaying || localGame);
         }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
@@ -564,16 +572,54 @@ namespace RevGame.Pvp
             Run(() => Service.Replay(Service.ReplayStep + 1));
         }
 
+        /// <summary>复盘时回原终局，本地终局左侧按钮可主动切换模式。</summary>
         [RevButtonClick("replayExit")]
         private void ExitReplay()
         {
-            Run(() => Service.ExitReplay());
+            Run(() =>
+            {
+                if (Service.ReplayStep >= 0)
+                {
+                    Service.ExitReplay();
+                }
+                else if (Service.Core?.Phase == GoPhase.Finished && Service.Mode == PvpConnectionMode.Local)
+                {
+                    OpenModeMenu();
+                }
+            });
         }
 
+        /// <summary>结束的本地对局沿用原方式和当前规则开新棋局；联网终局可返回模式选择。</summary>
         [RevButtonClick("newGame")]
         private void NewGame()
         {
-            Run(() => { Service.LeaveRoom(); ShowDestination("Entry"); });
+            Run(() =>
+            {
+                PvpService service = Service;
+                if (service.Core?.Phase != GoPhase.Finished)
+                {
+                    return;
+                }
+                if (service.Mode != PvpConnectionMode.Local)
+                {
+                    OpenModeMenu();
+                }
+                else if (service.IsComputerGame)
+                {
+                    service.StartComputer();
+                }
+                else
+                {
+                    service.StartLocal();
+                }
+            });
+        }
+
+        /// <summary>通过既有退房和界面交割路径再次选择对战方式。</summary>
+        private void OpenModeMenu()
+        {
+            Service.LeaveRoom();
+            ShowDestination("Entry");
         }
 
         /// <summary>对局期间排队确认离场；无进行中的棋局则直接返回。</summary>

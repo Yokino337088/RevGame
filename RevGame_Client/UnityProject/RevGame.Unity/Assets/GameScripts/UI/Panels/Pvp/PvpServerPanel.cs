@@ -34,10 +34,16 @@ namespace RevGame.Pvp
         [RevBind("mode")] private Button _mode;
         /// <summary>退房进行中禁用重复返回。</summary>
         [RevBind("back")] private Button _back;
+        /// <summary>使用现有按钮标题显示连接、等待和取消，兼容旧资源包。</summary>
+        [RevBind("connect/label")] private Text _connectLabel;
+        /// <summary>未连通的握手期间显示取消，结束握手后恢复返回。</summary>
+        [RevBind("back/label")] private Text _backLabel;
         [RevBind("match/label")] private Text _matchLabel;
         [RevBind("mode/label")] private Text _modeLabel;
         /// <summary>本次输入的拒绝原因，修改地址或重新打开面板后清除。</summary>
         private string _addressError;
+        /// <summary>上次显示给玩家的返回按钮意图，握手恰好结束时也按这次所见处理。</summary>
+        private bool _showingCancel;
         private PvpService Service { get { return RevServices.GetRequired<PvpService>(); } }
         /// <summary>回填上次握手成功的地址，玩家可修改后主动连接。</summary>
         protected override void OnOpen()
@@ -47,12 +53,17 @@ namespace RevGame.Pvp
             _endpoint.SetTextWithoutNotify(Service.LastSuccessfulServerAddress);
             RevTimer.Every(.2f, RefreshView, domain: RevTimeDomain.Unscaled, owner: this);
         }
-        /// <summary>展示当前连接状态，未连接时在原队列说明处提示地址格式。</summary>
+        /// <summary>根据同一份房间快照显示握手、取消与队列状态，并锁定在途请求的输入。</summary>
         protected override void OnRefreshView()
         {
             PvpService.PvpRoomSnapshot room = Service.RoomSnapshot;
             _state.text = _addressError ?? room.ServerStatusText;
-            _duration.text = Service.Connected && _addressError == null ? room.QueueText : ServerAddressHint;
+            _duration.text = room.IsConnecting ? "可取消本次连接，再修改服务器地址"
+                : Service.Connected && _addressError == null ? room.QueueText : ServerAddressHint;
+            _connectLabel.text = room.IsConnecting ? "正在连接…" : "连接 / 重连";
+            _showingCancel = room.IsConnecting;
+            _backLabel.text = _showingCancel ? "取消连接" : "返回";
+            _nickname.interactable = _endpoint.interactable = !room.IsConnecting;
             _match.interactable = room.Allows(PvpRoomAction.Match);
             _connect.interactable = room.Allows(PvpRoomAction.Connect);
             _mode.interactable = room.Allows(PvpRoomAction.ChangeMode);
@@ -82,9 +93,16 @@ namespace RevGame.Pvp
         {
             Service.SetRookie(!Service.Config.rookie);
         }
+        /// <summary>握手时撤销请求并留在当前页，其余情况沿正常退房路径回到对战菜单。</summary>
         [RevButtonClick("back")]
         private void Back()
         {
+            if (_showingCancel)
+            {
+                Service.CancelServerConnection();
+                RefreshView();
+                return;
+            }
             Service.LeaveRoom();
             RevUI.Get<PvpPanel>().ShowDestination("Entry");
         }

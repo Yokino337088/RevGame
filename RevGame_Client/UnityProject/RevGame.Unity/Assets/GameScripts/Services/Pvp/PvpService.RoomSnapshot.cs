@@ -198,6 +198,8 @@ namespace RevGame.Pvp
             public string ResultText { get; }
             /// <summary>服务器入口主状态文本。</summary>
             public string ServerStatusText { get; }
+            /// <summary>当前等待初始服务器握手时为真，服务器菜单可取消此请求。</summary>
+            public bool IsConnecting { get; }
             /// <summary>服务器入口排队时长或操作提示。</summary>
             public string QueueText { get; }
             /// <summary>服务器匹配按钮文本。</summary>
@@ -224,6 +226,8 @@ namespace RevGame.Pvp
                 StateHash = core?.StateHash;
                 bool online = service.Mode == PvpConnectionMode.Server;
                 bool local = service.Mode == PvpConnectionMode.Local;
+                bool handshakePending = service.ServerHandshakePending;
+                IsConnecting = handshakePending && !HasGame;
                 MissingPlayerNames = online && HasGame
                     && (string.IsNullOrWhiteSpace(service.BlackName) || string.IsNullOrWhiteSpace(service.WhiteName));
                 BlackName = string.IsNullOrWhiteSpace(service.BlackName) ? "黑方" : service.BlackName;
@@ -274,7 +278,8 @@ namespace RevGame.Pvp
                     : MissingCriticalState ? "missing_room_state" : service.AgentSettings.Ready ? string.Empty : "agent_not_configured";
                 _disabled[(int)PvpRoomAction.Reconnect] = leaving.Length != 0 ? leaving : !ShowReconnect ? "reconnect_unneeded"
                     : service._server?.Busy == true ? "request_pending" : string.Empty;
-                _disabled[(int)PvpRoomAction.Connect] = leaving.Length != 0 ? leaving : service.Queued ? "matching" : string.Empty;
+                _disabled[(int)PvpRoomAction.Connect] = leaving.Length != 0 ? leaving
+                    : handshakePending ? "request_pending" : service.Queued ? "matching" : string.Empty;
                 _disabled[(int)PvpRoomAction.Match] = service.MatchBlockReason();
                 _disabled[(int)PvpRoomAction.ChangeMode] = service.ModeBlockReason();
                 _disabled[(int)PvpRoomAction.Leave] = leaving;

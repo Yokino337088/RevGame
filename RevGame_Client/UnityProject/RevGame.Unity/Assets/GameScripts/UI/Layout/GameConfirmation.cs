@@ -50,10 +50,19 @@ namespace RevGame.UI
             Text reference = style.GetComponentInChildren<Text>(true);
             AddText("title", card, reference.font, title, new Color32(255, 221, 150, 255), 47, .08f, .72f, .92f, .94f);
             AddText("message", card, reference.font, message, new Color32(247, 244, 232, 255), 34, .09f, .33f, .91f, .71f);
-            Button cancel = AddButton("cancel", card, style, reference, cancelLabel, .10f, .45f, Dispose);
-            Button accepted = AddButton("confirm", card, style, reference, confirmLabel, .55f, .90f, Accept);
-            cancel.navigation = new Navigation { mode = Navigation.Mode.Explicit, selectOnRight = accepted };
-            accepted.navigation = new Navigation { mode = Navigation.Mode.Explicit, selectOnLeft = cancel };
+            Button cancel = AddButton("cancel", card, style, reference, cancelLabel,
+                confirm == null ? .32f : .10f, confirm == null ? .68f : .45f, Dispose);
+            if (confirm != null)
+            {
+                Button accepted = AddButton("confirm", card, style, reference, confirmLabel, .55f, .90f, Accept);
+                cancel.navigation = new Navigation { mode = Navigation.Mode.Explicit, selectOnRight = accepted };
+                accepted.navigation = new Navigation { mode = Navigation.Mode.Explicit, selectOnLeft = cancel };
+            }
+            else
+            {
+                // 只读战绩窗口只提供关闭；导航不能穿透到后面的新开按钮。
+                cancel.navigation = new Navigation { mode = Navigation.Mode.None };
+            }
             if (_events != null)
             {
                 _events.SetSelectedGameObject(cancel.gameObject);

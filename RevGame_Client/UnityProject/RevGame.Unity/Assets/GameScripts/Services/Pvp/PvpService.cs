@@ -165,12 +165,21 @@ namespace RevGame.Pvp
             Status = computer ? "本地人机 · 你执黑先行" : "本地双人练习 · 双方轮流落子";
         }
 
-        /// <summary>预检地址后建立或恢复连接。返回 true 表示已发起请求，握手结果由 Connected 表示。</summary>
+        /// <summary>服务器握手开始到取得权威回包之间为真，与已连通后的普通请求分开。</summary>
+        private bool ServerHandshakePending => Mode == PvpConnectionMode.Server && !_leaving &&
+            _server is { Busy: true, Connected: false };
+
+        /// <summary>预检并建立连接。同地址的在途握手共享原请求，正式连通仍由 Connected 表示。</summary>
         public bool StartServer(string endpoint, string nickname)
         {
-            if (_leaving)
+            if (_disposed || _leaving)
             {
                 return false;
+            }
+            if (ServerHandshakePending)
+            {
+                // 已发出的握手保留原请求和超时。切换地址须先显式取消，旧回包不能交给新地址。
+                return string.Equals(Endpoint, (endpoint ?? string.Empty).Trim(), StringComparison.OrdinalIgnoreCase);
             }
             if (!FantasyGoTransport.TryParseEndpoint(endpoint, out string host, out int port))
             {
@@ -182,6 +191,20 @@ namespace RevGame.Pvp
             FantasyGoTransport connection = PrepareServerConnection(endpoint, nickname);
             connection.Connect(host, port, Nickname, Config.RulesJson, Config.rookie ? "rookie" : "advanced",
                 _resumeToken, allowNewIdentity: !_recoveringServer);
+            return true;
+        }
+
+        /// <summary>撤销匹配页的初始握手，保留页面输入。已进房的重连由对局退场契约处理。</summary>
+        public bool CancelServerConnection()
+        {
+            if (_disposed || !ServerHandshakePending || Core != null)
+            {
+                return false;
+            }
+
+            CloseConnection();
+            Status = "已取消连接，可重新连接";
+            Revision++;
             return true;
         }
 

@@ -26,6 +26,8 @@ namespace RevGame.UI
         private Button _btnReady;
         [RevBind]
         private Button _btnSkip;
+        /// <summary>缓存末轮跳过按钮的标题，按业务许可与实际加成更新。</summary>
+        private Text _skipLabel;
         [RevBind]
         private Button _btnEye;
         // RevBind 按字段名寻找 btnRefresh 节点，预制体由项目 MCP 装配工具生成。
@@ -72,6 +74,7 @@ namespace RevGame.UI
             _hintPlate = transform.Find("hintPlate")?.gameObject;
             _rejectedTutorialCard = OnRejectedTutorialCard;
             _readyLabel = _btnReady.GetComponentInChildren<Text>(true);
+            _skipLabel = _btnSkip.GetComponentInChildren<Text>(true);
             _refreshLabel = _btnRefresh.GetComponentInChildren<Text>(true);
             _eyeLabel = _btnEye.GetComponentInChildren<Text>(true);
             // 六槽按钮随预制体一同装配，由方法特性接线；点击时读取当前 CardId。
@@ -164,8 +167,18 @@ namespace RevGame.UI
                 _shownHandCount = handCount;
             }
 
-            _btnSkip.gameObject.SetActive(battle.Round == Balance.NormalRoundsPerChapter);
-            _btnSkip.interactable = !guided && !flipping;
+            bool showSkip = battle.Round == Balance.NormalRoundsPerChapter && battle.Phase == GamePhase.Prepare && !guided;
+            _btnSkip.gameObject.SetActive(showSkip);
+            if (showSkip)
+            {
+                bool allowed = battle.SkipRoundBlockReason.Length == 0;
+                _btnSkip.interactable = allowed && !flipping;
+                string label = allowed ? "直达 Boss · 攻击 +" + ConfigText.Percent(Balance.RoundSkipAttackBonus) : "已落子 · 无法跳过";
+                if (_skipLabel.text != label)
+                {
+                    _skipLabel.text = label;
+                }
+            }
             int eyeStones = battle.EyeStones;
             _btnEye.gameObject.SetActive(eyeStones > 0);
             if (_shownEyeStones != eyeStones)
@@ -270,10 +283,14 @@ namespace RevGame.UI
             }
         }
 
+        /// <summary>提交末轮跳过；动画及业务门禁在真实点击时仍然复核。</summary>
         [RevButtonClick("btnSkip")]
         private void OnSkipClick()
         {
-            RevLogic.Get<BattleLogic>().SkipRound();
+            if (!AnyCardFlipping)
+            {
+                RevLogic.Get<BattleLogic>().SkipRound();
+            }
         }
         [RevButtonClick("btnEye")]
         private void OnEyeClick()

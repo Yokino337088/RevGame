@@ -37,7 +37,7 @@ namespace RevGame.UI
                 _chapters[i].interactable = i < unlocked;
                 _chapters[i].GetComponentInChildren<Text>().text = "第 " + (i + 1) + " 章\n" + (i < unlocked ? "开始挑战" : "通关前章解锁");
             }
-            _hint.text = $"每章 {Balance.NormalRoundsPerChapter} 个普通回合 + 1 个 Boss 回合\n本次挑战内回合间继承棋盘，离场或失败需重开本章。";
+            _hint.text = $"每章 {Balance.NormalRoundsPerChapter} 个普通回合 + 1 个 Boss 回合，回合间继承棋盘\n战败退回上一回合，首回合原地重试；离场需重开本章。";
         }
         private void OnChapter(int chapter)
         {

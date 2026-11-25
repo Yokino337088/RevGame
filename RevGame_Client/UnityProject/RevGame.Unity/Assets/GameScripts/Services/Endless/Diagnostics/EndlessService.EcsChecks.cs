@@ -94,6 +94,14 @@ namespace RevGame.Endless
                 replacement.CommitFirstSave();
                 Check(restored.Restore(false) && restored.Run.runId == replacement.Run.runId && restored.Run.formation == 2,
                     "首屏成功后的提交可继续到新局", checks);
+                Check(!replacement.DescribeSavedRun(false).Settled, "未结束的新档提供续玩入口", checks);
+                // 保存结算后，查看摘要必须包含归档分数，而且不改动保存文件。
+                replacement.Run.score = 36;
+                replacement.Finish();
+                string settledFile = File.ReadAllText(path);
+                var archive = replacement.DescribeSavedRun(false);
+                Check(archive.Settled && archive.Description.Contains("战绩 36") && File.ReadAllText(path) == settledFile,
+                    "结束的局提供只读战绩摘要，保留原始结算存档", checks);
                 return new Dictionary<string, object> { ["success"] = true, ["passed"] = checks.Count, ["checks"] = checks };
             }
             finally

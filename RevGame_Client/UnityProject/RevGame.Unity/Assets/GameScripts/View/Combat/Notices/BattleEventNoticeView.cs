@@ -155,13 +155,13 @@ namespace RevGame.View
             outline.effectDistance = new Vector2(2f, -2f);
         }
 
-        /// <summary>播放一条不抢输入的回合结果。使用非缩放时间，与战斗逻辑时间独立。</summary>
-        internal void ShowRoundOutcome(bool won, Action<BattleEventNoticeView> onFinished)
+        /// <summary>播放回合结果与败局重试目标，使用非缩放时间且不抢棋盘输入。</summary>
+        internal void ShowRoundOutcome(bool won, int retryRound, Action<BattleEventNoticeView> onFinished)
         {
             StopAnimation();
             _roundOutcomeMode = true;
             _onFinished = onFinished;
-            titleText.text = won ? "回合胜利" : "回合失败";
+            titleText.text = won ? "回合胜利" : $"回合失败\n返回第 {retryRound} 回合";
             titleText.fontStyle = FontStyle.Bold;
             titleText.alignment = TextAnchor.MiddleCenter;
             titleText.fontSize = 96;

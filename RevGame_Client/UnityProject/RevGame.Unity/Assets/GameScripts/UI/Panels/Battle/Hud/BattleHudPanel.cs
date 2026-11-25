@@ -360,6 +360,7 @@ namespace RevGame.UI
         private BattleEventNoticeView _roundOutcomeNotice;
         public bool IsRoundOutcomeVisible => _roundOutcomeNotice != null;
 
+        /// <summary>从当前战斗读取败局重试目标，在自动推进之前显示并在播完后回调。</summary>
         internal void ShowRoundOutcome(GameSide winner, System.Action completed)
         {
             ClearNotices();
@@ -379,7 +380,7 @@ namespace RevGame.UI
                 }
                 _roundOutcomeNotice = notice;
                 _notices.Add(notice);
-                notice.ShowRoundOutcome(winner == GameSide.Player, finished =>
+                notice.ShowRoundOutcome(winner == GameSide.Player, Battle.DefeatRetryRound, finished =>
                 {
                     _roundOutcomeNotice = null;
                     OnNoticeFinished(finished);

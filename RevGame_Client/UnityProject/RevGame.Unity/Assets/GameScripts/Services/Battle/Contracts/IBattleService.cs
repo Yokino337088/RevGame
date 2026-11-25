@@ -200,7 +200,13 @@ namespace RevGame.Services
         /// <summary>领取第 index 个奖励（0~2）；重复领取或不存在的编号必须返回 false。</summary>
         bool ChooseReward(int index);
 
-        /// <summary>最后普通回合未落子时跳过，直接挑战 Boss 并换取永久攻击加成。</summary>
+        /// <summary>末轮跳过的拒绝原因。空字符串表示服务允许跳过。</summary>
+        string SkipRoundBlockReason { get; }
+
+        /// <summary>当前回合战败后实际进入的回合，首回合返回 1。</summary>
+        int DefeatRetryRound { get; }
+
+        /// <summary>验证当前未落子的末轮准备阶段，并推进到 Boss 回合。</summary>
         bool SkipRound();
 
         /// <summary>切换“补眼模式”；必须准备阶段且持有眼位石。</summary>

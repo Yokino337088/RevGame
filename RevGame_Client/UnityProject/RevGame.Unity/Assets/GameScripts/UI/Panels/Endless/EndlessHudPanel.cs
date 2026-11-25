@@ -4,6 +4,7 @@ using DG.Tweening;
 using RevGame.Core;
 using RevGame.Data;
 using RevGame.Flow;
+using RevGame.UI;
 using RevGame.View;
 using Revolution;
 using UnityEngine;
@@ -80,6 +81,8 @@ namespace RevGame.Endless
         private readonly Text[] _cardNames = new Text[4];
         /// <summary>弹窗里的三个大选项。只有两个选项时用左右两张（0 和 2），只有一个时用中间（1）。</summary>
         private readonly GameObject[] _choices = new GameObject[3];
+        /// <summary>暂停页的结束确认；切出当前 HUD 时释放，避免迟到按钮结算另一局。</summary>
+        private GameConfirmation _finishConfirmation;
         private readonly Text[] _choiceTexts = new Text[3];
         private readonly StringBuilder _text = new StringBuilder(256);
         private EndlessArena _arena;
@@ -559,8 +562,13 @@ namespace RevGame.Endless
             }
             return _text.Length > 0 ? _text.ToString() : "还没有祝福";
         }
+        /// <summary>转发当前弹窗选项；暂停页的结束请求必须先得到玩家确认。</summary>
         private void Choice(int index)
         {
+            if (_finishConfirmation?.IsOpen == true)
+            {
+                return;
+            }
             EndlessPhase phase = Service.Run.phase;
             if (phase == EndlessPhase.Upgrade)
             {
@@ -595,7 +603,7 @@ namespace RevGame.Endless
                 }
                 else
                 {
-                    Service.Finish();
+                    ConfirmFinish();
                 }
             }
             else if (phase == EndlessPhase.Result)
@@ -604,6 +612,22 @@ namespace RevGame.Endless
             }
             RefreshView();
         }
+        /// <summary>先展示无法再续玩的后果。玩家确认时只结束这次暂停的同一局。</summary>
+        private void ConfirmFinish()
+        {
+            EndlessRun run = Service.Run;
+            _finishConfirmation = new GameConfirmation(_choices[2].GetComponent<Button>(), "结算并结束本局？",
+                "结算后会保留本局战绩，此局将无法继续。", "结算本局", "取消", () =>
+                {
+                    if (ReferenceEquals(Service.Run, run) && run.phase == EndlessPhase.Paused)
+                    {
+                        Service.Finish();
+                        RefreshView();
+                    }
+                });
+        }
+
+        /// <summary>保存仍可续玩的局，写入成功后才返回大厅。</summary>
         private void SaveExit()
         {
             if (Service.Save())
@@ -788,8 +812,11 @@ namespace RevGame.Endless
                 _choices[i].transform.localScale = Vector3.one;
             }
         }
+        /// <summary>退出时先关闭确认遮挡，再停止输入、计时和持有的棋盘表现。</summary>
         protected override void OnClose()
         {
+            _finishConfirmation?.Dispose();
+            _finishConfirmation = null;
             CancelCardDrag();
             SetCardDragBinding(false);
             _opening = false;
