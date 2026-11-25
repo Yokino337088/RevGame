@@ -20,6 +20,7 @@ namespace RevGame.Bootstrap
 {
     public static partial class GameGmCommands
     {
+        /// <summary>登记开发态各业务的 GM，失败时通过同一份名称账本统一回收。</summary>
         public static void RegisterAll()
         {
             // 同一宿主重复装配幂等；失败时回滚本文件已注册的命令，不污染其他模块。
@@ -34,6 +35,7 @@ namespace RevGame.Bootstrap
                 RevGame.Automation.GameAutomationCommands.RegisterGroup();
                 RegisterPlayerActions();
                 RegisterStoryCommands();
+                RegisterPvpTutorialCommands();
                 RegisterGalCommands();
                 RegisterYayaMemoryCommands();
                 RegisterYayaReactionCommands();

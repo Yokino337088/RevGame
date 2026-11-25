@@ -49,17 +49,18 @@ namespace RevGame.Pvp
             _regularSpeechBestFit = _speech.resizeTextForBestFit;
             RectTransform controls = PvpTutorialControls.Rect("tutorialControls", transform, 0, 0, 1, 1);
             _tutorialControls = controls.gameObject;
+            // 按钮和开发态 GM 共用同一套处理，GM 另外读取返回值来判断是否被拒绝。
             _tutorialNext = PvpTutorialControls.Button("tutorialNext", _resign, controls, "继续",
-                .44f, .025f, .56f, .095f, AdvanceTutorialFromPanel);
+                .44f, .025f, .56f, .095f, () => AdvanceTutorialFromPanel());
             _tutorialNextCaption = _tutorialNext.GetComponentInChildren<Text>(true);
             _tutorialPass = PvpTutorialControls.Button("tutorialPass", _pass, controls, "停一手",
-                .31f, .025f, .43f, .095f, PassTutorialFromPanel);
+                .31f, .025f, .43f, .095f, () => PassTutorialFromPanel());
             _tutorialConfirm = PvpTutorialControls.Button("tutorialConfirmScore", _hint, controls, "确认数子",
-                .57f, .025f, .69f, .095f, ConfirmTutorialScoreFromPanel);
+                .57f, .025f, .69f, .095f, () => ConfirmTutorialScoreFromPanel());
             PvpTutorialControls.Button("tutorialRetry", _back, controls, "重练本节",
-                .025f, .12f, .174f, .185f, RetryTutorialFromPanel);
+                .025f, .12f, .174f, .185f, () => RetryTutorialFromPanel());
             PvpTutorialControls.Button("tutorialExit", _back, controls, "退出教学",
-                .025f, .03f, .174f, .095f, ExitTutorialFromPanel);
+                .025f, .03f, .174f, .095f, () => ExitTutorialFromPanel());
             Show(_tutorialControls, false);
         }
 
@@ -197,44 +198,63 @@ namespace RevGame.Pvp
             ResetMatchFeedback();
         }
 
-        /// <summary>推进已完成的练习或完成整个教学。</summary>
-        private void AdvanceTutorialFromPanel()
+        /// <summary>本节允许继续时才推进。结课由业务记录完成，再清理练习并请求模式菜单。</summary>
+        internal bool AdvanceTutorialFromPanel()
         {
-            if (Service.AdvanceTutorial() && Service.Tutorial == null)
+            if (!Service.AdvanceTutorial())
+            {
+                return false;
+            }
+            if (Service.Tutorial == null)
             {
                 ReturnFromTutorial();
             }
             RefreshView();
+            return true;
         }
 
-        /// <summary>点击课程专用按钮提交停一手。</summary>
-        private void PassTutorialFromPanel()
+        /// <summary>只有停一手按钮可用时才提交真实停手，成功后刷新练习盘。</summary>
+        internal bool PassTutorialFromPanel()
         {
-            Service.PassTutorial();
-            RefreshView();
-        }
-
-        /// <summary>点击课程专用按钮确认当前盘面，展示实际计分。</summary>
-        private void ConfirmTutorialScoreFromPanel()
-        {
-            Service.ConfirmTutorialScore();
-            RefreshView();
-        }
-
-        /// <summary>重置这一节的盘面，在原地再练一次。</summary>
-        private void RetryTutorialFromPanel()
-        {
-            Service.RetryTutorial();
-            RefreshView();
-        }
-
-        /// <summary>离开练习并回到模式选择，由业务决定首次教学进度。</summary>
-        private void ExitTutorialFromPanel()
-        {
-            if (Service.ExitTutorial())
+            if (Service.Tutorial?.CanPass != true || !Service.PassTutorial())
             {
-                ReturnFromTutorial();
+                return false;
             }
+            RefreshView();
+            return true;
+        }
+
+        /// <summary>只有当前课允许确认才提交真实数子，成功后展示最终盘面。</summary>
+        internal bool ConfirmTutorialScoreFromPanel()
+        {
+            if (Service.Tutorial?.CanConfirmScore != true || !Service.ConfirmTutorialScore())
+            {
+                return false;
+            }
+            RefreshView();
+            return true;
+        }
+
+        /// <summary>恢复当前课的初始盘面。没有练习可重试时拒绝，不切换课程。</summary>
+        internal bool RetryTutorialFromPanel()
+        {
+            if (!Service.RetryTutorial())
+            {
+                return false;
+            }
+            RefreshView();
+            return true;
+        }
+
+        /// <summary>放弃当前练习并请求回到模式选择，不提交结课进度。</summary>
+        internal bool ExitTutorialFromPanel()
+        {
+            if (!Service.ExitTutorial())
+            {
+                return false;
+            }
+            ReturnFromTutorial();
+            return true;
         }
 
         /// <summary>先收起棋盘和专用控件，再请求同一场景中的模式菜单。</summary>
