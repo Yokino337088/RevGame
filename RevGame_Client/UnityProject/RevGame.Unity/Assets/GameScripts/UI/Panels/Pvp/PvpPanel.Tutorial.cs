@@ -46,6 +46,10 @@ namespace RevGame.Pvp
         private float _tutorialBubbleTop;
         /// <summary>上次排版所用的面板高度，单位为设计坐标。</summary>
         private float _tutorialFrameHeight;
+        /// <summary>顶部状态栏在预制体中的下边缘锚点，作为棋盘旁讲解的设计参考。</summary>
+        private float _tutorialHeaderAnchorY;
+        /// <summary>顶部状态栏下沿相对锚点的设计偏移。</summary>
+        private float _tutorialHeaderOffsetY;
         /// <summary>普通对局气泡的纵向锚点，退出教学时恢复。</summary>
         private Vector2 _regularBubbleVerticalAnchors;
         /// <summary>气泡与立绘在设计稿里的横向偏移差，入场用它清除残留动画位移。</summary>
@@ -69,6 +73,9 @@ namespace RevGame.Pvp
         private void BindTutorialHud()
         {
             _normalControls = transform.Find("controls").gameObject;
+            var header = (RectTransform)_title.transform.parent;
+            _tutorialHeaderAnchorY = header.anchorMin.y;
+            _tutorialHeaderOffsetY = header.offsetMin.y;
             var bubble = (RectTransform)_bubble.transform;
             _regularBubbleVerticalAnchors = new Vector2(bubble.anchorMin.y, bubble.anchorMax.y);
             _regularBubbleOffsetFromPortrait = bubble.anchoredPosition.x - _portrait.rectTransform.anchoredPosition.x;
@@ -122,7 +129,7 @@ namespace RevGame.Pvp
             RefreshTutorialBoard(tutorial.Core, lessonChanged);
         }
 
-        /// <summary>读取 Excel 讲解和表情，换课或可用范围变化时才重新排版。</summary>
+        /// <summary>读取 Excel 讲解和表情，围绕棋盘布置讲解，换课或可用范围变化时重新排版。</summary>
         private void RefreshTutorialDialogue(PvpTutorial tutorial, bool lessonChanged)
         {
             var rect = (RectTransform)_bubble.transform;
@@ -131,7 +138,9 @@ namespace RevGame.Pvp
             {
                 return;
             }
-            float top = TutorialStatusBottom(root) - 18f;
+            // 平板上的状态栏向安全顶边移动，讲解仍留在棋盘和立绘附近，并受状态栏实际下沿约束。
+            float designBottom = root.rect.yMin + root.rect.height * _tutorialHeaderAnchorY + _tutorialHeaderOffsetY;
+            float top = Mathf.Min(TutorialStatusBottom(root), designBottom) - 18f;
             if (!lessonChanged &&
                 Mathf.Approximately(_tutorialBubbleTop, top) && Mathf.Approximately(_tutorialFrameHeight, root.rect.height)
                 && Mathf.Approximately(_tutorialBubbleWidth, rect.rect.width))

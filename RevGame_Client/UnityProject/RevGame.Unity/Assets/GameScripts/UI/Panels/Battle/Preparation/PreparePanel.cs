@@ -59,7 +59,10 @@ namespace RevGame.UI
         /// <summary>绑定设计框、卡槽和按钮文字，后续刷新复用同一组节点。</summary>
         protected override void OnBindView()
         {
-            GameMobileLayout.EnableBoardFrame(transform);
+            // 左侧课题提示靠上，右侧准备按钮靠下。手牌跟随棋盘设计框。
+            GameMobileLayout.EnableBoardFrame(transform, leftNodes: null, rightNodes: null,
+                topNodes: new[] { "hintPlate", "hintText" },
+                bottomNodes: new[] { "btnReady", "btnRefresh", "btnEye", "btnSkip" });
             _cards = GetComponentsInChildren<CardItem>(true);
             _readyLabel = _btnReady.GetComponentInChildren<Text>(true);
             _refreshLabel = _btnRefresh.GetComponentInChildren<Text>(true);

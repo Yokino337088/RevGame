@@ -101,7 +101,8 @@ namespace RevGame.Editor
             type.GetMethod("Begin").Invoke(null, null);
             return new Result { text = (string)type.GetMethod("State").Invoke(null, null) };
         }
-        [RevAutomationAction("game.board-viewport.rules", Environment = "edit", Keys = new string[0], Description = "检查多种安卓横屏下的设计画幅和棋盘侧栏")]
+        /// <summary>在编辑态运行纯几何断言，检查横屏安全区和四边锚点的映射。</summary>
+        [RevAutomationAction("game.board-viewport.rules", Environment = "edit", Keys = new string[0], Description = "检查横屏设计框、安全区和四边控件锚点")]
         public static object BoardViewportRules(RevAutomationRequest request)
         {
             var type = Type.GetType("RevGame.Editor.GameReadabilityChecks, Assembly-CSharp-Editor", true);

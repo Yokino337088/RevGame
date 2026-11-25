@@ -103,10 +103,12 @@ namespace RevGame.UI
                 return RevServices.GetRequired<IBattleService>();
             }
         }
-        /// <summary>绑定信息牌坐标和深墨色，创建本面板血条复用的只读及写入委托。</summary>
+        /// <summary>绑定顶栏、信息牌坐标和深墨色，创建本面板血条复用的只读及写入委托。</summary>
         protected override void OnBindView()
         {
-            GameMobileLayout.EnableBoardFrame(transform);
+            // 血条和文字挂在信息牌下，跟父节点一起移动。
+            GameMobileLayout.EnableBoardFrame(transform, leftNodes: null, rightNodes: null,
+                topNodes: new[] { "roundText", "scoreFrame", "infoPlate", "btnHome", "btnSettings" }, bottomNodes: null);
             _readBossBar = () => _bossBar.fillAmount;
             _writeBossBar = value => _bossBar.fillAmount = value;
             _clearBossBar = ClearBossTween;

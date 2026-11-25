@@ -42,12 +42,30 @@ namespace RevGame.UI
         /// <summary>将棋盘设计框之外的安全空间分给两侧控件。返回设计坐标中的偏移，按钮和字体仍等比缩放。</summary>
         public static Vector2 SidebarOffsets(Rect safe, Rect frame)
         {
+            if (frame.width <= 0f)
+            {
+                return Vector2.zero;
+            }
             // 用掉八成额外宽度，超宽窗口也保留相邻关系和外侧余量。
             const float Spread = .8f;
             const float Limit = .12f;
             float left = Mathf.Clamp((frame.xMin - safe.xMin) * Spread / frame.width, 0f, Limit);
             float right = Mathf.Clamp((safe.xMax - frame.xMax) * Spread / frame.width, 0f, Limit);
             return new Vector2(-left, right) * DesignResolution.x;
+        }
+
+        /// <summary>返回贴底、贴顶控件要补偿的纵向距离，单位为设计坐标。棋盘仍使用原设计框。</summary>
+        public static Vector2 VerticalEdgeOffsets(Rect safe, Rect frame)
+        {
+            if (frame.height <= 0f)
+            {
+                return Vector2.zero;
+            }
+
+            // 固定设计框之外的安全留边归边缘控件使用，原有边距通过等比缩放保留。
+            float bottom = Mathf.Max(0f, frame.yMin - safe.yMin);
+            float top = Mathf.Max(0f, safe.yMax - frame.yMax);
+            return new Vector2(-bottom, top) * (DesignResolution.y / frame.height);
         }
         /// <summary>独立纯计算入口，方便验证刘海、左右旋转和非法的零尺寸输入。</summary>
         public static Rect NormalizeSafeArea(Rect safe, Vector2 size)

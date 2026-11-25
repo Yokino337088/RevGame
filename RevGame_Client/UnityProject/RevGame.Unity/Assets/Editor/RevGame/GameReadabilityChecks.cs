@@ -24,11 +24,19 @@ namespace RevGame.Editor
         // 当前检查步骤，仅作诊断。不是模型阶段，测试工具不能通过改这个字符串强行使业务通过。
         public static string Stage { get; private set; } = "未开始";
 
-        /// <summary>用真实布局函数校验常见安卓横屏和刘海，检查设计比例、包含关系与棋盘侧栏。</summary>
+        /// <summary>用实际布局函数校验常见横屏与安全区，检查棋盘等比和四周控件的安全边界。</summary>
         public static string CheckBoardViewport()
         {
-            var sizes = new[] { new Vector2(1920, 1080), new Vector2(2400, 1080), new Vector2(2340, 1080), new Vector2(1440, 1080), new Vector2(1920, 1080) };
-            var safeAreas = new[] { new Rect(0, 0, 1, 1), new Rect(.06f, 0, .94f, 1), new Rect(.01f, .035f, .94f, .965f), new Rect(0, 0, 1, 1), new Rect(.06f, 0, .94f, 1) };
+            var sizes = new[]
+            {
+                new Vector2(1920, 1080), new Vector2(2400, 1080), new Vector2(2340, 1080), new Vector2(1440, 1080),
+                new Vector2(1920, 1080), new Vector2(1280, 800), new Vector2(2520, 1080), new Vector2(2048, 1536)
+            };
+            var safeAreas = new[]
+            {
+                new Rect(0, 0, 1, 1), new Rect(.06f, 0, .94f, 1), new Rect(.01f, .035f, .94f, .965f), new Rect(0, 0, 1, 1),
+                new Rect(.06f, 0, .94f, 1), new Rect(0, 0, 1, 1), new Rect(0, 0, 1, 1), new Rect(.02f, .05f, .96f, .92f)
+            };
             for (int i = 0; i < sizes.Length; i++)
             {
                 Vector2 pixels = sizes[i];
@@ -36,8 +44,11 @@ namespace RevGame.Editor
                 Rect frame = RevGame.UI.GameBattleLayout.FitBoardViewport(pixels, safe);
                 var layout = RevGame.UI.GameBattleLayout.Calculate(pixels, frame);
                 Vector2 offsets = RevGame.UI.GameBattleLayout.SidebarOffsets(safe, frame);
+                Vector2 vertical = RevGame.UI.GameBattleLayout.VerticalEdgeOffsets(safe, frame);
                 float normalizedScale = frame.width / RevGame.UI.GameBattleLayout.DesignResolution.x;
-                bool hasHorizontalRoom = i == 1 || i == 2;
+                float normalizedHeightScale = frame.height / RevGame.UI.GameBattleLayout.DesignResolution.y;
+                bool hasHorizontalRoom = i == 1 || i == 2 || i == 6;
+                bool hasVerticalRoom = i == 3 || i == 4 || i == 5 || i == 7;
                 if (!Mathf.Approximately(frame.width * pixels.x / (frame.height * pixels.y), 16f / 9f) ||
                     frame.xMin < safe.xMin - .0001f || frame.xMax > safe.xMax + .0001f ||
                     frame.yMin < safe.yMin - .0001f || frame.yMax > safe.yMax + .0001f ||
@@ -45,13 +56,22 @@ namespace RevGame.Editor
                     frame.xMin + offsets.x * normalizedScale < safe.xMin - .0001f ||
                     frame.xMax + offsets.y * normalizedScale > safe.xMax + .0001f ||
                     (hasHorizontalRoom ? offsets.x >= 0f || offsets.y <= 0f : offsets.sqrMagnitude > .001f) ||
+                    (hasVerticalRoom ? vertical.x >= 0f || vertical.y <= 0f : vertical.sqrMagnitude > .001f) ||
+                    Mathf.Abs(frame.yMin + vertical.x * normalizedHeightScale - safe.yMin) > .0001f ||
+                    Mathf.Abs(frame.yMax + vertical.y * normalizedHeightScale - safe.yMax) > .0001f ||
                     !Mathf.Approximately(layout.Board.width, layout.Board.height) ||
                     layout.Board.Overlaps(layout.Left) || layout.Board.Overlaps(layout.Right) || layout.Board.Overlaps(layout.Header))
                 {
                     throw new InvalidOperationException("横屏控制区超出安全区域或遮挡棋盘：" + pixels);
                 }
             }
-            return "通过五组画幅与安全区的居中、正方形棋盘、宽屏侧栏扩展和 16:9 原位置检查";
+            Rect empty = Rect.zero;
+            if (RevGame.UI.GameBattleLayout.SidebarOffsets(safeAreas[0], empty) != Vector2.zero ||
+                RevGame.UI.GameBattleLayout.VerticalEdgeOffsets(safeAreas[0], empty) != Vector2.zero)
+            {
+                throw new InvalidOperationException("空设计框不能产生锚点偏移");
+            }
+            return "通过八组画幅与安全区的设计框、正方形棋盘、左右侧栏、上下边缘和 16:9 原位置检查";
         }
         // 只读结果/阶段/已完成断言数。断言数随渲染帧数可能略变，不代表这么多个独立玩法场景。
         public static string State()

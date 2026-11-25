@@ -30,10 +30,21 @@ namespace RevGame.Pvp
         {
             "controls/toggleHints", "yayaPortrait", "yayaBubble", "scoring", "result"
         };
+        /// <summary>随安全顶边定位的棋局状态栏，棋盘和讲解继续共用中间设计框。</summary>
+        private static readonly string[] TopAnchorPaths = { "top" };
+        /// <summary>玩家常按的按钮和胜率栏随安全底边定位，保持同组间距。</summary>
+        private static readonly string[] BottomAnchorPaths =
+        {
+            "winRate", "controls/back", "controls/agent", "controls/agentSettings", "controls/toggleHints",
+            "controls/pass", "controls/resign", "controls/hint",
+            "tutorialControls/tutorialExit", "tutorialControls/tutorialRetry",
+            "tutorialControls/tutorialPass", "tutorialControls/tutorialConfirmScore"
+        };
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+        /// <summary>验收时检查实际参与四边适配的围棋控件，角落节点只测一次。</summary>
         private static readonly string[] MatchLayoutPaths = LeftSidebarPaths.Concat(RightSidebarPaths)
-            .Concat(new[] { "top", "winRate", "controls/pass", "controls/resign", "controls/hint" }).ToArray();
+            .Concat(TopAnchorPaths).Concat(BottomAnchorPaths).Distinct().ToArray();
 
         /// <summary>只读对局的实际控制区。菜单或切场时没有可测棋盘，直接返回空。</summary>
         internal object BoardLayoutSnapshot()
@@ -51,8 +62,9 @@ namespace RevGame.Pvp
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
             BindDuelTestButton();
 #endif
-            // 动态按钮先创建，再读取原始锚点；设备变化只从这一份设计坐标重算。
-            RevGame.UI.GameMobileLayout.EnableBoardFrame(transform, LeftSidebarPaths, RightSidebarPaths, "defeat/backdrop");
+            // 动态按钮先创建，再捕获设计锚点。横向仍按侧栏展开，平板多出的高度由上下边缘控件使用。
+            RevGame.UI.GameMobileLayout.EnableBoardFrame(transform, LeftSidebarPaths, RightSidebarPaths,
+                TopAnchorPaths, BottomAnchorPaths, "defeat/backdrop");
         }
 
         /// <summary>左侧强制决斗按钮。仅当业务允许且没有其它弹窗遮挡时显示。</summary>

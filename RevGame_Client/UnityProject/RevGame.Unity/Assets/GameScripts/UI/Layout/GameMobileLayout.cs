@@ -22,15 +22,24 @@ namespace RevGame.UI
         private bool _applying;
         private bool _boardFrame;
         private float _frameScale;
-        private SidebarNode[] _leftSidebar;
-        private SidebarNode[] _rightSidebar;
+        /// <summary>宽屏上的左栏节点及其设计坐标。</summary>
+        private EdgeNode[] _leftSidebar;
+        /// <summary>宽屏上的右栏节点及其设计坐标。</summary>
+        private EdgeNode[] _rightSidebar;
+        /// <summary>在安全设计框上方有空间时贴向安全区顶部的控件。</summary>
+        private EdgeNode[] _topAnchors;
+        /// <summary>在安全设计框下方有空间时贴向安全区底部的控件。</summary>
+        private EdgeNode[] _bottomAnchors;
         private FullBleedNode[] _fullBleed;
         private SafeHudNode[] _sceneHud;
         public bool HasBoardFrame => _boardFrame;
 
-        private struct SidebarNode
+        /// <summary>保存控件绑定时的设计位置，换设备或改窗口时从原值重算。</summary>
+        private struct EdgeNode
         {
+            /// <summary>同一设计框内需要移动的控件。一个控件可同时参与横向和纵向适配。</summary>
             public RectTransform Transform;
+            /// <summary>编辑态预制体的原始锚点偏移，单位为设计坐标。</summary>
             public Vector2 DesignPosition;
         }
 
@@ -78,19 +87,20 @@ namespace RevGame.UI
             layout.ApplyLayout();
         }
 
-        /// <summary>在安全区内以等比设计框显示决斗 HUD，背景和角色继续使用完整画幅。</summary>
+        /// <summary>决斗状态贴向安全区顶边，两侧触控和键盘指引贴向底边，按键仍等比缩放。</summary>
         internal static void EnableDuelHud(RectTransform hud)
         {
-            // 以项目统一设计框等比布局，超宽屏、刘海屏上的触控区域仍是圆形。
-            GameMobileLayout layout = GetLayout(hud);
-            layout._boardFrame = true;
-            // 宽屏多出的安全空间优先留给两手的控制区，顶部状态条保持对称。
-            layout._leftSidebar = ReadSidebar(hud, "MoveStick", "Jump");
-            layout._rightSidebar = ReadSidebar(hud, "Jab", "Skill", "SkillTwo", "Ultimate");
-            // 结算立绘与按钮随设计框缩放，透明边框及其下层暗幕覆盖整个窗口。
-            layout._fullBleed = ReadFullBleed(hud, "Result/Backdrop", "Result/BackdropVeil");
-            layout._lastSize = Vector2.zero;
-            layout.ApplyLayout();
+            EnableBoardFrame(hud,
+                new[] { "MoveStick", "Jump" },
+                new[] { "Jab", "Skill", "SkillTwo", "Ultimate" },
+                new[]
+                {
+                    "ClockPlate", "Clock", "Back", "Reconnect", "Banner",
+                    "BlackName", "BlackHealth", "BlackHp", "BlackEnergy", "BlackCombo", "BlackPortraitFrame", "BlackPortrait", "BlackPortraitBadge",
+                    "WhiteName", "WhiteHealth", "WhiteHp", "WhiteEnergy", "WhiteCombo", "WhitePortraitFrame", "WhitePortrait", "WhitePortraitBadge"
+                },
+                new[] { "MoveStick", "Jump", "Jab", "Skill", "SkillTwo", "Ultimate", "KeyboardGuide", "InputFeedback" },
+                "Result/Backdrop", "Result/BackdropVeil");
         }
 
         /// <summary>将指定背景或引导节点还原为覆盖父画布。</summary>
@@ -106,23 +116,32 @@ namespace RevGame.UI
             return panel.TryGetComponent(out GameMobileLayout layout) ? layout : panel.gameObject.AddComponent<GameMobileLayout>();
         }
 
-        /// <summary>棋盘与控制面板使用相同安全设计框；可指定需扩展到整个画幅的底图。</summary>
+        /// <summary>使用安全设计框和可选的左右侧栏，沿用只声明横向锚点的调用方式。</summary>
         public static void EnableBoardFrame(Transform panel, string[] leftNodes = null, string[] rightNodes = null, params string[] fullBleedPaths)
+        {
+            EnableBoardFrame(panel, leftNodes, rightNodes, null, null, fullBleedPaths);
+        }
+
+        /// <summary>在安全设计框内保持棋盘比例，把指定控件按各自的边缘移动。可同时指定覆盖全画幅的底图。</summary>
+        public static void EnableBoardFrame(Transform panel, string[] leftNodes, string[] rightNodes,
+            string[] topNodes, string[] bottomNodes, params string[] fullBleedPaths)
         {
             GameMobileLayout layout = GetLayout(panel);
             layout._boardFrame = true;
             layout._lastSize = Vector2.zero;
             layout._fullBleed = ReadFullBleed(panel, fullBleedPaths);
+            layout._topAnchors = ReadEdgeNodes(panel, topNodes);
+            layout._bottomAnchors = ReadEdgeNodes(panel, bottomNodes);
             // 装配时只读取一次预制体坐标，后续换设备都从设计原点重算，不累加偏移。
             if (leftNodes != null || rightNodes != null)
             {
-                layout._leftSidebar = ReadSidebar(panel, leftNodes);
-                layout._rightSidebar = ReadSidebar(panel, rightNodes);
+                layout._leftSidebar = ReadEdgeNodes(panel, leftNodes);
+                layout._rightSidebar = ReadEdgeNodes(panel, rightNodes);
             }
             else if (layout.panelName == "PreparePanel")
             {
-                layout._leftSidebar = ReadSidebar(panel, "cards", "hintPlate", "hintText");
-                layout._rightSidebar = ReadSidebar(panel, "btnReady", "btnRefresh", "btnEye", "btnSkip");
+                layout._leftSidebar = ReadEdgeNodes(panel, "cards", "hintPlate", "hintText");
+                layout._rightSidebar = ReadEdgeNodes(panel, "btnReady", "btnRefresh", "btnEye", "btnSkip");
             }
             else if (layout.panelName == "BattleHudPanel")
             {
@@ -136,8 +155,8 @@ namespace RevGame.UI
                     removePiece.anchoredPosition = new Vector2(right.center.x, right.yMin + right.height * .56f);
                     removePiece.sizeDelta = new Vector2(224f, 72f);
                 }
-                layout._leftSidebar = ReadSidebar(panel, "scoreFrame", "assistPlate", "assistText");
-                layout._rightSidebar = ReadSidebar(panel, "infoPlate", "btnHome", "btnSettings", "btnRemovePiece");
+                layout._leftSidebar = ReadEdgeNodes(panel, "scoreFrame", "assistPlate", "assistText");
+                layout._rightSidebar = ReadEdgeNodes(panel, "infoPlate", "btnHome", "btnSettings", "btnRemovePiece");
             }
             layout.ApplyLayout();
         }
@@ -162,18 +181,19 @@ namespace RevGame.UI
             return nodes;
         }
 
-        private static SidebarNode[] ReadSidebar(Transform panel, params string[] names)
+        /// <summary>绑定时读取已存在的控件位置，兼容缺少个别节点的旧预制体。</summary>
+        private static EdgeNode[] ReadEdgeNodes(Transform panel, params string[] names)
         {
             if (names == null)
             {
                 return null;
             }
-            var nodes = new SidebarNode[names.Length];
+            var nodes = new EdgeNode[names.Length];
             for (int i = 0; i < names.Length; i++)
             {
                 if (panel.Find(names[i]) is RectTransform node)
                 {
-                    nodes[i] = new SidebarNode { Transform = node, DesignPosition = node.anchoredPosition };
+                    nodes[i] = new EdgeNode { Transform = node, DesignPosition = node.anchoredPosition };
                 }
             }
             return nodes;
@@ -433,7 +453,7 @@ namespace RevGame.UI
             _applying = false;
         }
 
-        /// <summary>固定预制体设计坐标，只移动及等比缩放面板根。父级仍是覆盖全屏的 Revolution UI 层。</summary>
+        /// <summary>等比缩放棋盘设计框，按安全区边缘重新定位控件。画幅稳定后跳过位置写入。</summary>
         private void ApplyBoardFrame(RectTransform root)
         {
             if (_applying || root == null || !(root.parent is RectTransform parent))
@@ -469,8 +489,11 @@ namespace RevGame.UI
             root.pivot = Vector2.one * .5f;
             _frameScale = Revolution.RevUIViewport.ApplyDesignFrame(root, frame, GameBattleLayout.DesignResolution);
             Vector2 sidebar = GameBattleLayout.SidebarOffsets(safe, frame);
-            MoveSidebar(_leftSidebar, sidebar.x);
-            MoveSidebar(_rightSidebar, sidebar.y);
+            Vector2 vertical = GameBattleLayout.VerticalEdgeOffsets(safe, frame);
+            MoveEdgeNodes(_leftSidebar, sidebar.x, vertical: false);
+            MoveEdgeNodes(_rightSidebar, sidebar.y, vertical: false);
+            MoveEdgeNodes(_bottomAnchors, vertical.x, vertical: true);
+            MoveEdgeNodes(_topAnchors, vertical.y, vertical: true);
             if (_fullBleed != null)
             {
                 // 从全屏坐标反算设计框内锚点，背景仍覆盖刘海外侧与宽屏留边。
@@ -555,17 +578,27 @@ namespace RevGame.UI
             _applying = false;
         }
 
-        private static void MoveSidebar(SidebarNode[] nodes, float offset)
+        /// <summary>只改指定轴，角落控件可以同时应用两个安全区偏移。位置始终由设计预设加本次偏移得出。</summary>
+        private static void MoveEdgeNodes(EdgeNode[] nodes, float offset, bool vertical)
         {
             if (nodes == null)
             {
                 return;
             }
-            foreach (SidebarNode node in nodes)
+            foreach (EdgeNode node in nodes)
             {
                 if (node.Transform != null)
                 {
-                    node.Transform.anchoredPosition = node.DesignPosition + Vector2.right * offset;
+                    Vector2 position = node.Transform.anchoredPosition;
+                    if (vertical)
+                    {
+                        position.y = node.DesignPosition.y + offset;
+                    }
+                    else
+                    {
+                        position.x = node.DesignPosition.x + offset;
+                    }
+                    node.Transform.anchoredPosition = position;
                 }
             }
         }
