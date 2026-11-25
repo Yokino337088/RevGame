@@ -31,10 +31,12 @@ namespace RevGame.UI
             RevUIAnim.Play(this, RevUIAnimPreset.PopOut, 0.1f, onDone, owner: this);
         }
 
+        /// <summary>先安排公共入口，再由浏览器扩展复制底部按钮，最后把大厅放入安全区。</summary>
         protected override void OnBindView()
         {
+            GameLobbyLayout.ConfigureContent(transform);
             BindCottageStoryEntry();
-            RevGame.UI.GameMobileLayout.EnableSafePanel(transform);
+            GameMobileLayout.EnableSafePanel(transform);
         }
 
         /// <summary>框架按按钮节点名自动接线，面板复用时不会叠加手动监听。</summary>

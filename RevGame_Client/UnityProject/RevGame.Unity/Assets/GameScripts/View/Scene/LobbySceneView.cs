@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using RevGame.Core;
+using RevGame.UI;
 using Revolution;
 using UnityEngine;
 
@@ -41,6 +42,8 @@ namespace RevGame.View
         private bool _released, _preparing;
         /// <summary>仅在视口变化时重新摆放场景对象，普通动画帧不改背景Transform。</summary>
         private Vector2Int _pixels;
+        /// <summary>同样的像素尺寸也可能替换安全区，构图要跟随大厅控件一起刷新。</summary>
+        private Rect _lastSafeArea;
         /// <summary>最近请求的局外界面，仅控制角色可见性，不持有玩法状态。</summary>
         private GameScreen _screen;
         /// <summary>材质、图集和首帧都可画后为true，过场据此等待。</summary>
@@ -183,7 +186,8 @@ namespace RevGame.View
                 bounds.max.y - bounds.size.y * .19f, bounds.center.z));
             return true;
         }
-        /// <summary>原画等比cover相机，角色全身站左侧圆台。结构比例为原画构图约定，不是游戏数值。</summary>
+
+        /// <summary>原画等比铺满相机，角色站位受大厅左栏和底部入口约束。</summary>
         public void FitCamera()
         {
             if (lobbyCamera == null || cottageRenderer.sharedMaterial == null || yayaRenderer.sprite == null || (Application.isPlaying && !Ready))
@@ -191,27 +195,67 @@ namespace RevGame.View
                 return;
             }
             var pixels = new Vector2Int(lobbyCamera.pixelWidth, lobbyCamera.pixelHeight);
-            if (_pixels == pixels && _lastFootAnchor == yayaFootAnchor && _lastHeight == yayaHeight)
+            Rect safeArea = GameBattleLayout.SafeViewport();
+            if (pixels.x == 0 || pixels.y == 0 ||
+                (_pixels == pixels && _lastSafeArea == safeArea && _lastFootAnchor == yayaFootAnchor && _lastHeight == yayaHeight))
             {
                 return;
             }
             _pixels = pixels;
+            _lastSafeArea = safeArea;
             _lastFootAnchor = yayaFootAnchor;
             _lastHeight = yayaHeight;
             lobbyCamera.orthographic = true;
             lobbyCamera.orthographicSize = 6f;
             lobbyCamera.transform.position = new Vector3(0, 0, -10);
             Texture texture = cottageRenderer.sharedMaterial.GetTexture("_ChapterTex");
-            float aspect = (float)texture.width / texture.height;
-            float height = Mathf.Max(12f, 12f * lobbyCamera.aspect / aspect);
-            cottageRenderer.transform.localScale = new Vector3(height * aspect, height, 1);
+            const float cameraHeight = 12f;
+            Vector2 cover = GameBackgroundLayout.CoverSize(
+                new Vector2(cameraHeight * lobbyCamera.aspect, cameraHeight), new Vector2(texture.width, texture.height));
+            cottageRenderer.transform.localScale = new Vector3(cover.x, cover.y, 1f);
             cottageRenderer.transform.position = new Vector3(0, 0, 5);
-            // 用户配置人物高度与脚底锚点，人工位移留在YayaPlacement父节点，不被自动cover布局覆盖。
-            float characterHeight = yayaHeight;
-            yayaRenderer.transform.localScale = Vector3.one * (characterHeight / yayaRenderer.sprite.bounds.size.y);
-            Vector3 center = new Vector3(height * aspect * (yayaFootAnchor.x - .5f), height * (yayaFootAnchor.y - .5f) + characterHeight * .5f, 0);
-            yayaRenderer.transform.localPosition = center - Vector3.Scale(yayaRenderer.sprite.bounds.center, yayaRenderer.transform.localScale);
+            FitYaya(cover.x, cover.y, GameLobbyLayout.PortraitViewport(pixels, safeArea));
         }
+
+        /// <summary>保持美术的脚底锚点和人工位移，再把相机里的完整立绘限制到左栏。</summary>
+        private void FitYaya(float artworkWidth, float artworkHeight, Rect viewport)
+        {
+            Vector2 low = lobbyCamera.ViewportToWorldPoint(new Vector3(viewport.xMin, viewport.yMin, 10f));
+            Vector2 high = lobbyCamera.ViewportToWorldPoint(new Vector3(viewport.xMax, viewport.yMax, 10f));
+            Transform sprite = yayaRenderer.transform;
+            Transform placement = sprite.parent;
+            Bounds bounds = yayaRenderer.sprite.bounds;
+            Vector3 parentScale = placement.lossyScale;
+            var unscaledWorld = new Vector2(bounds.size.x * Mathf.Abs(parentScale.x), bounds.size.y * Mathf.Abs(parentScale.y));
+            float scale = Mathf.Min(yayaHeight / bounds.size.y, (high.x - low.x) / unscaledWorld.x);
+            scale = Mathf.Min(scale, (high.y - low.y) / unscaledWorld.y);
+            sprite.localScale = Vector3.one * scale;
+
+            // 左栏在窄屏先给下方入口留空间。只校正子节点，Inspector 的站位输入留在父节点。
+            Vector2 half = unscaledWorld * (scale * .5f);
+            Vector3 center = placement.TransformPoint(artworkWidth * (yayaFootAnchor.x - .5f),
+                artworkHeight * (yayaFootAnchor.y - .5f) + bounds.extents.y * scale, 0f);
+            center.x = Mathf.Clamp(center.x, low.x + half.x, high.x - half.x);
+            center.y = Mathf.Clamp(center.y, low.y + half.y, high.y - half.y);
+            sprite.position = center - sprite.TransformVector(bounds.center);
+        }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+        /// <summary>返回实际绘制的立绘边界，供自动化核对 UI 覆盖和安全区。</summary>
+        internal bool TryGetYayaScreenBounds(out Rect rect)
+        {
+            rect = default;
+            if (!Ready || lobbyCamera == null || yayaRenderer == null || !yayaRenderer.enabled)
+            {
+                return false;
+            }
+            Bounds bounds = yayaRenderer.bounds;
+            Vector3 min = lobbyCamera.WorldToScreenPoint(bounds.min);
+            Vector3 max = lobbyCamera.WorldToScreenPoint(bounds.max);
+            rect = Rect.MinMaxRect(min.x, min.y, max.x, max.y);
+            return true;
+        }
+#endif
 #if UNITY_EDITOR
         /// <summary>编辑态仅显示固定预览图片并复用正式构图；不播放业务、不调RevInitialize，不克隆材质。</summary>
         private void Update()
@@ -231,16 +275,24 @@ namespace RevGame.View
             FitCamera();
         }
 #endif
-        /// <summary>只读真实场景、Shader遮罩与动画状态，不能用此入口更改图像或流程。</summary>
+        /// <summary>读取真实场景的原画比例、相机覆盖、Shader 遮罩与动画状态。</summary>
         public object Snapshot()
         {
             Material material = cottageRenderer.sharedMaterial;
+            Texture artwork = material == null ? null : material.GetTexture("_ChapterTex");
+            Bounds photo = cottageRenderer.bounds;
+            Vector2 viewportMin = lobbyCamera.WorldToViewportPoint(photo.min);
+            Vector2 viewportMax = lobbyCamera.WorldToViewportPoint(photo.max);
             return new Dictionary<string, object>
             {
                 ["ready"] = Ready,
                 ["scene"] = gameObject.scene.name,
                 ["sceneObjects"] = GetComponentInChildren<Canvas>(true) == null,
                 ["backgroundShader"] = cottageRenderer.sharedMaterial == null ? "" : cottageRenderer.sharedMaterial.shader.name,
+                ["backgroundCoversViewport"] = cottageRenderer.enabled && viewportMin.x <= .001f && viewportMin.y <= .001f &&
+                    viewportMax.x >= .999f && viewportMax.y >= .999f,
+                ["backgroundKeepsAspect"] = artwork != null && photo.size.y > 0f &&
+                    Mathf.Abs(photo.size.x / photo.size.y / ((float)artwork.width / artwork.height) - 1f) < .001f,
                 ["maskUsed"] = cottageRenderer.sharedMaterial != null && cottageRenderer.sharedMaterial.GetTexture("_RegionMask") != null,
                 ["sprite"] = yayaRenderer.sprite == null ? "" : yayaRenderer.sprite.name,
                 ["animatorPlaying"] = yayaAnimator.enabled && yayaAnimator.runtimeAnimatorController != null,

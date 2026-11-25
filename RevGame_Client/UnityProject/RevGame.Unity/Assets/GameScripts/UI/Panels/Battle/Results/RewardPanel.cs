@@ -28,7 +28,8 @@ namespace RevGame.UI
         private Sprite[] rewardIcons;
         protected override void OnBindView()
         {
-            RevGame.UI.GameMobileLayout.EnableSafePanel(transform);
+            GameMobileLayout.SeparateViewportVeil(transform);
+            GameMobileLayout.EnableSafePanel(transform, GameMobileLayout.ViewportVeil);
         }
 
         protected override void OnRefreshView()

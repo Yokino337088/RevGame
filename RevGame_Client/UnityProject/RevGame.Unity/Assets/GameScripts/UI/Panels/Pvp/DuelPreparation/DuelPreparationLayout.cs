@@ -18,6 +18,8 @@ namespace RevGame.Pvp
         private RevUIAdaptiveLayout _adaptiveLayout;
         // 底图随面板画幅改变而裁切。
         private Vector2 _lastSize;
+        /// <summary>上次已铺满的底图。AB 异步绑定后即使尺寸相同也要重新裁切。</summary>
+        private Sprite _lastBackdrop;
 
         // 内容加入安全设计框，底图继续覆盖整个面板。
         private void OnEnable()
@@ -47,7 +49,16 @@ namespace RevGame.Pvp
             Apply();
         }
 
-        // 编辑时直接用全幅预览设计框。背景独立按原画比例覆盖全屏。
+        /// <summary>编辑预览和运行时都能收到迟到的图片，未换图时跳过布局。</summary>
+        private void LateUpdate()
+        {
+            if (backdrop != null && backdrop.overrideSprite != _lastBackdrop)
+            {
+                Apply();
+            }
+        }
+
+        /// <summary>编辑时预览设计框。底图按原画铺满整个面板，以窗口尺寸和当前 Sprite 为基准。</summary>
         private void Apply()
         {
             if (!isActiveAndEnabled || !gameObject.scene.IsValid())
@@ -56,11 +67,13 @@ namespace RevGame.Pvp
             }
             var root = (RectTransform)transform;
             Vector2 size = root.rect.size;
-            if (size.x <= 0 || size.y <= 0 || _lastSize == size)
+            Sprite sprite = backdrop == null ? null : backdrop.overrideSprite;
+            if (size.x <= 0f || size.y <= 0f || (_lastSize == size && _lastBackdrop == sprite))
             {
                 return;
             }
             _lastSize = size;
+            _lastBackdrop = sprite;
 
             if (design != null && !Application.IsPlaying(gameObject))
             {
@@ -69,11 +82,9 @@ namespace RevGame.Pvp
                 RevUIViewport.ApplyDesignFrame(design, frame, reference);
             }
 
-            if (backdrop != null && backdrop.sprite != null)
+            if (backdrop != null)
             {
-                Rect art = backdrop.sprite.rect;
-                float aspect = art.width / art.height;
-                backdrop.rectTransform.sizeDelta = new Vector2(Mathf.Max(size.x, size.y * aspect), Mathf.Max(size.y, size.x / aspect));
+                backdrop.rectTransform.sizeDelta = sprite == null ? size : GameBackgroundLayout.CoverSize(size, sprite.rect.size);
             }
         }
     }

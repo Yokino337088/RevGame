@@ -138,6 +138,7 @@ namespace RevGame.UI
             }
         }
 
+        /// <summary>播放收藏提示。横向留在中栏，高度可随立绘站位调整，关闭面板时停止动画。</summary>
         private void ShowMemorySpeech()
         {
             HideMemorySpeech();
@@ -150,8 +151,8 @@ namespace RevGame.UI
                 Camera camera = canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera;
                 if (RectTransformUtility.ScreenPointToLocalPointInRectangle(parent, screen, camera, out Vector2 local))
                 {
-                    Vector2 normalized = (local - parent.rect.min) / parent.rect.size;
-                    rect.anchorMin = rect.anchorMax = new Vector2(Mathf.Clamp(normalized.x, .29f, .49f), Mathf.Clamp(normalized.y, .58f, .84f));
+                    float heightInFrame = (local.y - parent.rect.yMin) / parent.rect.height;
+                    rect.anchorMin = rect.anchorMax = new Vector2(GameLobbyLayout.HintLeft, Mathf.Clamp(heightInFrame, .57f, .625f));
                     rect.anchoredPosition = Vector2.zero;
                 }
             }

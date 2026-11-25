@@ -10,6 +10,7 @@ using DG.Tweening;
 using RevGame.Core;
 using RevGame.Flow;
 using RevGame.Services;
+using RevGame.UI;
 using RevGame.View;
 using Revolution;
 using UnityEngine;
@@ -24,7 +25,7 @@ namespace RevGame.Editor
         // 当前检查步骤，仅作诊断。不是模型阶段，测试工具不能通过改这个字符串强行使业务通过。
         public static string Stage { get; private set; } = "未开始";
 
-        /// <summary>用实际布局函数校验常见横屏与安全区，检查棋盘等比和四周控件的安全边界。</summary>
+        /// <summary>用实际布局函数检查背景铺满、棋盘等比与四周控件的安全边界。</summary>
         public static string CheckBoardViewport()
         {
             var sizes = new[]
@@ -40,6 +41,8 @@ namespace RevGame.Editor
             for (int i = 0; i < sizes.Length; i++)
             {
                 Vector2 pixels = sizes[i];
+                CheckBackgroundCover(pixels, new Vector2(1920f, 1080f));
+                CheckBackgroundCover(pixels, new Vector2(1200f, 1600f));
                 Rect safe = safeAreas[i];
                 Rect frame = RevGame.UI.GameBattleLayout.FitBoardViewport(pixels, safe);
                 var layout = RevGame.UI.GameBattleLayout.Calculate(pixels, frame);
@@ -71,7 +74,26 @@ namespace RevGame.Editor
             {
                 throw new InvalidOperationException("空设计框不能产生锚点偏移");
             }
-            return "通过八组画幅与安全区的设计框、正方形棋盘、左右侧栏、上下边缘和 16:9 原位置检查";
+            return "通过八组画幅与安全区的设计框、正方形棋盘、边缘控件，以及横竖原画等比铺满和图集裁切检查";
+        }
+
+        /// <summary>验证同一画幅下几何铺满和采样铺满，检查裁切区仍在原图集范围内。</summary>
+        private static void CheckBackgroundCover(Vector2 viewport, Vector2 art)
+        {
+            Vector2 covered = GameBackgroundLayout.CoverSize(viewport, art);
+            Rect source = Rect.MinMaxRect(.13f, .21f, .79f, .91f);
+            Rect crop = GameBackgroundLayout.CoverUv(viewport, art.x / art.y, source);
+            float cropAspect = (art.x * crop.width / source.width) / (art.y * crop.height / source.height);
+            const float tolerance = .0001f;
+            if (covered.x < viewport.x - .01f || covered.y < viewport.y - .01f ||
+                Mathf.Abs(covered.x / covered.y - art.x / art.y) > tolerance ||
+                Mathf.Abs(cropAspect - viewport.x / viewport.y) > tolerance ||
+                (crop.center - source.center).sqrMagnitude > tolerance * tolerance ||
+                crop.xMin < source.xMin - tolerance || crop.yMin < source.yMin - tolerance ||
+                crop.xMax > source.xMax + tolerance || crop.yMax > source.yMax + tolerance)
+            {
+                throw new InvalidOperationException("背景铺满或图集裁切范围有误：" + viewport + " / " + art);
+            }
         }
         // 只读结果/阶段/已完成断言数。断言数随渲染帧数可能略变，不代表这么多个独立玩法场景。
         public static string State()

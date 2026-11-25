@@ -36,7 +36,8 @@ namespace RevGame.UI
         private Button _btnContinue;
         protected override void OnBindView()
         {
-            RevGame.UI.GameMobileLayout.EnableSafePanel(transform);
+            GameMobileLayout.SeparateViewportVeil(transform);
+            GameMobileLayout.EnableSafePanel(transform, GameMobileLayout.ViewportVeil);
         }
 
         protected override void OnRefreshView()

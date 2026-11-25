@@ -2,6 +2,7 @@
 // 只负责展示与等比铺满；关闭先解除UI引用，再归还本面板的资源。
 using System;
 using RevGame.Data;
+using RevGame.UI;
 using Revolution;
 using UnityEngine;
 using UnityEngine.Sprites;
@@ -147,17 +148,14 @@ namespace RevGame.View
             }
             _image.material = _chapterMaterial;
         }
-        /// <summary>等比cover裁切，背景铺满屏幕；不改变人物或对话框布局，不让小屋随屏幕比例变形。</summary>
+        /// <summary>根据实际可绘制区域裁切原图，剧情换屏时保持画面比例。</summary>
         private void FitCrop()
         {
-            if (!Ready || _image == null || _image.rectTransform.rect.height <= 0)
+            if (!Ready || _image == null)
             {
                 return;
             }
-            float aspect = _image.rectTransform.rect.width / _image.rectTransform.rect.height;
-            float width = aspect < _sourceAspect ? aspect / _sourceAspect : 1;
-            float height = aspect > _sourceAspect ? _sourceAspect / aspect : 1;
-            _image.uvRect = new Rect(_sourceUv.x + _sourceUv.width * (1 - width) * .5f, _sourceUv.y + _sourceUv.height * (1 - height) * .5f, _sourceUv.width * width, _sourceUv.height * height);
+            _image.uvRect = GameBackgroundLayout.CoverUv(_image.rectTransform.rect.size, _sourceAspect, _sourceUv);
         }
         /// <summary>窗口大小改变时重新裁切现有纹理，不产生加载或材质副本。</summary>
         private void OnRectTransformDimensionsChange()

@@ -140,6 +140,7 @@ namespace RevGame.Pvp
             BindEyeTexture();
             boardRenderer.SetPropertyBlock(_boardBlock);
         }
+        /// <summary>屏幕变化时对齐棋盘和 HUD，让神殿原图按实际素材宽高等比铺满相机。</summary>
         private void FitCamera()
         {
             Vector2 pixels = new Vector2(_camera.pixelWidth, _camera.pixelHeight);
@@ -165,11 +166,12 @@ namespace RevGame.Pvp
             backgroundPosition.x = _camera.transform.position.x;
             backgroundPosition.y = _camera.transform.position.y;
             backgroundRenderer.transform.position = backgroundPosition;
-            float height = _camera.orthographicSize * 2;
-            float backgroundWidth = Mathf.Max(height * aspect, height * (16f / 9f));
-            backgroundRenderer.transform.localScale = new Vector3(backgroundWidth, backgroundWidth * 9f / 16f, 1);
-            _backgroundBlock.SetFloat("_Aspect", 16f / 9f);
-            // 原画按Cover裁切，建筑保持比例；不用把16:9图片横向拉伸成手机长屏。
+            float height = _camera.orthographicSize * 2f;
+            Texture texture = backgroundRenderer.sharedMaterial.GetTexture("_MainTex");
+            Vector2 art = texture == null ? RevGame.UI.GameBattleLayout.DesignResolution : new Vector2(texture.width, texture.height);
+            Vector2 cover = RevGame.UI.GameBackgroundLayout.CoverSize(new Vector2(height * aspect, height), art);
+            backgroundRenderer.transform.localScale = new Vector3(cover.x, cover.y, 1f);
+            _backgroundBlock.SetFloat("_Aspect", art.x / art.y);
             backgroundRenderer.SetPropertyBlock(_backgroundBlock);
         }
         private void ReadInput(PvpService service)

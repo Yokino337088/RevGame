@@ -341,6 +341,7 @@ namespace RevGame.Bootstrap
             };
         }
 
+        /// <summary>核对实际大厅场景、UI 标题字形、控件和场景立绘的落屏边界。</summary>
         private static object LobbySnapshot()
         {
             var lobby = Object.FindObjectOfType<RevGame.View.LobbySceneView>();
@@ -348,6 +349,7 @@ namespace RevGame.Bootstrap
             return new Dictionary<string, object>
             {
                 ["lobby"] = lobby?.Snapshot(),
+                ["contentLayout"] = home == null ? null : RevGame.UI.GameLobbyLayout.Inspect(home.transform, lobby),
                 ["noUIBackdrop"] = home != null && home.transform.Find("screenBackground") == null && home.transform.Find("LobbyBackground") == null,
                 ["noUICharacter"] = home != null && home.transform.Find("Yaya") == null
             };

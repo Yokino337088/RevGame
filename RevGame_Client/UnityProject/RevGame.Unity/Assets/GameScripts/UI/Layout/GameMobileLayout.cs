@@ -22,6 +22,8 @@ namespace RevGame.UI
         private bool _applying;
         private bool _boardFrame;
         private float _frameScale;
+        /// <summary>附在拟合内容下的独立全屏底色，也用作原有的点击面。</summary>
+        internal const string ViewportVeil = "ViewportVeil";
         /// <summary>宽屏上的左栏节点及其设计坐标。</summary>
         private EdgeNode[] _leftSidebar;
         /// <summary>宽屏上的右栏节点及其设计坐标。</summary>
@@ -49,12 +51,21 @@ namespace RevGame.UI
             public Vector2 AnchorMin, AnchorMax, OffsetMin, OffsetMax;
         }
 
+        /// <summary>全屏画面节点及装载前的图片信息，调整画幅时按源图比例重算。</summary>
         private struct FullBleedNode
         {
+            /// <summary>从安全设计框反算整屏边界时要调整的节点。</summary>
             public RectTransform Transform;
+            /// <summary>使用 UV 裁切过宽或过高的原图。</summary>
             public RawImage Artwork;
+            /// <summary>使用等比外扩来铺满画面的单图 Sprite。</summary>
+            public Image SpriteArtwork;
+            /// <summary>预制体指定的原始 UV，保留图集或子区域。</summary>
             public Rect SourceUv;
+            /// <summary>检测异步切图，避免每帧重写相同 UV。</summary>
             public Texture LastTexture;
+            /// <summary>检测剧情等页面的异步 Sprite 切换。</summary>
+            public Sprite LastSprite;
         }
 
         /// <summary>菜单、弹窗和全屏过场共用同一个设计框。指定的背景或遮罩穿过设计框，覆盖整个 UI 层。</summary>
@@ -65,6 +76,28 @@ namespace RevGame.UI
             layout._lastSize = Vector2.zero;
             layout._fullBleed = ReadFullBleed(panel, fullBleedPaths);
             layout.ApplyLayout();
+        }
+
+        /// <summary>把面板原本用 Image 绘制的全屏底色和点击面放到独立子节点。</summary>
+        internal static void SeparateViewportVeil(Transform owner)
+        {
+            if (owner == null || !owner.TryGetComponent(out Image original) || owner.Find(ViewportVeil) != null)
+            {
+                return;
+            }
+
+            // 主体缩进安全区时底色仍应覆盖整屏，CanvasGroup 与点击监听仍由原节点的层级管理。
+            var surface = new GameObject(ViewportVeil, typeof(RectTransform), typeof(Image));
+            surface.layer = owner.gameObject.layer;
+            var veil = surface.GetComponent<Image>();
+            veil.rectTransform.SetParent(owner, false);
+            veil.rectTransform.SetAsFirstSibling();
+            StretchToParent(veil.rectTransform);
+            veil.color = original.color;
+            veil.raycastTarget = original.raycastTarget;
+            veil.raycastPadding = original.raycastPadding;
+            veil.enabled = original.enabled;
+            original.enabled = false;
         }
 
         /// <summary>场景 Canvas 保留全屏，决斗的按钮和状态条分别使用原始锚点映射到安全设计框。</summary>
@@ -175,7 +208,8 @@ namespace RevGame.UI
                 RawImage artwork = node == null ? null : node.GetComponent<RawImage>();
                 nodes[i] = new FullBleedNode
                 {
-                    Transform = node, Artwork = artwork, SourceUv = artwork == null ? default : artwork.uvRect
+                    Transform = node, Artwork = artwork, SourceUv = artwork == null ? default : artwork.uvRect,
+                    SpriteArtwork = node == null || artwork != null ? null : node.GetComponent<Image>()
                 };
             }
             return nodes;
@@ -216,12 +250,21 @@ namespace RevGame.UI
                 }
                 bool coversScreen = true;
                 int covers = 0;
+                bool keepsArtworkAspect = true;
+                int activeArtworkCount = 0;
                 if (layout._fullBleed != null)
                 {
                     foreach (FullBleedNode backdrop in layout._fullBleed)
                     {
                         covers++;
-                        coversScreen &= backdrop.Transform != null && Contains(ScreenBounds(backdrop.Transform, corners), screen);
+                        Rect bounds = backdrop.Transform == null ? Rect.zero : ScreenBounds(backdrop.Transform, corners);
+                        coversScreen &= backdrop.Transform != null && Contains(bounds, screen);
+                        if (backdrop.Transform != null && backdrop.Transform.gameObject.activeInHierarchy &&
+                            TryGetArtworkAspect(backdrop, out float imageAspect))
+                        {
+                            activeArtworkCount++;
+                            keepsArtworkAspect &= bounds.height > 0f && Mathf.Abs(bounds.width / bounds.height / imageAspect - 1f) < .01f;
+                        }
                     }
                 }
                 var rect = (RectTransform)panel.transform;
@@ -232,7 +275,9 @@ namespace RevGame.UI
                     ["frameWidth"] = frame.width,
                     ["frameHeight"] = frame.height,
                     ["fullBleedCount"] = covers,
-                    ["fullBleedCoversScreen"] = coversScreen
+                    ["fullBleedCoversScreen"] = coversScreen,
+                    ["activeBackgroundImages"] = activeArtworkCount,
+                    ["backgroundImagesKeepAspect"] = keepsArtworkAspect
                 };
             }
             foreach (GameMobileLayout layout in FindObjectsOfType<GameMobileLayout>())
@@ -260,7 +305,26 @@ namespace RevGame.UI
             return panels;
         }
 
-        private static Rect ScreenBounds(RectTransform rect, Vector3[] corners)
+        /// <summary>读取实际采样区的宽高比。纯色遮罩和九宫格装饰不计入整图缩放检查。</summary>
+        private static bool TryGetArtworkAspect(FullBleedNode backdrop, out float aspect)
+        {
+            aspect = 0f;
+            if (backdrop.Artwork != null && backdrop.Artwork.enabled && backdrop.Artwork.texture != null)
+            {
+                Texture texture = backdrop.Artwork.texture;
+                Rect uv = backdrop.Artwork.uvRect;
+                aspect = texture.width * uv.width / (texture.height * uv.height);
+            }
+            else if (backdrop.SpriteArtwork != null && backdrop.SpriteArtwork.enabled &&
+                backdrop.SpriteArtwork.type == Image.Type.Simple && backdrop.SpriteArtwork.overrideSprite is Sprite sprite)
+            {
+                aspect = sprite.rect.width / sprite.rect.height;
+            }
+            return aspect > 0f;
+        }
+
+        /// <summary>将屏幕空间画布的矩形转为设备像素范围。</summary>
+        internal static Rect ScreenBounds(RectTransform rect, Vector3[] corners)
         {
             rect.GetWorldCorners(corners);
             Vector2 min = RectTransformUtility.WorldToScreenPoint(null, corners[0]);
@@ -268,7 +332,8 @@ namespace RevGame.UI
             return Rect.MinMaxRect(min.x, min.y, max.x, max.y);
         }
 
-        private static bool Contains(Rect outer, Rect inner)
+        /// <summary>比较像素范围，容许浮点投影产生的一像素误差。</summary>
+        internal static bool Contains(Rect outer, Rect inner)
         {
             const float Tolerance = 1f;
             return outer.xMin <= inner.xMin + Tolerance && outer.xMax >= inner.xMax - Tolerance &&
@@ -472,7 +537,7 @@ namespace RevGame.UI
                 // 有底图的面板继续等待转场结束，并在地址换图后更新 UV。
                 if (_fullBleed != null && !Revolution.RevUIAnim.IsPlaying(this))
                 {
-                    CropFullBleedArtwork(size.x / size.y, force: false);
+                    FitFullBleedArtwork(size / _frameScale, force: false);
                 }
                 return;
             }
@@ -508,13 +573,13 @@ namespace RevGame.UI
                         backdrop.Transform.offsetMin = backdrop.Transform.offsetMax = Vector2.zero;
                     }
                 }
-                CropFullBleedArtwork(size.x / size.y, force: true);
+                FitFullBleedArtwork(size / _frameScale, force: true);
             }
             _applying = false;
         }
 
-        // 图集或异步图片换纹理时才重算；尺寸与纹理稳定时不会写回 UI。
-        private void CropFullBleedArtwork(float viewportAspect, bool force)
+        /// <summary>全屏底图换画幅或换图片时才根据源比例铺满，位置与图片稳定时跳过写入。</summary>
+        private void FitFullBleedArtwork(Vector2 viewport, bool force)
         {
             if (_fullBleed == null)
             {
@@ -526,14 +591,34 @@ namespace RevGame.UI
                 Texture texture = backdrop.Artwork == null ? null : backdrop.Artwork.texture;
                 if (texture != null && (force || texture != backdrop.LastTexture))
                 {
-                    CropArtwork(backdrop, texture, viewportAspect);
+                    CropArtwork(backdrop, texture, viewport);
                 }
                 backdrop.LastTexture = texture;
+                Image image = backdrop.SpriteArtwork;
+                if (image == null || image.type != Image.Type.Simple)
+                {
+                    continue;
+                }
+                Sprite sprite = image.overrideSprite;
+                if (sprite == null && backdrop.LastSprite == null)
+                {
+                    continue;
+                }
+                if (force || sprite != backdrop.LastSprite)
+                {
+                    // 静态底色仍铺满原区域。有图的全屏节点按素材铺满，换图后从当前视口重算。
+                    RectTransform rect = backdrop.Transform;
+                    rect.pivot = Vector2.one * .5f;
+                    rect.anchoredPosition = Vector2.zero;
+                    image.preserveAspect = sprite != null;
+                    rect.sizeDelta = sprite == null ? Vector2.zero : GameBackgroundLayout.CoverSize(viewport, sprite.rect.size) - viewport;
+                    backdrop.LastSprite = sprite;
+                }
             }
         }
 
         /// <summary>图片使用原始 UV 等比裁切，重复旋转时不会在已经裁过的范围上继续裁。</summary>
-        private static void CropArtwork(FullBleedNode backdrop, Texture texture, float viewportAspect)
+        private static void CropArtwork(FullBleedNode backdrop, Texture texture, Vector2 viewport)
         {
             Rect uv = backdrop.SourceUv;
             if (uv.width <= 0f || uv.height <= 0f)
@@ -541,9 +626,7 @@ namespace RevGame.UI
                 return;
             }
             float aspect = texture.width * uv.width / (texture.height * uv.height);
-            float width = uv.width * Mathf.Min(1f, viewportAspect / aspect);
-            float height = uv.height * Mathf.Min(1f, aspect / viewportAspect);
-            backdrop.Artwork.uvRect = new Rect(uv.center - new Vector2(width, height) * .5f, new Vector2(width, height));
+            backdrop.Artwork.uvRect = GameBackgroundLayout.CoverUv(viewport, aspect, uv);
         }
 
         private void ApplySceneHud(RectTransform root)

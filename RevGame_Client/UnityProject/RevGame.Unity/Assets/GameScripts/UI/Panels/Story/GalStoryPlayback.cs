@@ -47,7 +47,7 @@ namespace RevGame.UI
         /// <summary>首声获得实际播放句柄后为 true，换句时清零。</summary>
         public bool SubtitleSoundStarted => _typingSound.Started;
 
-        /// <summary>默认面板打开并注册自身监听后接管两个业务按钮。View 原有整屏 Graphic 提供背景点击区域。</summary>
+        /// <summary>默认面板打开后接管两个业务按钮。首屏仍被遮挡时完成安全区布局，再开始播放。</summary>
         public static GalStoryPlayback Attach(RevGalPanel panel, Action returnHome, RevGalDefinition portraitPlan)
         {
             Transform view = panel.transform.Find("View");
@@ -67,6 +67,13 @@ namespace RevGame.UI
             playback._returnHome = returnHome;
             playback._portraitLookahead = BuildPortraitLookahead(portraitPlan);
             playback._background = story.Find("Background").GetComponent<UnityEngine.UI.Image>();
+            playback._background.preserveAspect = true;
+            GameMobileLayout.SeparateViewportVeil(view);
+            GameMobileLayout.SeparateViewportVeil(view.Find("Backlog"));
+            GameMobileLayout.SeparateViewportVeil(view.Find("SettingsOverlay"));
+            GameMobileLayout.EnableSafePanel(panel.transform, "View/Story/Background",
+                "View/" + GameMobileLayout.ViewportVeil, "View/Backlog/" + GameMobileLayout.ViewportVeil,
+                "View/SettingsOverlay/" + GameMobileLayout.ViewportVeil);
             playback._left = story.Find("Left").GetComponent<UnityEngine.UI.Image>();
             playback._center = story.Find("Center").GetComponent<UnityEngine.UI.Image>();
             playback._right = story.Find("Right").GetComponent<UnityEngine.UI.Image>();
