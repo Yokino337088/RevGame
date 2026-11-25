@@ -19,6 +19,8 @@ namespace RevGame.Flow
         public const string DuelSceneName = "PvpDuelScene";
         /// <summary>主线 StoryBook 中九路教学前的开场篇章。</summary>
         private const string PvpTutorialIntroId = "pvp_tutorial_intro";
+        /// <summary>主线 StoryBook 中完成全部九路课程后的收尾篇章。</summary>
+        private const string PvpTutorialOutroId = "pvp_tutorial_outro";
         // 准备页随当前 PvP 域存活，两个阶段换同一套图集，不在每帧加载资源。
         private DuelPrepPanelBase _duelPreparationPanel;
         // 决斗 HUD 独立于准备页，直到 HUD 关闭后才归还专用图集。
@@ -74,7 +76,7 @@ namespace RevGame.Flow
             }
             var panel = RevUI.Get<PvpPanel>();
             if (IsGameplayBlocked || RevScene.CurrentName != PvpSceneName || panel == null ||
-                !RevServices.GetRequired<PvpService>().StartTutorial(SkipPvpTutorial))
+                !RevServices.GetRequired<PvpService>().StartTutorial(FinishPvpTutorial))
             {
                 LastError = "请离开当前棋局或匹配后再打开教学";
                 if (panel != null && panel.Menu == "Entry")
@@ -85,6 +87,28 @@ namespace RevGame.Flow
                 return;
             }
             panel.ShowDestination("Tutorial");
+        }
+
+        /// <summary>仅在真实完成最后一课时提交进度。收起练习后播放收尾，读完或跳过才打开模式选择。</summary>
+        private void FinishPvpTutorial()
+        {
+            var panel = RevUI.Get<PvpPanel>();
+            if (_disposed || Screen != GameScreen.Pvp || RevScene.CurrentName != PvpSceneName || panel == null)
+            {
+                return;
+            }
+
+            RevServices.GetRequired<StoryProgress>().ResolvePvpTutorial();
+            panel.HideTutorialBoard();
+            PlayStory(PvpTutorialOutroId, () =>
+            {
+                // 只向发起这次教学的面板交付菜单，退场后不让旧回调重开对战入口。
+                if (Screen == GameScreen.Pvp && RevScene.CurrentName == PvpSceneName &&
+                    RevUI.IsOpen<PvpPanel>() && ReferenceEquals(RevUI.Get<PvpPanel>(), panel))
+                {
+                    panel.ShowDestination("Entry");
+                }
+            });
         }
 
         /// <summary>从大厅选择对战方式。教学请求先由统一的开场入口接单。</summary>
@@ -386,7 +410,7 @@ namespace RevGame.Flow
             PvpPanel panel = await RevUI.OpenAsync<PvpPanel>();
             await panel.PrepareAsync();
             // 等棋盘和界面都装配好再分配练习盘，玩家中途退出时没有正式房间需要退。
-            if (PvpDestination == "Tutorial" && !service.StartTutorial(SkipPvpTutorial))
+            if (PvpDestination == "Tutorial" && !service.StartTutorial(FinishPvpTutorial))
             {
                 throw new InvalidOperationException("九路围棋教学尚未就绪");
             }

@@ -403,6 +403,73 @@ MonoBehaviour:
     PortraitAtlasNames:
     - YayaExpressions
     - YayaStoryOpening
+  - Id: pvp_tutorial_outro
+    Title: "\u4E5D\u8DEF\u56F4\u68CB \xB7 \u4E0B\u4E00\u5C40\u89C1"
+    Portrait: {fileID: 0}
+    PortraitReference:
+      AssetGuid: 
+      LocalId: 0
+      SpriteName: 
+      Atlas: 
+    BackgroundChapter: -1
+    Lines:
+    - Speaker: "\u5192\u9669\u5BB6"
+      Portrait: {fileID: 0}
+      PortraitReference:
+        AssetGuid: 
+        LocalId: 0
+        SpriteName: 
+        Atlas: 
+      Expression: 18
+      Text: "\u5341\u4E94\u8BFE\u8D70\u5B8C\u4E86\u3002\u539F\u6765\u68CB\u5B50\u8FD9\u4E48\u5C0F\uFF0C\u8BB2\u7A76\u5012\u633A\u591A\u3002"
+    - Speaker: "\u9E26\u9E26"
+      Portrait: {fileID: 0}
+      PortraitReference:
+        AssetGuid: 
+        LocalId: 0
+        SpriteName: 
+        Atlas: 
+      Expression: 3
+      Text: "\u90A3\u672C\u9E26\u8003\u4F60\u3002\u53CC\u65B9\u90FD\u505C\u4E00\u624B\uFF0C\u63A5\u4E0B\u6765\u505A\u4EC0\u4E48\uFF1F"
+    - Speaker: "\u5192\u9669\u5BB6"
+      Portrait: {fileID: 0}
+      PortraitReference:
+        AssetGuid: 
+        LocalId: 0
+        SpriteName: 
+        Atlas: 
+      Expression: 1
+      Text: "\u5148\u6807\u6B7B\u5B50\uFF0C\u53CC\u65B9\u786E\u8BA4\u540E\u518D\u7B97\u5206\u3002\u7B54\u5BF9\u4E86\u5427\uFF1F"
+    - Speaker: "\u9E26\u9E26"
+      Portrait: {fileID: 0}
+      PortraitReference:
+        AssetGuid: 
+        LocalId: 0
+        SpriteName: 
+        Atlas: 
+      Expression: 10
+      Text: "\u5BF9\u3002\u771F\u4E0B\u68CB\u65F6\u4E5F\u5148\u770B\u6C14\uFF0C\u60F3\u597D\u4E86\u518D\u843D\u5B50\u3002"
+    - Speaker: "\u5192\u9669\u5BB6"
+      Portrait: {fileID: 0}
+      PortraitReference:
+        AssetGuid: 
+        LocalId: 0
+        SpriteName: 
+        Atlas: 
+      Expression: 23
+      Text: "\u61C2\u4E86\u3002\u6211\u53BB\u627E\u4E2A\u68CB\u53CB\uFF0C\u8BA4\u8BA4\u771F\u771F\u4E0B\u4E00\u5C40\u3002"
+    - Speaker: "\u9E26\u9E26"
+      Portrait: {fileID: 0}
+      PortraitReference:
+        AssetGuid: 
+        LocalId: 0
+        SpriteName: 
+        Atlas: 
+      Expression: 18
+      Text: "\u53BB\u5427\u3002\u8F93\u4E86\u5C31\u5E26\u68CB\u8C31\u56DE\u6765\uFF0C\u672C\u9E26\u966A\u4F60\u770B\u3002"
+    PortraitAtlasNames:
+    - YayaExpressions
+    - YayaStoryOpening
   - Id: chapter1
     Title: "\u7B2C\u4E00\u7AE0 \xB7 \u661F\u843D\u5C0F\u5F84"
     Portrait: {fileID: 0}

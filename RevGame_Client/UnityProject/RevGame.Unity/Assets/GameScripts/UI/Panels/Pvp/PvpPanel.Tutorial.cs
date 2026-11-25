@@ -382,7 +382,7 @@ namespace RevGame.Pvp
             ResetMatchFeedback();
         }
 
-        /// <summary>本节允许时由计时器推进，开发态也可立即推进。结课经业务回调再请求模式菜单。</summary>
+        /// <summary>本节允许时推进练习。结课由业务回调接管收尾，面板只刷新目前状态。</summary>
         internal bool AdvanceTutorialFromPanel()
         {
             if (!Service.AdvanceTutorial())
@@ -390,10 +390,6 @@ namespace RevGame.Pvp
                 return false;
             }
             _tutorialAdvanceAt = -1;
-            if (Service.Tutorial == null)
-            {
-                ReturnFromTutorial();
-            }
             RefreshView();
             return true;
         }
@@ -443,14 +439,20 @@ namespace RevGame.Pvp
             return true;
         }
 
-        /// <summary>先收起棋盘和专用控件，再请求同一场景中的模式菜单。</summary>
+        /// <summary>中途退出练习时收起教学习题，直接请求当前场景的模式菜单。</summary>
         private void ReturnFromTutorial()
+        {
+            HideTutorialBoard();
+            ShowDestination("Entry");
+            RefreshView();
+        }
+
+        /// <summary>收起练习棋盘和控件，取消待推进的计时。调用方负责打开下一个页面。</summary>
+        internal void HideTutorialBoard()
         {
             HideTutorialHud();
             _board.gameObject.SetActive(false);
             _battleVisible = false;
-            ShowDestination("Entry");
-            RefreshView();
         }
     }
 
