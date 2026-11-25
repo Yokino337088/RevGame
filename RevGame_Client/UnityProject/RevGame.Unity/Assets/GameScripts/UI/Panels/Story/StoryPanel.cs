@@ -115,6 +115,8 @@ namespace RevGame.UI
                 ["text"] = line.Text,
                 ["displayedText"] = dialogue.text,
                 ["textFits"] = required <= dialogue.rectTransform.rect.height + 1,
+                ["dialogueHeight"] = dialogue.rectTransform.rect.height,
+                ["requiredTextHeight"] = required,
                 ["skipActive"] = skip.gameObject.activeInHierarchy
             };
         }

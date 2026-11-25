@@ -9,6 +9,14 @@ namespace RevGame.UI
     /// <summary>框架节点级View（RevUIPart）：负责画像、打字与点击通知，不读存档、不改变场景。</summary>
     public sealed class StoryView : RevUIPart
     {
+        /// <summary>默认对话卡上缘在安全区中的位置，给正文留出更高的连续区域。</summary>
+        private const float DefaultCardTop = .55f;
+        /// <summary>长句最多扩张到此处，留出右上方的跳过按钮区域。</summary>
+        private const float MaximumCardTop = .82f;
+        /// <summary>安全区变窄时仍尽量保持正文清晰的设计字号下限。</summary>
+        private const int MinimumDialogueFontSize = 24;
+        /// <summary>给字形边缘和取整留出的垂直余量，单位为画布坐标。</summary>
+        private const float DialoguePadding = 4f;
         /// <summary>绑定对话卡标题、说话人、正文与阅读进度，均仅显示当前帧。</summary>
         [RevBind] private Text _title;
         [RevBind] private Text _speaker;
@@ -22,6 +30,12 @@ namespace RevGame.UI
         private Rect _cardAnchors;
         private Rect _skipAnchors;
         private Rect _lastSafeArea;
+        /// <summary>上次排版的视图尺寸，等比例调整窗口时也需要重新测量正文。</summary>
+        private Vector2 _lastViewSize;
+        /// <summary>预制体正文的正常字号。每句都从这一尺寸尝试排版。</summary>
+        private int _normalDialogueFontSize;
+        /// <summary>本次正在打字的整句，只在换句或关闭时更新。</summary>
+        private string _fullDialogue = string.Empty;
         private bool _layoutReady;
         /// <summary>只保存自己创建的Tween/音效句柄，换句、关闭、销毁均收尾，绝不KillAll。</summary>
         private Tween _typing;
@@ -61,6 +75,13 @@ namespace RevGame.UI
         protected override void OnBindView()
         {
             _dialogue.supportRichText = false;
+            _dialogue.alignment = TextAnchor.UpperLeft;
+            _normalDialogueFontSize = _dialogue.fontSize;
+            // 标题、署名、正文与页脚各有明确的竖向区间，正文可以占用卡片的主要高度。
+            SetVerticalAnchors(_title.rectTransform, .86f, .95f);
+            SetVerticalAnchors(_speaker.rectTransform, .75f, .85f);
+            SetVerticalAnchors(_dialogue.rectTransform, .17f, .74f);
+            SetVerticalAnchors(_counter.rectTransform, .035f, .145f);
             // 标题靠近卡片上缘，神殿高光会压低浅金字的对比。只在绑定时配置一次深色描边，翻页不重复创建。
             if (!_title.TryGetComponent(out Outline titleOutline))
             {
@@ -70,11 +91,13 @@ namespace RevGame.UI
             titleOutline.effectDistance = new Vector2(2f, -2f);
             _guideAnchors = ReadAnchors(_guide.rectTransform);
             _cardAnchors = ReadAnchors(_card);
+            _cardAnchors.yMax = Mathf.Max(_cardAnchors.yMax, DefaultCardTop);
             _skipAnchors = ReadAnchors(_skip);
             _layoutReady = true;
             ApplySafeArea();
         }
 
+        /// <summary>只检测窗口和安全区变化，尺寸稳定时不重复测量打字中的内容。</summary>
         private void LateUpdate()
         {
             if (_layoutReady)
@@ -87,15 +110,61 @@ namespace RevGame.UI
         private void ApplySafeArea()
         {
             Rect safe = GameBattleLayout.SafeViewport();
-            if (safe == _lastSafeArea)
+            Vector2 size = ((RectTransform)transform).rect.size;
+            if (safe == _lastSafeArea && size == _lastViewSize)
             {
                 return;
             }
 
             _lastSafeArea = safe;
+            _lastViewSize = size;
             SetSafeAnchors(_guide.rectTransform, _guideAnchors, safe);
-            SetSafeAnchors(_card, _cardAnchors, safe);
             SetSafeAnchors(_skip, _skipAnchors, safe);
+            FitDialogue();
+        }
+
+        /// <summary>用整句测量所需空间，先扩卡片，再在小画幅下按需缩小正文。</summary>
+        private void FitDialogue()
+        {
+            Rect design = _cardAnchors;
+            SetSafeAnchors(_card, design, _lastSafeArea);
+            _dialogue.fontSize = _normalDialogueFontSize;
+            if (_fullDialogue.Length == 0 || _lastViewSize.y <= 0f || _dialogue.rectTransform.rect.width <= 0f)
+            {
+                return;
+            }
+
+            RectTransform body = _dialogue.rectTransform;
+            var settings = _dialogue.GetGenerationSettings(new Vector2(body.rect.width, 0f));
+            float required = MeasureDialogue(settings);
+            if (required > body.rect.height && _lastSafeArea.height > 0f)
+            {
+                // 正文高度按锚点比例随卡片增大。保持卡片在安全区内并避开跳过按钮。
+                float bodyScale = body.anchorMax.y - body.anchorMin.y;
+                float additional = (required - body.rect.height) / (bodyScale * _lastViewSize.y * _lastSafeArea.height);
+                design.yMax = Mathf.Min(Mathf.Max(design.yMax, MaximumCardTop), design.yMax + additional);
+                SetSafeAnchors(_card, design, _lastSafeArea);
+            }
+            while (required > body.rect.height && settings.fontSize > MinimumDialogueFontSize)
+            {
+                settings.fontSize--;
+                required = MeasureDialogue(settings);
+            }
+            _dialogue.fontSize = settings.fontSize;
+        }
+
+        /// <summary>计算整句换行所需的高度，包含字形留白。</summary>
+        private float MeasureDialogue(TextGenerationSettings settings)
+        {
+            return Mathf.Ceil(_dialogue.cachedTextGeneratorForLayout.GetPreferredHeight(_fullDialogue, settings) /
+                _dialogue.pixelsPerUnit + DialoguePadding);
+        }
+
+        /// <summary>调整卡片内部的纵向区间，保留预制体原有横向边距。</summary>
+        private static void SetVerticalAnchors(RectTransform rect, float bottom, float top)
+        {
+            rect.anchorMin = new Vector2(rect.anchorMin.x, bottom);
+            rect.anchorMax = new Vector2(rect.anchorMax.x, top);
         }
 
         private static Rect ReadAnchors(RectTransform rect)
@@ -108,7 +177,7 @@ namespace RevGame.UI
             rect.anchorMin = safe.position + Vector2.Scale(design.min, safe.size);
             rect.anchorMax = safe.position + Vector2.Scale(design.max, safe.size);
         }
-        /// <summary>按Unicode文字元素切分，避免半个emoji/代理字符。DOTween用非缩放时间，暂停战斗仍可阅读。</summary>
+        /// <summary>先排版整句再逐字显示，避免文字逼近边缘时改变行高或裁掉结尾。</summary>
         public void Show(StoryPanel.Frame frame)
         {
             if (_version == frame.Version && _index == frame.Index)
@@ -127,7 +196,9 @@ namespace RevGame.UI
             GuideFrame = frame.ExpressionIndex;
             _guide.preserveAspect = true;
             _guide.transform.SetAsLastSibling();
+            _fullDialogue = line.Text;
             _dialogue.text = string.Empty;
+            FitDialogue();
             int[] ends = StringInfo.ParseCombiningCharacters(line.Text);
             VisibleCharacters = 0;
             _typing = DOTween.To(() => VisibleCharacters, count =>
@@ -156,11 +227,12 @@ namespace RevGame.UI
         {
             RevServices.GetRequired<RevGame.Flow.GameFlow>().SkipStory();
         }
-        /// <summary>面板关闭先取消自己的Tween/声音和立绘引用，防止缓存面板保留旧资源。</summary>
+        /// <summary>面板关闭释放打字、声音与立绘，同时清掉上一句的排版内容。</summary>
         protected override void OnPartClose()
         {
             StopTyping();
             _guide.sprite = null;
+            _fullDialogue = string.Empty;
             _version = -1;
             _index = -1;
         }

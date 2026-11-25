@@ -1,9 +1,11 @@
+using System;
 using System.Collections.Generic;
 using RevGame.Core;
 using RevGame.Flow;
 using Revolution;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.U2D;
 
 namespace RevGame.UI
 {
@@ -15,6 +17,14 @@ namespace RevGame.UI
         [RevBind] private Text _progress;
         [RevBind] private Text _liberty;
         [RevBind] private Image _focus;
+        /// <summary>已在场景交接中预载的公共 UI 图集名。</summary>
+        private const string HintAtlasName = "UIMenus";
+        /// <summary>从项目现有图集中取用的深色提示底图。</summary>
+        private const string HintSpriteName = "UI_Tip_imgBK";
+        /// <summary>预制体中提示框的背景 Image，由绑定阶段缓存。</summary>
+        private Image _hintBackground;
+        /// <summary>本次打开从图集取得的 Sprite 副本，关闭后释放。</summary>
+        private Sprite _hintSprite;
         /// <summary>棋格专用共享材质，增强闪烁和淡色底光；由编辑器装配，不在运行时new材质。</summary>
         [SerializeField] private Material boardFocusMaterial;
         private Material _uiFocusMaterial;
@@ -24,17 +34,56 @@ namespace RevGame.UI
 
         private readonly Vector3[] _corners = new Vector3[4];
 
+        /// <summary>装配深色卡片对应的粗体亮字，兼容已发布的教学面板预制体。</summary>
         protected override void OnBindView()
         {
             GameMobileLayout.StretchToParent((RectTransform)transform);
+            _hintBackground = _instruction.transform.parent.GetComponent<Image>();
+            _hintBackground.color = Color.white;
+            // 旧底板的外圈闪光在深色底图上会抢过文字对比。棋盘的目标提示仍由 focus 绘制。
+            var hintGlow = _hintBackground.transform.Find("hintGlow");
+            if (hintGlow != null)
+            {
+                hintGlow.gameObject.SetActive(false);
+            }
+
+            Color gold = new Color(1f, .91f, .67f);
+            StyleHintText(_progress, new Vector2(.07f, .70f), new Vector2(.65f, .94f), gold, 26, TextAnchor.MiddleLeft);
+            StyleHintText(_liberty, new Vector2(.66f, .70f), new Vector2(.93f, .94f), gold, 22, TextAnchor.MiddleRight);
+            StyleHintText(_instruction, new Vector2(.07f, .10f), new Vector2(.93f, .68f), new Color(1f, .98f, .92f), 30, TextAnchor.UpperLeft);
             _instruction.supportRichText = false;
             _uiFocusMaterial = _focus.material;
         }
+
+        /// <summary>统一提示文字颜色、粗体和最小字号，窄侧栏按当前高度适配。</summary>
+        private static void StyleHintText(Text label, Vector2 min, Vector2 max, Color color, int size, TextAnchor alignment)
+        {
+            RectTransform rect = label.rectTransform;
+            rect.anchorMin = min;
+            rect.anchorMax = max;
+            label.color = color;
+            label.fontStyle = FontStyle.Bold;
+            label.alignment = alignment;
+            label.resizeTextForBestFit = true;
+            label.resizeTextMinSize = 20;
+            label.resizeTextMaxSize = size;
+        }
+
+        /// <summary>从场景已预载的公共图集取得底图，再启动教学提示刷新。</summary>
         protected override void OnOpen()
         {
+            // GamePresentation 先把 UIMenus 交付给战斗画面；这里只借用图集，不另持全局资源或复制贴图。
+            var atlas = RevResManager.Get(RevResPath.Atlases, HintAtlasName).Content as SpriteAtlas;
+            _hintSprite = atlas == null ? null : atlas.GetSprite(HintSpriteName);
+            if (_hintSprite == null)
+            {
+                throw new InvalidOperationException("教学提示底图未随 UIMenus 图集就绪");
+            }
+            _hintBackground.overrideSprite = _hintSprite;
             // 动画由共享Shader的时间驱动，不克隆材质，也不对原按钮做缩放或透明度动画。
             RevTimer.Every(0.1f, RefreshView, owner: this);
         }
+        /// <summary>读取当前教学状态和目标，刷新提示并保留真实棋盘的下层输入。</summary>
         protected override void OnRefreshView()
         {
             var lesson = RevLogic.Get<TutorialLogic>();
@@ -46,7 +95,7 @@ namespace RevGame.UI
             }
             var flow = RevServices.GetRequired<GameFlow>();
             _instruction.text = flow.StoryContent.Find("lesson").Lines[(int)lesson.Step].Text;
-            _progress.text = "团团的引导  " + ((int)lesson.Step + 1) + " / 5";
+            _progress.text = "鸦鸦的教学  " + ((int)lesson.Step + 1) + " / 5";
             _liberty.text = "敌气 " + lesson.EnemyLiberties + (lesson.EnemyLocked ? " · 封锁" : "");
             // 查询当前可见控件的实际边界，利用最大空隙放大提示；不覆盖手工调整过的真实UI布局。
             RectTransform root = (RectTransform)transform;
@@ -170,17 +219,26 @@ namespace RevGame.UI
             }
             return null;
         }
+        /// <summary>关窗时撤销刷新计时并释放本次取得的底图副本。</summary>
         protected override void OnClose()
         {
             StopEffects();
         }
+        /// <summary>销毁缓存面板时幂等清理本面板持有的显示资源。</summary>
         protected override void OnRelease()
         {
             StopEffects();
         }
+        /// <summary>先断开 Image 引用再销毁 Sprite 副本，公共图集仍由场景负责。</summary>
         private void StopEffects()
         {
             RevTimer.CancelAllOf(this);
+            if (_hintSprite != null)
+            {
+                _hintBackground.overrideSprite = null;
+                Destroy(_hintSprite);
+                _hintSprite = null;
+            }
         }
     }
 }

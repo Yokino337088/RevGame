@@ -149,7 +149,7 @@ namespace RevGame.Editor
                 helperInterval = b.HelperShotInterval,
                 error = _report.error,
                 completed = _report.completed,
-                helperSpeechFits = UnityEngine.Object.FindObjectOfType<HelperView>()?.SpeechFits == true
+                helperSpeechVisible = UnityEngine.Object.FindObjectOfType<HelperView>()?.SpeechVisible == true
             };
             foreach (var card in b.Hand)
             {
@@ -344,7 +344,9 @@ namespace RevGame.Editor
         [Serializable]
         private sealed class Snapshot
         {
-            public bool active, window, blocked, story, helperSpeechFits;
+            public bool active, window, blocked, story;
+            /// <summary>验证局内帮手的旧对白画布已关闭。</summary>
+            public bool helperSpeechVisible;
             public int chapter, round, cardsRemaining, helperTarget, completed;
             public long wallet, score;
             public float seconds, helperInterval;

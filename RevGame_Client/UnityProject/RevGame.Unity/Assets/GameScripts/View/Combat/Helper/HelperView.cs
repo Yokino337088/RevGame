@@ -1,13 +1,11 @@
 using DG.Tweening;
 using RevGame.Core;
-using RevGame.UI;
 using Revolution;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace RevGame.View
 {
-    /// <summary>帮手序列帧、蜘蛛式轻爬行与台词框。四帧在预制体中引用，图集绑定完成后只切Sprite，不GetSprite。</summary>
+    /// <summary>展示帮手序列帧和爬行动画。四帧由预制体引用，规则和支援行为由服务持有。</summary>
     [RevPoolPrefab("Pieces/Helper", "BattleHelper", Group = RevResGroup.Battle)]
     public sealed class HelperView : MonoBehaviour, IRevPoolable
     {
@@ -15,9 +13,7 @@ namespace RevGame.View
         [SerializeField] private SpriteRenderer body;
         [Tooltip("指定特殊棋子目录四帧，资源配方一次绑定；由BoardView租用图集。")]
         [SerializeField] private Sprite[] frames;
-        [Tooltip("最近动作短反馈；只在文字改变时刷新。")]
-        [SerializeField] private Text speech;
-        [Tooltip("世界空间的小台词框，无GraphicRaycaster，不阻挡棋盘输入。")]
+        /// <summary>旧预制体的对白画布。新预制体为空，旧实例在 Awake 时禁用。</summary>
         [SerializeField] private Canvas bubble;
         private Tween _movement;
         private BoardPos _lastPosition;
@@ -25,11 +21,6 @@ namespace RevGame.View
         private float _animationTime;
         private int _lastFrame = -1;
         private MaterialPropertyBlock _goldProperties;
-        /// <summary>唯一帮手拥有的台词布局缓存。换台词时排字，跟随移动时约束落屏位置。</summary>
-        private readonly Vector3[] _bubbleCorners = new Vector3[4];
-        private Vector3 _bubbleAnchor;
-        private Camera _bubbleCamera;
-        private bool _bubbleLayoutReady;
         private static readonly int FrameUvId = Shader.PropertyToID("_FrameUV"), MainTexId = Shader.PropertyToID("_MainTex");
         /// <summary>只读验收：当前身体仍采样当前帧图集，金光参数块不能把它换成默认白纹理。</summary>
         public bool GoldReflectionReady => body != null && body.sprite != null && body.sprite.texture != null
@@ -55,6 +46,19 @@ namespace RevGame.View
                 return true;
             }
         }
+
+        /// <summary>实例创建时关闭旧 AB 残留的台词框，在对象池复用前就切断其渲染。</summary>
+        private void Awake()
+        {
+            if (bubble != null)
+            {
+                bubble.gameObject.SetActive(false);
+            }
+        }
+
+        /// <summary>只读验收旧预制体是否仍存在可见对白，新的帮手没有对白画布。</summary>
+        public bool SpeechVisible => bubble != null && bubble.isActiveAndEnabled;
+
         /// <summary>按服务快照落屏；不碰积分、不改位置规则。移动被新目标覆盖时先停止旧Tween。</summary>
         public void Present(HelperSnapshot snapshot)
         {
@@ -72,101 +76,23 @@ namespace RevGame.View
                 _placed = true;
                 _lastPosition = snapshot.Position;
             }
-            else
-
-                if (_lastPosition != snapshot.Position)
+            else if (_lastPosition != snapshot.Position)
+            {
+                _movement?.Kill(false);
+                _lastPosition = snapshot.Position;
+                Vector3 start = transform.position;
+                float progress = 0;
+                // 用小幅起伏表现攀爬，跨盘位移增加跳跃高度；纯动画参数不影响移动冷却/战斗规则。
+                float height = Vector3.Distance(start, target) > Consts.CellSize * 2 ? .28f : .09f;
+                _movement = DOTween.To(() => progress, value =>
                 {
-                    _movement?.Kill(false);
-                    _lastPosition = snapshot.Position;
-                    Vector3 start = transform.position;
-                    float progress = 0;
-                    // 用小幅起伏表现攀爬，跨盘位移增加跳跃高度；纯动画参数不影响移动冷却/战斗规则。
-                    float height = Vector3.Distance(start, target) > Consts.CellSize * 2 ? .28f : .09f;
-                    _movement = DOTween.To(() => progress, value =>
-                    {
-                        progress = value;
-                        transform.position = Vector3.Lerp(start, target, value) + Vector3.up * (Mathf.Sin(value * Mathf.PI) * height);
-                    }, 1f, .42f).SetEase(Ease.InOutSine).OnComplete(() => _movement = null);
-                }
-            if (speech != null && (speech.text != snapshot.Speech || !_bubbleLayoutReady))
-            {
-                speech.text = snapshot.Speech;
-                RefreshSpeechLayout();
+                    progress = value;
+                    transform.position = Vector3.Lerp(start, target, value) + Vector3.up * (Mathf.Sin(value * Mathf.PI) * height);
+                }, 1f, .42f).SetEase(Ease.InOutSine).OnComplete(() => _movement = null);
             }
         }
 
-        /// <summary>按当前文案测宽，再在有限宽度内换行测高；不缩小字体，避免长句被固定高度截掉。</summary>
-        private void RefreshSpeechLayout()
-        {
-            if (bubble == null || speech == null)
-            {
-                return;
-            }
-            var rect = (RectTransform)bubble.transform;
-
-            if (!_bubbleLayoutReady)
-            {
-                _bubbleAnchor = rect.localPosition;
-            }
-            speech.horizontalOverflow = HorizontalWrapMode.Wrap;
-            speech.verticalOverflow = VerticalWrapMode.Truncate;
-            speech.resizeTextForBestFit = false;
-            float width = Mathf.Clamp(speech.preferredWidth + 32f, 270f, 390f);
-            rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, width);
-            // 文字与底板都用拉伸锚点，旧AB实例同样能够得到正确内边距。
-            speech.rectTransform.anchorMin = Vector2.zero;
-            speech.rectTransform.anchorMax = Vector2.one;
-            speech.rectTransform.offsetMin = new Vector2(16f, 10f);
-            speech.rectTransform.offsetMax = new Vector2(-16f, -10f);
-            Transform background = rect.Find("Background");
-
-            if (background is RectTransform bg)
-            {
-                bg.anchorMin = Vector2.zero;
-                bg.anchorMax = Vector2.one;
-                bg.offsetMin = bg.offsetMax = Vector2.zero;
-            }
-            rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, Mathf.Max(72f, speech.preferredHeight + 24f));
-            _bubbleLayoutReady = true;
-        }
-        /// <summary>只读验收完整字形所需高度；独立于截图，能抓到“背景变大但文字仍截断”。</summary>
-        public bool SpeechFits => speech != null && speech.preferredHeight <= speech.rectTransform.rect.height + 1f;
-
-        private void LateUpdate()
-        {
-            if (bubble == null || !_bubbleLayoutReady)
-            {
-                return;
-            }
-            if (_bubbleCamera == null)
-            {
-                _bubbleCamera = Camera.main;
-            }
-            if (_bubbleCamera == null || !_bubbleCamera.orthographic)
-            {
-                return;
-            }
-            var rect = (RectTransform)bubble.transform;
-            rect.localPosition = _bubbleAnchor;
-            rect.GetWorldCorners(_bubbleCorners);
-            Vector3 low = _bubbleCamera.WorldToViewportPoint(_bubbleCorners[0]);
-            Vector3 high = _bubbleCamera.WorldToViewportPoint(_bubbleCorners[2]);
-            Rect safe = GameBattleLayout.SafeViewport();
-            const float Margin = .02f;
-            float edge = Consts.BoardSize * Consts.CellSize * .5f;
-            Vector3 boardLow = _bubbleCamera.WorldToViewportPoint(new Vector3(-edge, -edge, 0f));
-            Vector3 boardHigh = _bubbleCamera.WorldToViewportPoint(new Vector3(edge, edge, 0f));
-            // 台词框沿用棋盘中央列的宽度，两侧留给积分和增益。棋盘上沿还为回合与首领状态留出空间。
-            float left = Mathf.Max(safe.xMin, boardLow.x) + Margin;
-            float right = Mathf.Min(safe.xMax, boardHigh.x) - Margin;
-            float bottom = safe.yMin + Margin;
-            float top = Mathf.Min(safe.yMax, boardHigh.y) - Margin;
-            float dx = Mathf.Clamp(low.x, left, Mathf.Max(left, right - (high.x - low.x))) - low.x;
-            float dy = Mathf.Clamp(low.y, bottom, Mathf.Max(bottom, top - (high.y - low.y))) - low.y;
-            // 只平移气泡，保留帮手世界坐标和台词字号。
-            rect.position += _bubbleCamera.transform.right * (dx * _bubbleCamera.orthographicSize * 2f * _bubbleCamera.aspect)
-                + _bubbleCamera.transform.up * (dy * _bubbleCamera.orthographicSize * 2f);
-        }
+        /// <summary>只推进已预载的身体帧和爬行动画，帧变更时同步金光采样。</summary>
         private void Update()
         {
             if (!FramesReady)
@@ -194,7 +120,6 @@ namespace RevGame.View
                 body.SetPropertyBlock(_goldProperties);
             }
             body.transform.localPosition = new Vector3(0, Mathf.Sin(_animationTime * 7f) * .022f, 0);
-            // 正交2D相机无需每帧LookAt；台词框固定朝向屏幕，且不阻挡点击敌棋。
         }
         public void OnPoolGet()
         {

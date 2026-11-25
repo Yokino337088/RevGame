@@ -142,6 +142,9 @@ namespace RevGame.Bootstrap
                 return null;
             }
             var hint = panel.transform.Find("Hint") as RectTransform;
+            var hintImage = hint.GetComponent<UnityEngine.UI.Image>();
+            var instruction = hint.Find("instruction").GetComponent<UnityEngine.UI.Text>();
+            var helper = Object.FindObjectOfType<RevGame.View.HelperView>();
             var focus = panel.transform.Find("focus").GetComponent<UnityEngine.UI.Image>();
             var hintGlow = hint.Find("hintGlow")?.GetComponent<UnityEngine.UI.Image>();
             var corners = new Vector3[4];
@@ -188,12 +191,18 @@ namespace RevGame.Bootstrap
                 ["overlaps"] = overlaps,
                 ["width"] = hint.rect.width,
                 ["height"] = hint.rect.height,
+                ["backgroundSprite"] = hintImage.overrideSprite == null ? "" : hintImage.overrideSprite.name.Replace("(Clone)", ""),
+                ["backgroundTextureBound"] = hintImage.mainTexture != null && hintImage.mainTexture != Texture2D.whiteTexture,
+                ["instructionBold"] = instruction.fontStyle == FontStyle.Bold,
+                ["title"] = hint.Find("progress").GetComponent<UnityEngine.UI.Text>().text,
+                ["helperVisible"] = helper != null,
+                ["helperSpeechVisible"] = helper != null && helper.SpeechVisible,
                 ["shader"] = focus.material.shader.name,
-                ["hintHighlight"] = hintGlow != null && hintGlow.enabled && hintGlow.material.shader.name == "RevGame/UI/SlimeTutorialHighlight",
+                ["hintHighlight"] = hintGlow != null && hintGlow.isActiveAndEnabled && hintGlow.material.shader.name == "RevGame/UI/SlimeTutorialHighlight",
                 ["focusWidth"] = focus.material.GetFloat("_Width"),
                 ["pulseDepth"] = focus.material.GetFloat("_PulseDepth"),
                 ["fill"] = focus.material.GetFloat("_Fill"),
-                ["fontSize"] = hint.Find("instruction").GetComponent<UnityEngine.UI.Text>().fontSize,
+                ["fontSize"] = instruction.fontSize,
                 ["supported"] = focus.material.shader.isSupported,
                 ["raycast"] = focus.raycastTarget,
                 ["focusVisible"] = focus.enabled

@@ -11,6 +11,7 @@ namespace RevGame.Editor
     /// <summary>只生成新增帮手预制体与HUD新控件，保留用户既有面板布局、图片和引用。</summary>
     public static class GameHelperBuild
     {
+        /// <summary>生成帮手身体、支援特效与对应 HUD 控件，帮手预制体只带战斗所需的表现节点。</summary>
         public static string Build()
         {
             if (EditorApplication.isPlaying)
@@ -141,25 +142,8 @@ namespace RevGame.Editor
             // 身体约1.42个棋盘格，1920设计宽度下接近原158像素宽，不用数倍插值冒充细节。
             body.sortingOrder = 35;
             body.transform.localScale = Vector3.one * 1.55f;
-            var canvas = new GameObject("Speech", typeof(RectTransform), typeof(Canvas)).GetComponent<Canvas>();
-            canvas.transform.SetParent(root.transform, false);
-            canvas.renderMode = RenderMode.WorldSpace;
-            canvas.sortingOrder = 80;
-            canvas.GetComponent<RectTransform>().sizeDelta = new Vector2(360, 90);
-            canvas.transform.localScale = Vector3.one * .01f;
-            canvas.transform.localPosition = new Vector3(.3f, 1.12f, 0);
-            var bg = GameAssetBuilder.Picture("Background", canvas.transform, GameAssetBuilder.Sprite("界面/新版/UI_Tip_imgBK.png"), new Vector2(360, 90), Vector2.zero);
-            bg.preserveAspect = false;
-            bg.type = Image.Type.Sliced;
-            bg.color = new Color(1f, 1f, 1f, .96f);
-            bg.gameObject.AddComponent<AtlasImageBinding>();
-            var text = GameAssetBuilder.Label("SpeechText", canvas.transform, "攻击敌人，为我积攒能量！", new Vector2(328, 70), Vector2.zero, 23);
-            text.horizontalOverflow = HorizontalWrapMode.Wrap;
-            text.color = new Color(1f, .96f, .8f);
             var serialized = new SerializedObject(view);
             serialized.FindProperty("body").objectReferenceValue = body;
-            serialized.FindProperty("speech").objectReferenceValue = text;
-            serialized.FindProperty("bubble").objectReferenceValue = canvas;
             serialized.FindProperty("frames").arraySize = frames.Length;
             for (int i = 0; i < frames.Length; i++)
             {
