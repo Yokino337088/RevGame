@@ -479,8 +479,16 @@ namespace RevGame.Services
             RevLog.Info("落子 " + def.DisplayName + " → " + pos + "（本回合第 " + _cardsPlayedThisRound + " 张）", Tag);
             return true;
         }
+        /// <summary>以实际入盘的存活棋子判断准备资格，界面和业务验证遵守同一条件。</summary>
+        public bool HasDeployedPlayerPieces => !_board.IsSideWiped(GameSide.Player);
+
+        /// <summary>按策划配置和实际准备时钟返回剩余秒数。0 表示可以忽略增益等待。</summary>
+        public int PreparationWaitSeconds => VictoryAssistEnabled && !_preparationGranted
+            ? System.Math.Max(1, (int)System.Math.Ceiling(Balance.PrepDelaySeconds - _preparationElapsed))
+            : 0;
+
         /// <summary>
-        /// 从准备进入战斗：先检查至少一颗我方棋子和增益已发放，再清空选择并广播 PhaseEnterBattle。
+        /// 从准备进入战斗：先检查至少一颗我方棋子和当轮的增益等待，再清空选择并广播 PhaseEnterBattle。
         /// 开战后不再接受新手牌落子，只能移动已在场棋子（由 HandleBoardClick 判定）。
         /// </summary>
         public bool StartBattle()
@@ -490,13 +498,14 @@ namespace RevGame.Services
                 LastError = "只有准备阶段能开始战斗（当前：" + Phase + "）";
                 return false;
             }
-            if (_board.IsSideWiped(GameSide.Player))
+            if (!HasDeployedPlayerPieces)
             {
                 return Reject("请先放下至少一颗棋子再准备战斗");
             }
-            if (VictoryAssistEnabled && !_preparationGranted)
+            int waitSeconds = PreparationWaitSeconds;
+            if (waitSeconds > 0)
             {
-                return Reject("开战前请等待准备增益，约 " + System.Math.Max(1, (int)System.Math.Ceiling(Balance.PrepDelaySeconds - _preparationElapsed)) + " 秒");
+                return Reject("开战前请等待准备增益，约 " + waitSeconds + " 秒");
             }
             SelectedCardId = 0;
             SelectedPieceId = 0;

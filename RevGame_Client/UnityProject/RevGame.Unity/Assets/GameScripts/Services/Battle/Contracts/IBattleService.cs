@@ -230,6 +230,12 @@ namespace RevGame.Services
         /// <summary>准备阶段结束，进入战斗（全自动）。要求至少一颗我方棋子且准备增益已发放。</summary>
         bool StartBattle();
 
+        /// <summary>真实棋盘上至少有一颗存活己方棋子。准备界面和开战准入共用。</summary>
+        bool HasDeployedPlayerPieces { get; }
+
+        /// <summary>准备增益尚需等待的整秒。已经发放或当前模式无需等待时返回 0。</summary>
+        int PreparationWaitSeconds { get; }
+
         /// <summary>
         /// 推进战斗一小步。由域逻辑 <c>BattleLogic</c> 用固定小步长驱动，
         /// **不要**在 MonoBehaviour 的 Update 里直接调 —— 那样不同帧率会打出不同结果。

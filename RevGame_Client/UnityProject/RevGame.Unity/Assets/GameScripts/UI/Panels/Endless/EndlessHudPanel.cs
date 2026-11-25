@@ -91,6 +91,8 @@ namespace RevGame.Endless
         /// <summary>上一次看到的错误，以及这条错误显示到什么时候。错误只显示 2.5 秒，不长期占屏幕。</summary>
         private string _lastError = "";
         private float _errorUntil;
+        /// <summary>面板已处理的拒绝序号，打开新局时以当前服务状态为起点。</summary>
+        private int _seenRejectionSerial;
         /// <summary>上一次刷新看到的状态，只用来判断“变化了没有”以触发动画。</summary>
         private bool _modalShown, _bossShown, _startShown, _tipShown;
         private int _shownLevel, _shownCards = -1, _shownSelected = -1, _shownKills;
@@ -168,12 +170,14 @@ namespace RevGame.Endless
                 _choiceTexts[i] = choice.Find("label").GetComponent<Text>();
             }
         }
+        /// <summary>打开新一轮 HUD 并开始观察本轮提示。旧局的拒绝在新开时不再播放。</summary>
         protected override void OnOpen()
         {
             _opening = true;
             SetCardDragBinding(true);
             _version++;
             _lastError = "";
+            _seenRejectionSerial = Service.RejectionSerial;
             _errorUntil = 0;
             ResetAnimationState();
             RevTimer.Every(0.2f, RefreshView, owner: this);
@@ -360,11 +364,12 @@ namespace RevGame.Endless
                 Set(_startLabel, run.phase == EndlessPhase.Formation ? "开战 " + Mathf.CeilToInt(run.formationLeft) : "开战");
             }
         }
-        /// <summary>提示框：永远只说“现在该做什么”这一件事。优先级：错误 → 领主招式 → 操作引导。</summary>
+        /// <summary>从每次真实拒绝开始计时，然后依次显示领主预警与操作引导。</summary>
         private void RefreshTip(EndlessRun run)
         {
-            if (Service.LastError != _lastError)
+            if (Service.RejectionSerial != _seenRejectionSerial)
             {
+                _seenRejectionSerial = Service.RejectionSerial;
                 _lastError = Service.LastError;
                 _errorUntil = string.IsNullOrEmpty(_lastError) ? 0 : Time.unscaledTime + 2.5f;
             }
@@ -524,7 +529,13 @@ namespace RevGame.Endless
             else if (run.phase == EndlessPhase.Paused)
             {
                 title = "已暂停\n" + BuildSummary(run);
-                left = "继续战斗";
+                left = run.previousPhase switch
+                {
+                    EndlessPhase.Formation => "继续布阵",
+                    EndlessPhase.Preparation => "继续整备",
+                    EndlessPhase.Fighting => "继续战斗",
+                    _ => "继续本局"
+                };
                 middle = "保存并退出";
                 right = "结束本局";
             }

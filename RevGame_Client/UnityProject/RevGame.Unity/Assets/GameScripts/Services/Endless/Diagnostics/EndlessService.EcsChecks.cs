@@ -95,6 +95,18 @@ namespace RevGame.Endless
                 Check(restored.Restore(false) && restored.Run.runId == replacement.Run.runId && restored.Run.formation == 2,
                     "首屏成功后的提交可继续到新局", checks);
                 Check(!replacement.DescribeSavedRun(false).Settled, "未结束的新档提供续玩入口", checks);
+
+                // 战斗中的自动档也要等玩家查看棋盘再推进；保持本局身份、时间与棋心。
+                Check(replacement.StartWave() && replacement.Save(), "保存未暂停的战斗快照", checks);
+                float savedSeconds = replacement.Run.seconds;
+                Check(restored.Restore(false, pauseOnEntry: true) && restored.Run.phase == EndlessPhase.Paused
+                    && restored.Run.previousPhase == EndlessPhase.Fighting && restored.Run.runId == replacement.Run.runId,
+                    "玩家续玩未暂停的战斗档时先等在暂停页", checks);
+                restored.Tick(0.5f);
+                Check(restored.Run.seconds == savedSeconds && restored.Run.heart == replacement.Run.heart
+                    && restored.Pause() && restored.Run.phase == EndlessPhase.Fighting,
+                    "恢复后计时和棋心保持，确认继续回到战斗", checks);
+
                 // 保存结算后，查看摘要必须包含归档分数，而且不改动保存文件。
                 replacement.Run.score = 36;
                 replacement.Finish();

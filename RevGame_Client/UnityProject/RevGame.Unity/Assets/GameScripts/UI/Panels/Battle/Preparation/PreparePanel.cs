@@ -43,7 +43,7 @@ namespace RevGame.UI
         private Text _eyeLabel;
         /// <summary>上次提示的剩余次数、操作文案和错误。默认值要求首次刷新。</summary>
         private (int remaining, string prompt, string error) _hintStamp;
-        /// <summary>上次的准备提示状态。-1 是教学门禁，0 可开战，正数为剩余秒数。</summary>
+        /// <summary>上次的准备提示状态。-2 缺少棋子，-1 等待教学，0 可开战，正数为剩余秒数。</summary>
         private int _shownReadySeconds = int.MinValue;
         /// <summary>上次展示的手牌数，未绘制时是 int.MinValue。</summary>
         private int _shownHandCount = int.MinValue;
@@ -150,12 +150,18 @@ namespace RevGame.UI
             }
             bool canGuideReady = !guided || lesson.Step == TutorialStep.Ready;
             bool flipping = AnyCardFlipping;
-            _btnReady.interactable = canGuideReady && battle.Phase == GamePhase.Prepare && battle.PreparationGranted && !flipping;
-            int readySeconds = !canGuideReady ? -1 : battle.PreparationGranted ? 0
-                : System.Math.Max(1, (int)System.Math.Ceiling(3f - battle.PreparationElapsed));
+            // 先提示必须完成的教学或落子，再显示服务计算的增益等待时间。
+            int readySeconds = !canGuideReady ? -1 : !battle.HasDeployedPlayerPieces ? -2 : battle.PreparationWaitSeconds;
+            _btnReady.interactable = battle.Phase == GamePhase.Prepare && !flipping && readySeconds == 0;
             if (_shownReadySeconds != readySeconds)
             {
-                _readyLabel.text = readySeconds < 0 ? "完成引导后开战" : readySeconds == 0 ? "开始战斗" : "增益抵达 " + readySeconds + "秒";
+                _readyLabel.text = readySeconds switch
+                {
+                    -2 => "先落一颗棋子",
+                    -1 => "完成引导后开战",
+                    0 => "开始战斗",
+                    _ => "增益抵达 " + readySeconds + "秒"
+                };
                 _shownReadySeconds = readySeconds;
             }
 

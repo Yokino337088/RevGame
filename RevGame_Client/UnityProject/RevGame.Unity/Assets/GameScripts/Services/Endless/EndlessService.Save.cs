@@ -246,8 +246,11 @@ namespace RevGame.Endless
             return (loaded, units);
         }
 
-        /// <summary>先解码校验，再重建模型；从快照恢复随机源和选择，不调用RollChoices。</summary>
-        public bool Restore(bool isolated)
+        /// <summary>
+        /// 校验快照后重建模型、保留随机源和选择。玩家从大厅续玩时保留手动暂停，
+        /// 也会让战斗中的自动存档先暂停，待玩家看清棋盘后再推进。
+        /// </summary>
+        public bool Restore(bool isolated, bool pauseOnEntry = false)
         {
             try
             {
@@ -288,7 +291,12 @@ namespace RevGame.Endless
                     Units.Add(units[i]);
                 }
                 RefreshRules();
-                if (Run.phase == EndlessPhase.Paused)
+                // 暂停记录中的来源阶段供继续按钮恢复。已结算和待选择的界面按快照落屏。
+                if (pauseOnEntry && Run.phase == EndlessPhase.Fighting)
+                {
+                    Pause();
+                }
+                else if (!pauseOnEntry && Run.phase == EndlessPhase.Paused)
                 {
                     Run.phase = Run.previousPhase;
                 }

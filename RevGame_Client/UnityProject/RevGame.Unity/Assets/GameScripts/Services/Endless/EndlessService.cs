@@ -62,12 +62,10 @@ namespace RevGame.Endless
             get;
             private set;
         }
-        public string LastError
-        {
-            get;
-            private set;
-        }
-        = "";
+        /// <summary>最近一次被拒绝的操作原因。新局、读档或退场时清除。</summary>
+        public string LastError { get; private set; } = string.Empty;
+        /// <summary>每次拒绝均递增，包括连续相同的原因。HUD 据此续期显示。</summary>
+        public int RejectionSerial { get; private set; }
         public bool Isolated
         {
             get;
@@ -96,9 +94,11 @@ namespace RevGame.Endless
         {
             return EndlessConfig.Count(key);
         }
+        /// <summary>记录一次独立拒绝，调用方仍得到 false，重复文案也会刷新提示。</summary>
         private bool Reject(string reason)
         {
             LastError = reason;
+            RejectionSerial++;
             return false;
         }
         /// <summary>
@@ -474,6 +474,7 @@ namespace RevGame.Endless
         /// <summary>统一重置单局棋盘、演员、战斗回执和缓存。新局、读档和离场共用。</summary>
         private void Clear()
         {
+            LastError = string.Empty;
             Units.Clear();
             World?.Horde.Clear();
             Board.Reset();

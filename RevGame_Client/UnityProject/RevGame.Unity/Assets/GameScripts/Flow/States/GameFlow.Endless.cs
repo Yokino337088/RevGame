@@ -54,7 +54,7 @@ namespace RevGame.Flow
                 service = RevServices.GetRequired<EndlessService>();
                 if (resume)
                 {
-                    if (!service.Restore(isolated))
+                    if (!service.Restore(isolated, pauseOnEntry: true))
                     {
                         throw new InvalidOperationException(service.LastError);
                     }
