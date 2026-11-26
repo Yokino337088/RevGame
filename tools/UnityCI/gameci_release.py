@@ -18,6 +18,8 @@ INVENTORY_NAME = ".prebuilt-ab.json"
 ENTRY = release.PROJECT / "Assets/Editor/RevGame/ResourceBuild/RevGameGameCiRelease.cs"
 # 本轮生成的密钥库由 GameCI 放在项目根目录。
 KEYSTORE = release.PROJECT / "revgame-gameci-release.keystore"
+# 临时脚本在正式出包和预热检出中使用同一个导入身份。
+ENTRY_GUID = "232dc2162f4b4fcfa502fa5ea0ec9c9b"
 
 
 def require_checkout():
@@ -45,7 +47,8 @@ def prepare(build_target, platform):
     selected = streaming / platform
     if not selected.is_dir() or release.is_link(selected):
         raise ValueError(f"缺少目标 AB 目录 {platform}。")
-    if ENTRY.exists() or ENTRY.is_symlink() or KEYSTORE.exists() or KEYSTORE.is_symlink():
+    entry_meta = ENTRY.with_suffix(".cs.meta")
+    if any(path.exists() or path.is_symlink() for path in (ENTRY, entry_meta, KEYSTORE)):
         raise ValueError("GameCI 临时入口或密钥库路径已经存在。")
     expected = release.bundle_inventory(streaming, build_target, platform)
     STASH.mkdir(exist_ok=False)
@@ -64,6 +67,7 @@ def prepare(build_target, platform):
     version.write_text("m_EditorVersion: 2022.3.15f1\nm_EditorVersionWithRevision: 2022.3.15f1 (b58023a2b463)\n",
                        encoding="utf-8")
     shutil.copyfile(Path(__file__).with_name(ENTRY.name), ENTRY)
+    entry_meta.write_text(f"fileFormatVersion: 2\nguid: {ENTRY_GUID}\n", encoding="utf-8")
 
 
 def restore():

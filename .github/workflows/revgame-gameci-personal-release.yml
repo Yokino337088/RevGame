@@ -7,6 +7,10 @@ on:
         description: 来自手动入口的固定构建目标
         required: true
         type: string
+      import_only:
+        description: 对相同目标执行导入验证并预热缓存
+        type: boolean
+        default: false
     secrets:
       UNITY_LICENSE:
         required: true
@@ -32,13 +36,14 @@ concurrency:
 
 jobs:
   release:
-    name: GameCI 正式包 ${{ inputs.platform }}
+    name: ${{ inputs.import_only && 'GameCI 导入预热' || 'GameCI 正式包' }} ${{ inputs.platform }}
     if: github.repository == 'Yokino337088/RevGame' && github.ref == 'refs/heads/main' && (inputs.platform == 'windows' || inputs.platform == 'android')
     runs-on: ${{ inputs.platform == 'windows' && 'windows-2022' || 'ubuntu-22.04' }}
     timeout-minutes: 320
     env:
       REVGAME_TARGET: ${{ inputs.platform }}
       REVGAME_BUILD_TARGET: ${{ inputs.platform == 'windows' && 'StandaloneWindows64' || 'Android' }}
+      REVGAME_EDITOR_IMAGE: ${{ inputs.platform == 'windows' && 'unityci/editor@sha256:b3be4bb2ac15241bf932efa0f5d00d2f93f41afadc74a4b07656985fb7113ea2' || 'unityci/editor@sha256:509ad2bbc977d029a9c8d642f1b6cc10f42e2d66e307befa73ebe359a3db58a9' }}
       PYTHONIOENCODING: utf-8
     steps:
       - name: 检查授权和目标签名
@@ -47,13 +52,14 @@ jobs:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          REVGAME_ANDROID_SIGNING_REQUIRED: ${{ inputs.platform == 'android' && !inputs.import_only }}
           REVGAME_ANDROID_KEYSTORE_B64: ${{ inputs.platform == 'android' && secrets.REVGAME_ANDROID_KEYSTORE_B64 || '' }}
           REVGAME_ANDROID_STORE_PASS: ${{ inputs.platform == 'android' && secrets.REVGAME_ANDROID_STORE_PASS || '' }}
           REVGAME_ANDROID_KEY_ALIAS: ${{ inputs.platform == 'android' && secrets.REVGAME_ANDROID_KEY_ALIAS || '' }}
           REVGAME_ANDROID_KEY_PASS: ${{ inputs.platform == 'android' && secrets.REVGAME_ANDROID_KEY_PASS || '' }}
         run: |
           $required = @('UNITY_LICENSE','UNITY_EMAIL','UNITY_PASSWORD')
-          if ($env:REVGAME_TARGET -eq 'android') {
+          if ($env:REVGAME_ANDROID_SIGNING_REQUIRED -eq 'true') {
             $required += @('REVGAME_ANDROID_KEYSTORE_B64','REVGAME_ANDROID_STORE_PASS','REVGAME_ANDROID_KEY_ALIAS','REVGAME_ANDROID_KEY_PASS')
           }
           $missing = $required | Where-Object { [string]::IsNullOrWhiteSpace([Environment]::GetEnvironmentVariable($_)) }
@@ -97,17 +103,20 @@ jobs:
         shell: pwsh
         continue-on-error: true
         env:
-          # 工具链、导入入口、包依赖或项目设置变了，就从新的兼容范围恢复缓存。
-          REVGAME_IMPORT_COMPATIBILITY: ${{ hashFiles('.github/workflows/revgame-gameci-personal-release.yml', 'tools/UnityCI/gameci_release.py', 'tools/UnityCI/RevGameGameCiRelease.cs', 'RevGame_Client/UnityProject/RevGame.Unity/Packages/**', 'RevGame_Client/UnityProject/RevGame.Unity/ProjectSettings/**') }}
+          # 将工作流改动和普通资源变动留在兼容范围内，由 Unity 检查实际变更的导入输入。
+          REVGAME_IMPORT_COMPATIBILITY: ${{ hashFiles('RevGame_Client/UnityProject/RevGame.Unity/Packages/**', 'RevGame_Client/UnityProject/RevGame.Unity/ProjectSettings/**') }}
+          REVGAME_IMPORT_ENTRY: ${{ hashFiles('tools/UnityCI/RevGameGameCiRelease.cs') }}
         run: |
           $assets = git rev-parse HEAD:RevGame_Client/UnityProject/RevGame.Unity/Assets
           if ($LASTEXITCODE -ne 0) {
             exit $LASTEXITCODE
           }
-          $prefix = "revgame-import-v1-$($env:RUNNER_OS)-$($env:RUNNER_ARCH)-$($env:REVGAME_TARGET)-$($env:REVGAME_IMPORT_COMPATIBILITY)-"
-          Add-Content -LiteralPath $env:GITHUB_OUTPUT -Encoding utf8 -Value @("key=$prefix$assets", "prefix=$prefix")
+          $image = ($env:REVGAME_EDITOR_IMAGE -split '@sha256:')[-1]
+          $prefix = "revgame-import-v2-$($env:RUNNER_OS)-$($env:RUNNER_ARCH)-$($env:REVGAME_TARGET)-$image-$($env:REVGAME_IMPORT_COMPATIBILITY)-"
+          Add-Content -LiteralPath $env:GITHUB_OUTPUT -Encoding utf8 -Value @("key=$prefix$assets-$env:REVGAME_IMPORT_ENTRY", "prefix=$prefix")
 
       - name: 复用本平台 Unity 资源导入缓存
+        id: import-cache
         if: steps.import-cache-key.outputs.key != ''
         uses: actions/cache@v5
         continue-on-error: true
@@ -120,7 +129,7 @@ jobs:
           key: ${{ steps.import-cache-key.outputs.key }}
           restore-keys: ${{ steps.import-cache-key.outputs.prefix }}
 
-      - name: 激活个人版并使用现有 AB 构建 Player
+      - name: ${{ inputs.import_only && '验证 Unity 导入并预热缓存' || '激活个人版并使用现有 AB 构建 Player' }}
         # 固定支持 Node.js 24 的 GameCI v5.0.1 发布提交，两个平台各自使用实际编辑器模块。
         uses: game-ci/unity-builder@adaf7cd8f42fd48fbbf2d4f5f67ca30d87f819f1
         env:
@@ -131,19 +140,38 @@ jobs:
           unityVersion: 2022.3.15f1
           projectPath: RevGame_Client/UnityProject/RevGame.Unity
           targetPlatform: ${{ env.REVGAME_BUILD_TARGET }}
-          customImage: ${{ inputs.platform == 'windows' && 'unityci/editor@sha256:b3be4bb2ac15241bf932efa0f5d00d2f93f41afadc74a4b07656985fb7113ea2' || 'unityci/editor@sha256:509ad2bbc977d029a9c8d642f1b6cc10f42e2d66e307befa73ebe359a3db58a9' }}
-          buildMethod: RevGame.Editor.RevGameGameCiRelease.Build
+          customImage: ${{ env.REVGAME_EDITOR_IMAGE }}
+          buildMethod: ${{ inputs.import_only && 'RevGame.Editor.RevGameGameCiRelease.VerifyImport' || 'RevGame.Editor.RevGameGameCiRelease.Build' }}
           buildName: RevGame
           buildsPath: build
           versioning: None
           allowDirtyBuild: true
-          androidKeystoreName: ${{ inputs.platform == 'android' && 'revgame-gameci-release.keystore' || '' }}
-          androidKeystoreBase64: ${{ inputs.platform == 'android' && secrets.REVGAME_ANDROID_KEYSTORE_B64 || '' }}
-          androidKeystorePass: ${{ inputs.platform == 'android' && secrets.REVGAME_ANDROID_STORE_PASS || '' }}
-          androidKeyaliasName: ${{ inputs.platform == 'android' && secrets.REVGAME_ANDROID_KEY_ALIAS || '' }}
-          androidKeyaliasPass: ${{ inputs.platform == 'android' && secrets.REVGAME_ANDROID_KEY_PASS || '' }}
+          androidKeystoreName: ${{ inputs.platform == 'android' && !inputs.import_only && 'revgame-gameci-release.keystore' || '' }}
+          androidKeystoreBase64: ${{ inputs.platform == 'android' && !inputs.import_only && secrets.REVGAME_ANDROID_KEYSTORE_B64 || '' }}
+          androidKeystorePass: ${{ inputs.platform == 'android' && !inputs.import_only && secrets.REVGAME_ANDROID_STORE_PASS || '' }}
+          androidKeyaliasName: ${{ inputs.platform == 'android' && !inputs.import_only && secrets.REVGAME_ANDROID_KEY_ALIAS || '' }}
+          androidKeyaliasPass: ${{ inputs.platform == 'android' && !inputs.import_only && secrets.REVGAME_ANDROID_KEY_PASS || '' }}
+
+      - name: 核对本轮导入回执和资产缓存
+        if: inputs.import_only
+        shell: pwsh
+        env:
+          REVGAME_IMPORT_CACHE_HIT: ${{ steps.import-cache.outputs.cache-hit }}
+        run: |
+          $library = 'RevGame_Client/UnityProject/RevGame.Unity/Library'
+          $receipt = Get-Content -LiteralPath "$library/RevGameGameCiImport.txt"
+          if ($receipt[0] -cne '2022.3.15f1' -or $receipt[1] -cne $env:REVGAME_BUILD_TARGET -or $receipt[2] -notmatch '^[0-9a-f]{32}$') {
+            throw 'Unity 导入回执不符。'
+          }
+          foreach ($path in @('Artifacts', 'ArtifactDB', 'SourceAssetDB')) {
+            if (!(Test-Path -LiteralPath "$library/$path")) {
+              throw "Unity 导入缓存缺失 $path"
+            }
+          }
+          Write-Output "Unity 导入验证通过，精确缓存命中=$env:REVGAME_IMPORT_CACHE_HIT"
 
       - name: 核验 IL2CPP、原生库及 AB
+        if: '!inputs.import_only'
         run: python -B tools/UnityCI/gameci_release.py verify --target ${{ inputs.platform }}
 
       - name: 恢复平台资源并清除临时签名
@@ -151,6 +179,7 @@ jobs:
         run: python -B tools/UnityCI/gameci_release.py restore --target ${{ inputs.platform }}
 
       - uses: actions/upload-artifact@v6
+        if: '!inputs.import_only'
         with:
           name: RevGame-gameci-${{ inputs.platform }}-il2cpp-${{ github.sha }}
           path: build/${{ env.REVGAME_BUILD_TARGET }}/

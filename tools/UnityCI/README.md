@@ -37,4 +37,6 @@ Windows 只读 Unity 授权。正式签名放在 Android 专属步骤，签名�
 
 两个入口分别校验本轮提交里的目标 AB，记录摘要后才启动 Unity。构建完成再比对检出和实际成品，成功后从对应该平台的 Artifacts 下载。`Library` 是 Unity 的导入缓存，首次检出出现缓存提示时会执行完整导入。 [Unity 导入缓存说明](https://docs.unity3d.com/2022.3/Documentation/Manual/AssetDatabaseCustomizingWorkflow.html)
 
-GameCI 按构建目标、runner 系统及架构、编辑器镜像和项目配置缓存 `Library` 的资源导入产物及索引。第一次成功出包保存缓存。此后在同一兼容范围内，Unity 可复用已经导入的图集和纹理，只更新改动或缺失的部分。Player、Gradle 工作区与签名文件属于当次任务的临时数据。 [GitHub Actions 缓存说明](https://github.com/actions/cache#cache-action)
+GameCI 按构建目标、runner 系统及架构、编辑器镜像和项目配置缓存 `Library` 的资源导入产物及索引。每批资源有独立缓存键，找不到完全相同的版本时，Unity 从兼容缓存检查并重导改动项。Player、Gradle 工作区与签名文件属于当次任务的临时数据。 [GitHub Actions 缓存说明](https://github.com/actions/cache#cache-action)
+
+通过 **RevGame GameCI 个人版导入验证 → android-cache** 可以提前生成 Android 出包所用的导入缓存。该任务使用与正式 Android 出包相同的 Unity 镜像、资源预检和缓存键，按本轮回执核对实际编辑器版本、平台和启动场景。首次导入成功时写入缓存，后续运行可在「核对本轮导入回执和资产缓存」中查看精确命中状态。它只需要 Unity 许可。 [导入工作流](https://github.com/Yokino337088/RevGame/actions/workflows/revgame-gameci-personal-smoke.yml)

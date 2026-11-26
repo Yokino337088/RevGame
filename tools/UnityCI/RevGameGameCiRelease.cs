@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using Revolution.Editor;
 using UnityEditor;
 using UnityEngine;
@@ -9,8 +10,8 @@ namespace RevGame.Editor
     /// <summary>GameCI 专用的正式出包入口。使用检出中已验证的目标平台 AB，调用原有 Player 构建。</summary>
     public static class RevGameGameCiRelease
     {
-        /// <summary>使用托管 runner 上已经导入的目标平台，真实构建失败时向 GameCI 抛出异常。</summary>
-        public static void Build()
+        /// <summary>核对国际版编辑器、脚本编译状态和本轮已激活的出包平台。</summary>
+        private static BuildTarget RequireImportedTarget()
         {
             if (!Application.isBatchMode || Application.unityVersion != "2022.3.15f1" ||
                 EditorUtility.scriptCompilationFailed)
@@ -23,6 +24,28 @@ namespace RevGame.Editor
             {
                 throw new InvalidOperationException($"GameCI 没有选中 RevGame 的出包平台 {target}。");
             }
+            return target;
+        }
+
+        /// <summary>使用正式包的同一导入环境生成回执，供宿主验收并保存导入缓存。</summary>
+        public static void VerifyImport()
+        {
+            BuildTarget target = RequireImportedTarget();
+            const string startScene = "Assets/Scenes/StartScene.unity";
+            if (EditorApplication.isCompiling || AssetDatabase.LoadAssetAtPath<SceneAsset>(startScene) == null ||
+                !AppDomain.CurrentDomain.GetAssemblies().Any(assembly => assembly.GetType("RevGame.Flow.GameFlow") != null))
+            {
+                throw new InvalidOperationException("未完成业务脚本编译与启动场景导入。");
+            }
+            string library = Path.Combine(Path.GetDirectoryName(Application.dataPath), "Library");
+            File.WriteAllLines(Path.Combine(library, "RevGameGameCiImport.txt"),
+                new[] { Application.unityVersion, target.ToString(), AssetDatabase.AssetPathToGUID(startScene) });
+        }
+
+        /// <summary>使用托管 runner 上已经导入的目标平台，真实构建失败时向 GameCI 抛出异常。</summary>
+        public static void Build()
+        {
+            BuildTarget target = RequireImportedTarget();
 
             // 激活由容器完成，子构建进程无需继承 Unity 账号凭据。
             Environment.SetEnvironmentVariable("UNITY_EMAIL", null);

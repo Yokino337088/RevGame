@@ -2,6 +2,12 @@ name: RevGame GameCI 个人版导入验证
 
 on:
   workflow_dispatch:
+    inputs:
+      target:
+        description: 选择普通导入验证或 Android 出包缓存预热
+        type: choice
+        default: editor
+        options: [editor, android-cache]
 
 permissions:
   contents: read
@@ -13,7 +19,7 @@ concurrency:
 jobs:
   import:
     name: 验证授权与工程导入
-    if: github.repository == 'Yokino337088/RevGame' && github.ref == 'refs/heads/main'
+    if: github.repository == 'Yokino337088/RevGame' && github.ref == 'refs/heads/main' && inputs.target != 'android-cache'
     runs-on: ubuntu-22.04
     timeout-minutes: 55
     env:
@@ -85,3 +91,14 @@ jobs:
             exit 1
           fi
           echo "RevGame 已在 Unity ${imported[0]} 完成脚本编译和启动场景导入。"
+
+  android-cache:
+    if: inputs.target == 'android-cache'
+    uses: ./.github/workflows/revgame-gameci-personal-release.yml
+    with:
+      platform: android
+      import_only: true
+    secrets:
+      UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+      UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+      UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
