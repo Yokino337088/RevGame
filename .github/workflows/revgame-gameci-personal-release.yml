@@ -86,7 +86,6 @@ jobs:
           buildsPath: build
           versioning: None
           allowDirtyBuild: true
-          androidTargetSdkVersion: ${{ matrix.target == 'android' && 'AndroidApiLevel33' || '' }}
           androidKeystoreName: ${{ matrix.target == 'android' && 'revgame-gameci-release.keystore' || '' }}
           androidKeystoreBase64: ${{ matrix.target == 'android' && secrets.REVGAME_ANDROID_KEYSTORE_B64 || '' }}
           androidKeystorePass: ${{ matrix.target == 'android' && secrets.REVGAME_ANDROID_STORE_PASS || '' }}

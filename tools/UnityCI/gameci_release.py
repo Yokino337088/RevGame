@@ -12,8 +12,8 @@ import release
 
 # 隔离目录和 StreamingAssets 在同一检出盘，且位于 Unity 的 Assets 之外。
 STASH = release.PROJECT.parent / ".revgame-gameci-streaming"
-# GameCI 正式构建入口只复制进本次检出。
-ENTRY = release.PROJECT / "Assets/Editor/RevGameGameCiRelease.cs"
+# GameCI 入口与项目资源构建脚本使用同一个程序集，沿用它对 Revolution.Editor 的显式引用。
+ENTRY = release.PROJECT / "Assets/Editor/RevGame/ResourceBuild/RevGameGameCiRelease.cs"
 # 本轮生成的密钥库由 GameCI 放在项目根目录。
 KEYSTORE = release.PROJECT / "revgame-gameci-release.keystore"
 

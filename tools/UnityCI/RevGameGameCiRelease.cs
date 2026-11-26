@@ -62,7 +62,8 @@ namespace RevGame.Editor
             }
             Environment.SetEnvironmentVariable("ANDROID_KEYSTORE_BASE64", null);
             PlayerSettings.Android.targetArchitectures = AndroidArchitecture.ARM64;
-            PlayerSettings.Android.targetSdkVersion = AndroidSdkVersions.AndroidApiLevel33;
+            // 国际版 2022.3.15f1 的枚举没有 API 33 的成员名，Unity 设置保存的是 API 数值。
+            PlayerSettings.Android.targetSdkVersion = (AndroidSdkVersions)33;
             PlayerSettings.Android.forceInternetPermission = true;
             PlayerSettings.defaultInterfaceOrientation = UIOrientation.LandscapeLeft;
             PlayerSettings.defaultScreenWidth = 1920;
