@@ -58,6 +58,26 @@ jobs:
             throw "请配置 Actions Secrets $($missing -join ', ')"
           }
 
+      - name: 等待 Windows 容器服务就绪
+        if: matrix.target == 'windows'
+        shell: pwsh
+        # 某些托管 Windows runner 在分配任务后 Docker 服务仍然停止，先确认服务端可以响应。
+        run: |
+          $deadline = [DateTime]::UtcNow.AddSeconds(90)
+          do {
+            $service = Get-Service -Name docker -ErrorAction Stop
+            if ($service.Status -eq 'Stopped') {
+              Start-Service -Name docker -ErrorAction SilentlyContinue
+            }
+            $dockerOs = docker version --format '{{.Server.Os}}' 2>$null
+            if ($LASTEXITCODE -eq 0 -and $dockerOs -eq 'windows') {
+              Write-Output 'Windows Docker 服务已就绪。'
+              return
+            }
+            Start-Sleep -Seconds 5
+          } while ([DateTime]::UtcNow -lt $deadline)
+          throw "Windows Docker 服务在 90 秒内未就绪，最后一次服务状态为 $($service.Status)。"
+
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
