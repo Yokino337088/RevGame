@@ -1,0 +1,110 @@
+name: RevGame IL2CPP 正式出包
+
+on:
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: 选择正式包平台
+        type: choice
+        default: both
+        options: [both, windows, android]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: revgame-il2cpp-release
+  cancel-in-progress: false
+
+jobs:
+  assets:
+    name: 流式资源隔离预检
+    if: github.ref == 'refs/heads/main'
+    runs-on: windows-2022
+    timeout-minutes: 15
+    outputs:
+      targets: ${{ steps.targets.outputs.targets }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: 选择平台并验证实际资源目录
+        id: targets
+        env:
+          REVGAME_PLATFORM: ${{ inputs.platform }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          python -B -m unittest discover -s tools/UnityCI -p test_release.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $targets = if ($env:REVGAME_PLATFORM -eq 'both') { @('windows','android') } else { @($env:REVGAME_PLATFORM) }
+          foreach ($target in $targets) {
+              python -B tools/UnityCI/release.py assets --target $target
+              if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
+          $json = ConvertTo-Json -InputObject @($targets) -Compress
+          "targets=$json" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+
+  release:
+    name: 正式包 ${{ matrix.target }}
+    needs: assets
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        target: ${{ fromJSON(needs.assets.outputs.targets) }}
+    runs-on: windows-2022
+    timeout-minutes: 320
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: 检查授权和签名配置
+        env:
+          TARGET: ${{ matrix.target }}
+          REVGAME_UNITY_EMAIL: ${{ secrets.REVGAME_UNITY_EMAIL }}
+          REVGAME_UNITY_PASSWORD: ${{ secrets.REVGAME_UNITY_PASSWORD }}
+          REVGAME_UNITY_SERIAL: ${{ secrets.REVGAME_UNITY_SERIAL }}
+          REVGAME_ANDROID_KEYSTORE_B64: ${{ matrix.target == 'android' && secrets.REVGAME_ANDROID_KEYSTORE_B64 || '' }}
+          REVGAME_ANDROID_STORE_PASS: ${{ matrix.target == 'android' && secrets.REVGAME_ANDROID_STORE_PASS || '' }}
+          REVGAME_ANDROID_KEY_ALIAS: ${{ matrix.target == 'android' && secrets.REVGAME_ANDROID_KEY_ALIAS || '' }}
+          REVGAME_ANDROID_KEY_PASS: ${{ matrix.target == 'android' && secrets.REVGAME_ANDROID_KEY_PASS || '' }}
+        run: python -B tools/UnityCI/release.py credentials --target $env:TARGET
+      - name: 安装固定 Unity 版本和目标模块
+        env:
+          TARGET: ${{ matrix.target }}
+        run: ./tools/UnityCI/install-release-editor.ps1 -Target $env:TARGET
+      - name: 激活 Unity 构建授权
+        id: license
+        env:
+          REVGAME_UNITY_EMAIL: ${{ secrets.REVGAME_UNITY_EMAIL }}
+          REVGAME_UNITY_PASSWORD: ${{ secrets.REVGAME_UNITY_PASSWORD }}
+          REVGAME_UNITY_SERIAL: ${{ secrets.REVGAME_UNITY_SERIAL }}
+        run: python -B tools/UnityCI/release.py activate --editor $env:REVGAME_CLOUD_EDITOR
+      - name: 重建目标 AB、构建 Player 并验包
+        id: player
+        env:
+          TARGET: ${{ matrix.target }}
+          PYTHONIOENCODING: utf-8
+          REVGAME_ANDROID_KEYSTORE_B64: ${{ matrix.target == 'android' && secrets.REVGAME_ANDROID_KEYSTORE_B64 || '' }}
+          REVGAME_ANDROID_STORE_PASS: ${{ matrix.target == 'android' && secrets.REVGAME_ANDROID_STORE_PASS || '' }}
+          REVGAME_ANDROID_KEY_ALIAS: ${{ matrix.target == 'android' && secrets.REVGAME_ANDROID_KEY_ALIAS || '' }}
+          REVGAME_ANDROID_KEY_PASS: ${{ matrix.target == 'android' && secrets.REVGAME_ANDROID_KEY_PASS || '' }}
+        run: python -B tools/UnityCI/release.py build --target $env:TARGET --editor $env:REVGAME_CLOUD_EDITOR --output $env:REVGAME_RELEASE_OUTPUT
+      - name: 归还本次 Unity 授权
+        if: always() && (steps.license.outcome == 'success' || steps.license.outcome == 'failure')
+        env:
+          REVGAME_UNITY_EMAIL: ${{ secrets.REVGAME_UNITY_EMAIL }}
+          REVGAME_UNITY_PASSWORD: ${{ secrets.REVGAME_UNITY_PASSWORD }}
+        run: python -B tools/UnityCI/release.py return-license --editor $env:REVGAME_CLOUD_EDITOR
+      - uses: actions/upload-artifact@v4
+        if: always() && steps.player.outcome == 'success'
+        with:
+          name: RevGame-${{ matrix.target }}-il2cpp-${{ github.sha }}
+          path: ${{ env.REVGAME_RELEASE_OUTPUT }}/
+          if-no-files-found: error
