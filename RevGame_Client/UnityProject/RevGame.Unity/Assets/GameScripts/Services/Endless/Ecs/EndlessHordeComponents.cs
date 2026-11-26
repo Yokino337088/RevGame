@@ -26,6 +26,8 @@ namespace RevGame.Endless
         private int _activeCount;
         /// <summary>出生/死亡标记变化时置位，移动/HP变化不导致无效名单重建。</summary>
         private bool _activeDirty = true;
+        /// <summary>下一次寻找空槽的起点。其前的槽均已占用，低位腾空或清池时回退。</summary>
+        private int _firstFreeSlot;
         /// <summary>按出生编号排序的槽号，只由当前世界使用，排队算法借用时不改变内容。</summary>
         private readonly int[] _birthSlots;
         /// <summary>排序时使用的出生编号，按世界容量预留，重建时覆盖实际范围。</summary>
@@ -72,7 +74,7 @@ namespace RevGame.Endless
             _birthSlots = new int[capacity];
             _birthIds = new int[capacity];
         }
-        /// <summary>读回值快照，写回一次拆到组件并使显示样本失效。真实状态仍由本组件持有。</summary>
+        /// <summary>按槽读回值快照。写回更新组件和版本，腾空时让下一次出生重新检查低位。</summary>
         public EndlessHorde this[int slot]
         {
             get
@@ -94,6 +96,10 @@ namespace RevGame.Endless
                 {
                     _activeDirty = true;
                     _birthOrderDirty = true;
+                    if (!value.active && slot < _firstFreeSlot)
+                    {
+                        _firstFreeSlot = slot;
+                    }
                 }
                 if (value.active && _state[slot].id != value.id)
                 {
@@ -138,17 +144,15 @@ namespace RevGame.Endless
         {
             return _birthSlots[order];
         }
-        /// <summary>保持旧出生顺序：选择编号最小的空槽，随机源与后续并列目标不因ECS迁移改变。</summary>
+        /// <summary>返回最低可用槽号，满池返回 -1。查询本身不占用槽，出生成功后由写入口提交。</summary>
         public int FirstFree()
         {
-            for (int i = 0; i < Length; i++)
+            // 连续出生可跳过已检查过的占用前缀。死亡与清池会让起点回到可复用范围。
+            while (_firstFreeSlot < Length && _state[_firstFreeSlot].active)
             {
-                if (!_state[i].active)
-                {
-                    return i;
-                }
+                _firstFreeSlot++;
             }
-            return -1;
+            return _firstFreeSlot < Length ? _firstFreeSlot : -1;
         }
         /// <summary>开发态或延迟消费者核对槽代次，避免旧槽引用误认新实体。</summary>
         public int Generation(int slot)
@@ -183,7 +187,7 @@ namespace RevGame.Endless
             }
             _activeDirty = false;
         }
-        /// <summary>退出清组件和代次；导出的存档与池内数组互不共享。</summary>
+        /// <summary>退出或读档前清组件、推进旧槽代次，并重置活跃名单与空槽起点。</summary>
         public void Clear()
         {
             Array.Clear(_state, 0, Length);
@@ -195,18 +199,27 @@ namespace RevGame.Endless
                 _generation[i]++;
             }
             _activeCount = 0;
+            _firstFreeSlot = 0;
             _activeDirty = true;
             _birthOrderDirty = true;
             SpatialVersion++;
             PresentationVersion++;
         }
-        /// <summary>保存边界创建独立序列化数组，后续组件修改不会改动已交给存档的快照。</summary>
+        /// <summary>按原槽号导出独立快照，省略最后一个活跃槽之后的空槽。无敌人时返回空数组。</summary>
         public EndlessHorde[] Export()
         {
-            var result = new EndlessHorde[Length];
-            for (int i = 0; i < Length; i++)
+            RefreshActive();
+            if (_activeCount == 0)
             {
-                result[i] = this[i];
+                return Array.Empty<EndlessHorde>();
+            }
+
+            // 存档数组的下标就是槽号。中间的空槽保留默认值，恢复后并列目标和后续出生仍使用原来的槽。
+            var result = new EndlessHorde[_active[_activeCount - 1] + 1];
+            for (int cursor = 0; cursor < _activeCount; cursor++)
+            {
+                int slot = _active[cursor];
+                result[slot] = this[slot];
             }
             return result;
         }

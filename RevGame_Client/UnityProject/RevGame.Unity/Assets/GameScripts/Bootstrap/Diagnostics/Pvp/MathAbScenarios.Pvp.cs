@@ -29,19 +29,43 @@ namespace RevGame.Bootstrap
         /// <summary>棋盘实际着色器上用于触发棋子落下动画的格号。</summary>
         private static readonly int PvpLandingProperty = Shader.PropertyToID("_ComputerLand");
 
-        /// <summary>在已进入的空白本地人机盘重复固定棋谱。通过真实服务提交黑子，由原游戏的轮询和棋盘渲染完成白子。</summary>
+        /// <summary>在空白的隔离人机棋盘验证本地电脑。测试期间只在内存里关闭云端，退出时恢复调用前的配置。</summary>
         internal static IEnumerator Pvp(MathAbRun run)
         {
             var service = RevServices.GetRequired<PvpService>();
             var panel = RevUI.Get<PvpPanel>();
             var view = panel?.BoardForCheck;
-            if (service.Mode != PvpConnectionMode.Local || !service.IsComputerGame || service.AgentSettings.Enabled ||
+            if (service.Mode != PvpConnectionMode.Local || !service.IsComputerGame ||
                 service.Core?.Phase != GoPhase.Playing || service.Core.Sequence != 0 || service.Core.KomiHalfPoints != 15 ||
                 panel?.BattleReady != true || view == null || !view.isActiveAndEnabled)
             {
-                throw new InvalidOperationException("九路对照需要已打开的空白本地人机棋盘、七目半贴目和关闭的云端对手");
+                throw new InvalidOperationException("九路对照需要已打开的空白本地人机棋盘和七目半贴目");
             }
 
+            // 已配置云对手的开发机也能测到本地试算。只调用内存配置入口，保持本机授权文件的原样。
+            bool restoreCloud = service.AgentSettings.Enabled;
+            string model = service.AgentSettings.Model;
+            string key = restoreCloud ? service.AgentSettings.Key : string.Empty;
+            try
+            {
+                if (restoreCloud && !service.ConfigureAgent(string.Empty, model, false))
+                {
+                    throw new InvalidOperationException("无法在隔离对照中切换到本地试算");
+                }
+                yield return MeasurePvp(run, service, view);
+            }
+            finally
+            {
+                if (restoreCloud)
+                {
+                    service.ConfigureAgent(key, model, true);
+                }
+            }
+        }
+
+        /// <summary>用真实服务提交固定黑子，由游戏的轮询和棋盘渲染提交白棋预告与落点。</summary>
+        private static IEnumerator MeasurePvp(MathAbRun run, PvpService service, PvpBoardView view)
+        {
             // 在开始计时前取预制体真正绑定的渲染器，不在游戏画面添加额外控件。
             MeshRenderer renderer;
             using (var serialized = new SerializedObject(view))

@@ -127,6 +127,7 @@ namespace RevGame.Endless
                 Check(archive.Settled && archive.Description.Contains("战绩 36") && File.ReadAllText(path) == settledFile,
                     "结束的局提供只读战绩摘要，保留原始结算存档", checks);
                 CheckResultSaveRetry(Path.Combine(directory, "blocked-result"), checks);
+                CheckHordeSaveSlots(directory, checks);
                 return new Dictionary<string, object> { ["success"] = true, ["passed"] = checks.Count, ["checks"] = checks };
             }
             finally
@@ -137,6 +138,59 @@ namespace RevGame.Endless
                 }
                 Directory.Delete(directory);
             }
+        }
+
+        /// <summary>用临时槽验证零敌快照、完整长度旧档和含空洞的新档。续玩后还要按原槽号复用。</summary>
+        private static void CheckHordeSaveSlots(string directory, List<string> checks)
+        {
+            using var source = new EndlessService(directory);
+            using var restored = new EndlessService(directory);
+            string path = Path.Combine(directory, RunFileName);
+            source.Begin(1, 0, 1108, deferFirstSave: true);
+            source.CommitFirstSave();
+            EndlessRun legacy = Decode(File.ReadAllText(path));
+            Check(legacy.horde.Length == 0 && restored.Restore(false) && restored.Horde.ActiveCount == 0
+                && restored.Horde.FirstFree() == 0, "空外围写出空快照并恢复可用容量", checks);
+            Check(source.SpawnHorde() && source.SpawnHorde() && source.SpawnHorde(), "用正式出生入口占用前三个槽", checks);
+            EndlessHorde first = source.Horde[0];
+            EndlessHorde vacant = source.Horde[1];
+            EndlessHorde last = source.Horde[2];
+            last.attackAt = 7.25f;
+            last.burnDamage = 2.5f;
+            source.Horde[2] = last;
+            // 旧文件会保留死敌字段，夹具在中间和末尾都放一份，检验任何空槽都不会变成活敌。
+            vacant.active = false;
+            source.Horde[1] = vacant;
+            source.Horde[source.Horde.Length - 1] = vacant;
+            legacy.horde = new EndlessHorde[source.Horde.Length];
+            for (int slot = 0; slot < legacy.horde.Length; slot++)
+            {
+                legacy.horde[slot] = source.Horde[slot];
+            }
+            legacy.nextId = source.Run.nextId;
+            legacy.laneCursor = source.Run.laneCursor;
+            string payload = JsonUtility.ToJson(legacy);
+            File.WriteAllText(path, JsonUtility.ToJson(new Envelope { payload = payload, checksum = Digest(payload) }));
+            Check(restored.Restore(false) && restored.Horde.ActiveCount == 2 && restored.Horde[2].Equals(last)
+                && restored.Horde.FirstFree() == 1, "旧版满长度槽数组仍可恢复身份、状态与最低空槽", checks);
+
+            Check(source.Save(), "带空洞的外围实际落盘", checks);
+            EndlessHorde[] snapshot = Decode(File.ReadAllText(path)).horde;
+            Check(snapshot.Length == 3 && snapshot[0].Equals(first) && snapshot[1].Equals(default(EndlessHorde))
+                && snapshot[2].Equals(last), "新快照省略尾部空槽并保持活跃敌人的精确槽号和状态", checks);
+            Check(restored.Restore(false) && restored.Horde.ActiveCount == 2 && restored.Horde[2].Equals(last)
+                && restored.Horde.FirstFree() == 1, "新档恢复保留槽洞和剩余容量", checks);
+            int nextId = restored.Run.nextId;
+            Check(restored.SpawnHorde() && restored.Horde[1].id == nextId && restored.Horde.FirstFree() == 3,
+                "续玩时下一个敌人先填最低空槽并使用续档身份", checks);
+
+            // 用两槽世界覆盖满池后腾空的回退边界，避免等待实际棋局刷满才验证。
+            var pool = new EndlessHordeComponents(2);
+            pool[0] = first;
+            pool[1] = last;
+            Check(pool.FirstFree() == -1, "满槽返回不可出生", checks);
+            pool[0] = default;
+            Check(pool.FirstFree() == 0, "腾出低位后空槽查询及时回退", checks);
         }
 
         /// <summary>临时目录制造两个实际写入冲突，逐一解除，验证只补写失败文件且不重复入账。</summary>

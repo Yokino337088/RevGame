@@ -5,6 +5,7 @@ using System.Collections.Generic;
 
 namespace RevGame.Pvp
 {
+    /// <summary>每局独立的九路棋规与超级劫历史。玩家、联网和受控试盘共用同一落子校验。</summary>
     public sealed partial class GoCore
     {
         // 9 和 81 属于本模式棋盘/协议的固定结构，不是策划平衡数值；变更尺寸须升级协议及界面。
@@ -33,7 +34,10 @@ namespace RevGame.Pvp
         private readonly int[] _group = new int[PointCount];
         private readonly bool[] _visited = new bool[PointCount];
         private readonly bool[] _liberty = new bool[PointCount];
+        /// <summary>本盘曾经合法提交的精确棋面。草稿实例独占其集合，并从同规格父盘复制。</summary>
         private readonly HashSet<PositionKey> _positions = new HashSet<PositionKey>();
+        /// <summary>已提交棋面的精确键。开局全零，仅合法落子或复制整盘时更新。</summary>
+        private PositionKey _positionKey;
         private GoPointSet _dead;
         private byte _confirmed;
         private int _passes;
@@ -153,6 +157,7 @@ namespace RevGame.Pvp
         {
         }
 
+        /// <summary>装配固定规则并登记空盘，使之后的精确同形判断也覆盖开局。</summary>
         private GoCore(int komiHalfPoints, int placementLimit, bool automaticScoring)
         {
             if (komiHalfPoints < 0 || komiHalfPoints > PointCount * 2)
@@ -163,7 +168,7 @@ namespace RevGame.Pvp
             AutomaticScoring = automaticScoring;
             KomiHalfPoints = komiHalfPoints;
             Turn = GoSide.Black;
-            _positions.Add(new PositionKey(_board));
+            _positions.Add(_positionKey);
         }
 
         /// <summary>客户端、局域网双方和服务器都用同一套终局规则创建实盘或空白回放。</summary>
@@ -239,7 +244,7 @@ namespace RevGame.Pvp
             return TryPlay(Turn, x, y, out result);
         }
 
-        /// <summary>在草稿盘完成提子、自杀和超级劫检查。合法时一起提交棋面、增量指纹和轮次，拒绝时保留实盘。</summary>
+        /// <summary>在草稿盘检查提子、自杀与超级劫。合法时一起提交棋面、精确键、联机指纹和轮次。</summary>
         public bool TryPlay(GoSide side, int x, int y, out GoPlayResult result)
         {
             if (!CanTakeTurn(side, out string error))
@@ -259,9 +264,10 @@ namespace RevGame.Pvp
             Array.Copy(_board, _working, PointCount);
             _working[index] = (byte)side;
             byte enemy = (byte)Opponent(side);
-            // 从已提交指纹出发。新棋贡献加入一次，被提棋的贡献再异或一次就会抵消。
-            // 暂存在局部变量，后续若判定自杀或全局同形，实盘指纹不会提前变化。
+            // 只改新落子和实际被提走的格子。精确键和联机指纹都是局部候选值，非法手不改变实盘。
             ulong candidateHash = PositionHash ^ StoneHash(index, (byte)side);
+            PositionKey candidate = _positionKey;
+            candidate.SetStone(index, (byte)side);
             GoPointSet captured = new GoPointSet();
             int captureCount = 0;
             // 先提敌子再检查自己是否有气：看似无气但能提走敌人的落子是合法着法。
@@ -282,6 +288,7 @@ namespace RevGame.Pvp
                     int removed = _group[member];
                     _working[removed] = 0;
                     candidateHash ^= StoneHash(removed, enemy);
+                    candidate.SetStone(removed, 0);
                     captured.Add(removed);
                     captureCount++;
                 }
@@ -292,7 +299,6 @@ namespace RevGame.Pvp
                 return Reject("这里没有气，且不能提走对方棋子。", out result);
             }
 
-            PositionKey candidate = new PositionKey(_working);
             // 精确的 162 位棋面键做位置超级劫；公开 Zobrist 哈希仅作联机快速对账，不用碰撞概率判输赢。
             if (_positions.Contains(candidate))
             {
@@ -300,6 +306,7 @@ namespace RevGame.Pvp
             }
             Array.Copy(_working, _board, PointCount);
             _positions.Add(candidate);
+            _positionKey = candidate;
             PositionHash = candidateHash;
             _historyHash = Mix(_historyHash ^ PositionHash);
             if (side == GoSide.Black)
@@ -480,12 +487,38 @@ namespace RevGame.Pvp
             return clone;
         }
 
-        /// <summary>搜索同一局时反复重填私有棋盘，保留完整劫历史和规则预算。禁止用在正在进行的实盘上。</summary>
+        /// <summary>把同规格的源盘和完整劫历史复制到独立实例。搜索每次切换父盘时调用一次。</summary>
         internal void CopyPositionFrom(GoCore source)
         {
-            Array.Copy(source._board, _board, PointCount);
+            CopyPositionStateFrom(source);
             _positions.Clear();
-            _positions.UnionWith(source._positions);
+            // 直接遍历具体集合，使用值类型枚举器。保留集合容量供下一次复制。
+            foreach (PositionKey key in source._positions)
+            {
+                _positions.Add(key);
+            }
+        }
+
+        /// <summary>
+        /// 私有试盘从同一个父盘尝试不同落子。先调用 CopyPositionFrom 完整复制父盘，之后保持父盘只读。
+        /// 每次只撤掉上一次试放留下的新棋面。非法试放保留父盘状态，换父盘时重新复制完整历史。
+        /// </summary>
+        internal bool TryAlternativePlayFrom(GoCore parent, int point)
+        {
+            // 只有成功试放才增加一个落子计数和精确键。超级劫检查保证该键原先不在父盘历史中。
+            if (PlacementCount > parent.PlacementCount)
+            {
+                _positions.Remove(_positionKey);
+            }
+            CopyPositionStateFrom(parent);
+            return TryPlay(point % BoardSize, point / BoardSize, out _);
+        }
+
+        /// <summary>覆盖独立试盘的棋面和规则状态。完整复制或同一父盘的试放分别管理精确键集合。</summary>
+        private void CopyPositionStateFrom(GoCore source)
+        {
+            Array.Copy(source._board, _board, PointCount);
+            _positionKey = source._positionKey;
             _dead = source._dead;
             _confirmed = source._confirmed;
             _passes = source._passes;
@@ -689,29 +722,30 @@ namespace RevGame.Pvp
         /// <summary>每点两位，三个 ulong 完整保存 81 点，避免以“哈希碰撞很少”代替规则正确性。</summary>
         private struct PositionKey : IEquatable<PositionKey>
         {
-            private readonly ulong _a;
-            private readonly ulong _b;
-            private readonly ulong _c;
+            /// <summary>格号 0 至 31，每格占两位。</summary>
+            private ulong _a;
+            /// <summary>格号 32 至 63，每格占两位。</summary>
+            private ulong _b;
+            /// <summary>格号 64 至 80，其余位保持为零。</summary>
+            private ulong _c;
 
-            internal PositionKey(byte[] board)
+            /// <summary>在候选键的值副本上写单格。空格为 0，黑白为 1 和 2。</summary>
+            internal void SetStone(int index, byte color)
             {
-                _a = 0;
-                _b = 0;
-                _c = 0;
-                for (int i = 0; i < PointCount; i++)
+                int shift = (index & 31) * 2;
+                ulong keep = ~(3UL << shift);
+                ulong bits = (ulong)color << shift;
+                if (index < 32)
                 {
-                    if (i < 32)
-                    {
-                        _a |= (ulong)board[i] << (i * 2);
-                    }
-                    else if (i < 64)
-                    {
-                        _b |= (ulong)board[i] << ((i - 32) * 2);
-                    }
-                    else
-                    {
-                        _c |= (ulong)board[i] << ((i - 64) * 2);
-                    }
+                    _a = (_a & keep) | bits;
+                }
+                else if (index < 64)
+                {
+                    _b = (_b & keep) | bits;
+                }
+                else
+                {
+                    _c = (_c & keep) | bits;
                 }
             }
 

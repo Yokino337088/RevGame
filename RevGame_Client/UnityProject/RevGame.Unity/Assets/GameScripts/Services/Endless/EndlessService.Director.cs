@@ -6,6 +6,7 @@ using Revolution;
 using UnityEngine;
 namespace RevGame.Endless
 {
+    /// <summary>推进无尽的固定步、波次和敌人出生。导演通过本局组件池提交新敌人。</summary>
     public sealed partial class EndlessService
     {
         /// <summary>唯一推进入口；现实时间只用于改阵期限，其余计时共用战斗时间，暂停没有隐形刷怪。</summary>
@@ -203,34 +204,33 @@ namespace RevGame.Endless
             }
             return null;
         }
+        /// <summary>在最低空槽生成一个杂兵。满池时拒绝，保留出生游标与身份编号。</summary>
         private bool SpawnHorde()
         {
-            for (int i = 0; i < Horde.Length; i++)
+            int slot = Horde.FirstFree();
+            if (slot < 0)
             {
-                if (Horde[i].active)
-                {
-                    continue;
-                }
-                // 左右两侧 × 九行轮转出生（见 NextLane）：敌人对齐棋盘横线，从两侧均匀铺开再往里涌。
-                NextLane(out int gate, out int row);
-                if (Run.affixes.Contains(0))
-                {
-                    gate = (int)(Run.seconds / V("GateWait")) % 2;
-                }
-                // 血量 = 基础 × 巡回成长 × 波次成长：越往后越硬，逼玩家靠领主奖励滚雪球。
-                float hp = V("HordeHp") * (1 + V("CircuitHpGrowth") * Math.Min(Run.circuit - 1, N("CircuitHpCap"))) * WaveHpScale();
-                hp *= Run.difficulty == 1 ? V("DifficultyHp") : 1;
-                Horde[i] = new EndlessHorde
-                {
-                    active = true, id = Run.nextId++, gate = gate, hp = hp, maxHp = hp,
-                    x = gate == 0 ? -3 : 11,
-                    y = row,
-                    speed = V("HordeSpeed") * Mathf.Min(V("CircuitSpeedCap"), 1 + (Run.circuit - 1) * V("CircuitAttackGrowth"))
-                };
-                World.InvalidateSpatial();
-                return true;
+                return false;
             }
-            return false;
+
+            // 先确定有槽，再推进左右两侧 × 九行的出生顺序。满池拒绝不会跳过一行。
+            NextLane(out int gate, out int row);
+            if (Run.affixes.Contains(0))
+            {
+                gate = (int)(Run.seconds / V("GateWait")) % 2;
+            }
+            // 血量按基础值、巡回成长和波次成长计算，再将身份和坐标一并提交。
+            float hp = V("HordeHp") * (1 + V("CircuitHpGrowth") * Math.Min(Run.circuit - 1, N("CircuitHpCap"))) * WaveHpScale();
+            hp *= Run.difficulty == 1 ? V("DifficultyHp") : 1;
+            Horde[slot] = new EndlessHorde
+            {
+                active = true, id = Run.nextId++, gate = gate, hp = hp, maxHp = hp,
+                x = gate == 0 ? -3 : 11,
+                y = row,
+                speed = V("HordeSpeed") * Mathf.Min(V("CircuitSpeedCap"), 1 + (Run.circuit - 1) * V("CircuitAttackGrowth"))
+            };
+            World.InvalidateSpatial();
+            return true;
         }
         /// <summary>每只外围敌人在自己那一行里的排队名次（0 = 最前排），下标与 Horde 一致；每步重算，不进存档。</summary>
         private int[] _queueRank = new int[0];

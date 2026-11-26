@@ -61,7 +61,7 @@ namespace RevGame.Pvp
             _workspaces[0] = new SearchWorkspace(position);
         }
 
-        /// <summary>根据本次允许使用的组数试算，复用本局工作区。按原短名单顺序挑建议和反制，返回实际写入数。</summary>
+        /// <summary>按允许的组数在私有试盘上复用父盘历史，沿短名单顺序挑建议和反制，返回实际写入数。</summary>
         internal int Rank(GoCore position, GoHint[] best, out GoHint bait, int partitionLimit = MaxPartitions)
         {
             bait = default;
@@ -75,6 +75,7 @@ namespace RevGame.Pvp
             _source.CopyPositionFrom(position);
             GoSide side = _source.Turn;
             SearchWorkspace main = _workspaces[0];
+            main.PrepareMoves(_source);
             int count = 0;
             int emptyPoints = 0;
             for (int i = 0; i < GoCore.PointCount; i++)
@@ -106,6 +107,10 @@ namespace RevGame.Pvp
                 count = Math.Min(count + 1, _ranked.Length);
             }
 
+            if (count == 0)
+            {
+                return 0;
+            }
             ScoreReplies(side, count, emptyPoints, partitionLimit);
 
             // 保持原有同分与诱敌顺序。各组完成的时间完全不参与排位。
@@ -248,9 +253,11 @@ namespace RevGame.Pvp
         }
 #endif
 
-        /// <summary>从不可变的本轮短名单读取，写入该组独占的前闭后开下标范围。</summary>
+        /// <summary>给本组独立试盘装入一次源历史，再按本组独占下标写入应手分数。</summary>
         private void ScoreRange(SearchWorkspace workspace, GoSide side, int first, int end)
         {
+            // 组 0 可能刚跑完首轮，其余组也可能持有上一轮的棋面。各自先绑定当前同一份源盘。
+            workspace.PrepareMoves(_source);
             for (int i = first; i < end; i++)
             {
                 _replyScores[i] = workspace.ScoreReply(_source, side, _ranked[i]);
@@ -290,7 +297,7 @@ namespace RevGame.Pvp
         {
             /// <summary>前一手候选的完整试盘，也是试对方应手时的历史来源。</summary>
             private readonly GoCore _move;
-            /// <summary>逐个尝试对方应手的独立试盘，每一步重新复制首手盘。</summary>
+            /// <summary>应手独占试盘。每个首手只复制一次完整历史，换应手时退回同一首手盘。</summary>
             private readonly GoCore _reply;
             /// <summary>当前组逐盘复用的气、眼和地盘分析结果。</summary>
             private readonly GoBoardAnalysis _analysis = new GoBoardAnalysis();
@@ -304,10 +311,16 @@ namespace RevGame.Pvp
                 _reply = source.CreateEmptyReplay();
             }
 
-            /// <summary>以当前走棋方试一手。非法点不参与首轮短名单；合法点返回这手走完的评分。</summary>
+            /// <summary>进入新一轮首手或应手评分前绑定当前源局。之后只有本组写这份试盘。</summary>
+            internal void PrepareMoves(GoCore source)
+            {
+                _move.CopyPositionFrom(source);
+            }
+
+            /// <summary>从已准备的源盘试一手。非法点不参与首轮短名单，合法点返回落子后的评分。</summary>
             internal bool TryMove(GoCore source, int index, out int score)
             {
-                if (!PlayOn(_move, source, index))
+                if (!_move.TryAlternativePlayFrom(source, index))
                 {
                     score = 0;
                     return false;
@@ -316,29 +329,24 @@ namespace RevGame.Pvp
                 return true;
             }
 
-            /// <summary>用对手全部合法应手中的最低分作为候选得分。无应手或已结束时沿用首轮评分。</summary>
+            /// <summary>复用包含候选首手的历史，取全部合法应手中的最低分。无应手或已终局则沿用首轮评分。</summary>
             internal int ScoreReply(GoCore source, GoSide side, GoHint candidate)
             {
-                PlayOn(_move, source, candidate.Y * GoCore.BoardSize + candidate.X);
+                // 首轮已用同一源盘确认过此落点。应手需要把它也当成曾经出现过的棋面。
+                _move.TryAlternativePlayFrom(source, candidate.Y * GoCore.BoardSize + candidate.X);
                 int worst = int.MaxValue;
                 if (_move.Phase == GoPhase.Playing)
                 {
+                    _reply.CopyPositionFrom(_move);
                     for (int i = 0; i < GoCore.PointCount; i++)
                     {
-                        if (_move.GetStone(i) == GoSide.Empty && PlayOn(_reply, _move, i))
+                        if (_move.GetStone(i) == GoSide.Empty && _reply.TryAlternativePlayFrom(_move, i))
                         {
                             worst = Math.Min(worst, Evaluate(_reply, side));
                         }
                     }
                 }
                 return worst == int.MaxValue ? candidate.Score : worst;
-            }
-
-            /// <summary>重填私有试盘再落子，保留整局的超级劫约束，也保留合法手触发的终局规则。</summary>
-            private static bool PlayOn(GoCore target, GoCore source, int index)
-            {
-                target.CopyPositionFrom(source);
-                return target.TryPlay(index % GoCore.BoardSize, index / GoCore.BoardSize, out _);
             }
 
             /// <summary>从固定执棋方计算原有气眼、叫吃与影响分。终局直接沿用正式数子结果。</summary>

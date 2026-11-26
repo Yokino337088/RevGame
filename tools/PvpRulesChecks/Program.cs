@@ -197,6 +197,7 @@ internal static class Program
         Check(game.StateHash == before && game.GetStone(1, 1) == GoSide.Empty, "suicide leaves board and history untouched");
     }
 
+    /// <summary>用同一劫争核对正常提交、独立试盘复用以及数子后恢复对弈的超级劫规则。</summary>
     private static void SuperkoAcrossScoring()
     {
         GoCore game = new GoCore(15);
@@ -206,6 +207,23 @@ internal static class Program
         ulong before = game.StateHash;
         Check(!game.TryPlay(1, 1, out _), "immediate ko denied");
         Check(game.StateHash == before, "ko rejection atomic");
+
+        // 兄弟分支应退回同一父盘的历史，成功试放的棋面只在该分支有效。
+        const int legalPoint = 7 * GoCore.BoardSize + 8;
+        const int koPoint = 1 * GoCore.BoardSize + 1;
+        GoCore expected = game.Clone();
+        Play(expected, 8, 7);
+        GoCore trial = game.CreateEmptyReplay();
+        trial.CopyPositionFrom(game);
+        Check(trial.TryAlternativePlayFrom(game, legalPoint) && trial.StateHash == expected.StateHash,
+            "first trial matches a full copy");
+        Check(trial.TryAlternativePlayFrom(game, legalPoint) && trial.StateHash == expected.StateHash,
+            "a sibling trial discards the previous position key");
+        Check(!trial.TryAlternativePlayFrom(game, koPoint) && trial.StateHash == before,
+            "a rejected trial retains the parent's superko history and state");
+        Check(trial.TryAlternativePlayFrom(game, legalPoint) && trial.StateHash == expected.StateHash && game.StateHash == before,
+            "a rejected trial can be followed by a legal trial without mutating the real game");
+
         Check(game.TryPass(GoSide.White, out _) && game.TryPass(GoSide.Black, out _), "passes exempt position repetition");
         Check(game.Phase == GoPhase.Scoring && game.Turn == GoSide.White, "double pass enters scoring");
         Check(game.TryResume(GoSide.Black, out _), "either party can dispute and resume");
