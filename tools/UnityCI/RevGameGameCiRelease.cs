@@ -70,8 +70,13 @@ namespace RevGame.Editor
             PlayerSettings.defaultScreenHeight = 1080;
             EditorUserBuildSettings.buildAppBundle = false;
             EditorUserBuildSettings.exportAsGoogleAndroidProject = false;
+            string previousProductName = PlayerSettings.productName;
+            string previousApplicationId = PlayerSettings.GetApplicationIdentifier(BuildTargetGroup.Android);
             try
             {
+                // 安装到手机时使用明确的桌面名称和应用 ID，设置只作用于本次 Android 构建。
+                PlayerSettings.productName = "围棋大作战";
+                PlayerSettings.SetApplicationIdentifier(BuildTargetGroup.Android, "com.Tangmen.RevGame");
                 PlayerSettings.Android.useCustomKeystore = true;
                 PlayerSettings.Android.keystoreName = key;
                 PlayerSettings.Android.keystorePass = ReadArgument("-androidKeystorePass");
@@ -87,6 +92,9 @@ namespace RevGame.Editor
                 PlayerSettings.Android.keystoreName = string.Empty;
                 PlayerSettings.Android.keyaliasName = string.Empty;
                 PlayerSettings.Android.useCustomKeystore = false;
+                // 成品已记录手机端身份，随后归还临时检出中的项目设置。
+                PlayerSettings.productName = previousProductName;
+                PlayerSettings.SetApplicationIdentifier(BuildTargetGroup.Android, previousApplicationId);
                 AssetDatabase.SaveAssets();
             }
         }

@@ -79,7 +79,7 @@ def restore():
 
 
 def verify(target, build_target, platform):
-    """使用真实 BuildReport、AB 摘要与 Player 文件验证本轮出包。"""
+    """核验本轮 BuildReport、实际资源和原生库，同时检查 Android 成品的应用身份与签名。"""
     streaming = streaming_root()
     release.assert_selected_streaming(streaming, platform)
     expected = release.bundle_inventory(streaming, build_target, platform)
@@ -98,6 +98,14 @@ def verify(target, build_target, platform):
         tools = sorted((Path(sdk) / "build-tools").glob("*/apksigner"), reverse=True) if sdk else []
         if not tools:
             raise ValueError("GitHub runner 没有可用于验签的 Android apksigner。")
+        # 从最终 APK 读取实际桌面名称和应用 ID，校验构建阶段设置确实进入产物。
+        badging = release.run_tool([str(tools[0].with_name("aapt")), "dump", "badging", str(apk)],
+                                   "Android APK 应用身份校验", output, 180)
+        package = re.search(r"^package: name='([^']+)'", badging, re.MULTILINE)
+        label = re.search(r"^application-label:'([^']+)'$", badging, re.MULTILINE)
+        if not package or not label or (package.group(1), label.group(1)) != ("com.Tangmen.RevGame", "围棋大作战"):
+            raise ValueError("Android APK 的应用 ID 或桌面名称与本轮出包配置不符。")
+        print(f"Android 应用 {label.group(1)} ({package.group(1)})")
         signature = release.run_tool([str(tools[0]), "verify", "--print-certs", str(apk)],
                                      "Android APK 签名校验", output, 180)
         cert = re.search(r"certificate SHA-256 digest:\s*([0-9a-fA-F]{64})", signature)
