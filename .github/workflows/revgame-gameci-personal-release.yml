@@ -78,10 +78,10 @@ jobs:
           } while ([DateTime]::UtcNow -lt $deadline)
           throw "Windows Docker 服务在 90 秒内未就绪，最后一次服务状态为 $($service.Status)。"
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           persist-credentials: false
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.11'
 
@@ -90,8 +90,8 @@ jobs:
         run: python -B tools/UnityCI/gameci_release.py prepare --target ${{ matrix.target }}
 
       - name: 激活个人版、重建 AB 并构建 Player
-        # 固定已通过导入验证的同一个 GameCI v4 发布提交，两个平台各自使用实际编辑器模块。
-        uses: game-ci/unity-builder@4423ee75828dff56037d1d1cfdac6b68e3a6ba00
+        # 固定支持 Node.js 24 的 GameCI v5.0.1 发布提交，两个平台各自使用实际编辑器模块。
+        uses: game-ci/unity-builder@adaf7cd8f42fd48fbbf2d4f5f67ca30d87f819f1
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
@@ -119,7 +119,7 @@ jobs:
         if: always() && (steps.prepare.outcome == 'success' || steps.prepare.outcome == 'failure')
         run: python -B tools/UnityCI/gameci_release.py restore --target ${{ matrix.target }}
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: RevGame-gameci-${{ matrix.target }}-il2cpp-${{ github.sha }}
           path: build/${{ env.REVGAME_BUILD_TARGET }}/

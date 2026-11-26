@@ -44,7 +44,7 @@ jobs:
             exit 1
           fi
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           persist-credentials: false
 
@@ -61,8 +61,8 @@ jobs:
           cp tools/UnityCI/RevGameGameCiImportProbe.cs "$probe"
 
       - name: 激活个人版并导入 RevGame
-        # 固定 GameCI v4 发布提交和 2022.3.15f1 Linux 编辑器镜像。
-        uses: game-ci/unity-builder@4423ee75828dff56037d1d1cfdac6b68e3a6ba00
+        # 固定支持 Node.js 24 的 GameCI v5.0.1 发布提交和 2022.3.15f1 Linux 编辑器镜像。
+        uses: game-ci/unity-builder@adaf7cd8f42fd48fbbf2d4f5f67ca30d87f819f1
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
