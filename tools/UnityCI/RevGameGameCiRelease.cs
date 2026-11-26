@@ -10,6 +10,12 @@ namespace RevGame.Editor
     /// <summary>GameCI 专用的正式出包入口。使用检出中已验证的目标平台 AB，调用原有 Player 构建。</summary>
     public static class RevGameGameCiRelease
     {
+        /// <summary>测试版桌面名称，同时区分 Windows Player 的本地数据目录。</summary>
+        private const string TestProductName = "围棋大作战test";
+
+        /// <summary>测试版应用标识，用于 Unity Player 设置及 Android 安装身份。</summary>
+        private const string TestApplicationId = "com.Tangmen.RevGameTest";
+
         /// <summary>核对国际版编辑器、脚本编译状态和本轮已激活的出包平台。</summary>
         private static BuildTarget RequireImportedTarget()
         {
@@ -51,6 +57,7 @@ namespace RevGame.Editor
             Environment.SetEnvironmentVariable("UNITY_EMAIL", null);
             Environment.SetEnvironmentVariable("UNITY_PASSWORD", null);
             Environment.SetEnvironmentVariable("UNITY_SERIAL", null);
+            bool testPackage = Environment.GetCommandLineArgs().Contains("-revGameCiTestPackage");
             bool android = target == BuildTarget.Android;
             string other = android ? "PC" : "Android";
             if (Directory.Exists(Path.Combine(Application.streamingAssetsPath, other)))
@@ -60,7 +67,7 @@ namespace RevGame.Editor
             string output = ReadArgument("-customBuildPath");
             if (!android)
             {
-                BuildPlayer(target, output);
+                BuildPlayer(target, output, testPackage);
                 return;
             }
 
@@ -91,19 +98,14 @@ namespace RevGame.Editor
             PlayerSettings.defaultScreenHeight = 1080;
             EditorUserBuildSettings.buildAppBundle = false;
             EditorUserBuildSettings.exportAsGoogleAndroidProject = false;
-            string previousProductName = PlayerSettings.productName;
-            string previousApplicationId = PlayerSettings.GetApplicationIdentifier(BuildTargetGroup.Android);
             try
             {
-                // 安装到手机时使用明确的桌面名称和应用 ID，设置只作用于本次 Android 构建。
-                PlayerSettings.productName = "围棋大作战";
-                PlayerSettings.SetApplicationIdentifier(BuildTargetGroup.Android, "com.Tangmen.RevGame");
                 PlayerSettings.Android.useCustomKeystore = true;
                 PlayerSettings.Android.keystoreName = key;
                 PlayerSettings.Android.keystorePass = ReadArgument("-androidKeystorePass");
                 PlayerSettings.Android.keyaliasName = ReadArgument("-androidKeyaliasName");
                 PlayerSettings.Android.keyaliasPass = ReadArgument("-androidKeyaliasPass");
-                BuildPlayer(target, output);
+                BuildPlayer(target, output, testPackage);
             }
             finally
             {
@@ -113,21 +115,56 @@ namespace RevGame.Editor
                 PlayerSettings.Android.keystoreName = string.Empty;
                 PlayerSettings.Android.keyaliasName = string.Empty;
                 PlayerSettings.Android.useCustomKeystore = false;
-                // 成品已记录手机端身份，随后归还临时检出中的项目设置。
-                PlayerSettings.productName = previousProductName;
-                PlayerSettings.SetApplicationIdentifier(BuildTargetGroup.Android, previousApplicationId);
                 AssetDatabase.SaveAssets();
             }
         }
 
-        /// <summary>使用 Revolution 正式 Player 的 IL2CPP 入口，并按同步结果判断成功。</summary>
-        private static void BuildPlayer(BuildTarget target, string output)
+        /// <summary>用 Revolution 的 IL2CPP 入口构建 Player。Android 和测试版临时应用各自的产品身份。</summary>
+        private static void BuildPlayer(BuildTarget target, string output, bool testPackage)
+        {
+            if (target != BuildTarget.Android && !testPackage)
+            {
+                RunPlayerBuild(target, output, testPackage);
+                return;
+            }
+
+            BuildTargetGroup group = BuildPipeline.GetBuildTargetGroup(target);
+            string previousProductName = PlayerSettings.productName;
+            string previousApplicationId = PlayerSettings.GetApplicationIdentifier(group);
+            string applicationId = testPackage ? TestApplicationId : "com.Tangmen.RevGame";
+            try
+            {
+                // 测试版在手机上单独安装，在 Windows 下使用独立的本地数据目录。
+                PlayerSettings.productName = testPackage ? TestProductName : "围棋大作战";
+                PlayerSettings.SetApplicationIdentifier(group, applicationId);
+                if (PlayerSettings.GetApplicationIdentifier(group) != applicationId)
+                {
+                    throw new InvalidOperationException($"Unity 未接受本轮应用 ID {applicationId}。");
+                }
+                RunPlayerBuild(target, output, testPackage);
+            }
+            finally
+            {
+                PlayerSettings.productName = previousProductName;
+                PlayerSettings.SetApplicationIdentifier(group, previousApplicationId);
+                AssetDatabase.SaveAssets();
+            }
+        }
+
+        /// <summary>以同步 BuildReport 判断出包结果。测试版开启自动化桥和帧时采样，继续采用正式 IL2CPP 后端。</summary>
+        private static void RunPlayerBuild(BuildTarget target, string output, bool testPackage)
         {
             if (RevAutomationActions.Execute(new RevAutomationRequest
             {
                 id = Guid.NewGuid().ToString("N"),
                 action = "build.player",
-                payloadJson = JsonUtility.ToJson(new PlayerRequest { target = target.ToString(), path = output })
+                payloadJson = JsonUtility.ToJson(new PlayerRequest
+                {
+                    target = target.ToString(),
+                    path = output,
+                    automation = testPackage,
+                    frameTiming = testPackage
+                })
             }) is not RevAutomationOperation operation)
             {
                 throw new InvalidOperationException("Revolution 没有返回本轮 Player 构建结果。");
@@ -153,7 +190,7 @@ namespace RevGame.Editor
             return arguments[index];
         }
 
-        /// <summary>只读目标和输出位置，其余字段使用 Revolution 的正式包默认值。</summary>
+        /// <summary>将平台、输出位置和按包类型启用的测试能力交给 Revolution 构建入口。</summary>
         [Serializable]
         private sealed class PlayerRequest
         {
@@ -165,6 +202,12 @@ namespace RevGame.Editor
 
             /// <summary>正式包固定使用 IL2CPP。</summary>
             public string backend = "il2cpp";
+
+            /// <summary>加入 REV_AUTOMATION，使 Player 通过显式启动参数接受测试。</summary>
+            public bool automation;
+
+            /// <summary>启用 Unity 帧时统计，为性能自动化提供采样。</summary>
+            public bool frameTiming;
         }
     }
 }

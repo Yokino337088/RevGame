@@ -11,6 +11,10 @@ on:
         description: 对相同目标执行导入验证并预热缓存
         type: boolean
         default: false
+      test_package:
+        description: 生成带 Revolution 自动化和帧时采样的测试包
+        type: boolean
+        default: false
     secrets:
       UNITY_LICENSE:
         required: true
@@ -36,7 +40,7 @@ concurrency:
 
 jobs:
   release:
-    name: ${{ inputs.import_only && 'GameCI 导入预热' || 'GameCI 正式包' }} ${{ inputs.platform }}
+    name: ${{ inputs.import_only && 'GameCI 导入预热' || inputs.test_package && 'GameCI 测试包' || 'GameCI 正式包' }} ${{ inputs.platform }}
     if: github.repository == 'Yokino337088/RevGame' && github.ref == 'refs/heads/main' && (inputs.platform == 'windows' || inputs.platform == 'android')
     runs-on: ${{ inputs.platform == 'windows' && 'windows-2022' || 'ubuntu-22.04' }}
     timeout-minutes: 320
@@ -146,6 +150,7 @@ jobs:
           buildsPath: build
           versioning: None
           allowDirtyBuild: true
+          customParameters: ${{ inputs.test_package && !inputs.import_only && '-revGameCiTestPackage' || '' }}
           androidKeystoreName: ${{ inputs.platform == 'android' && !inputs.import_only && 'revgame-gameci-release.keystore' || '' }}
           androidKeystoreBase64: ${{ inputs.platform == 'android' && !inputs.import_only && secrets.REVGAME_ANDROID_KEYSTORE_B64 || '' }}
           androidKeystorePass: ${{ inputs.platform == 'android' && !inputs.import_only && secrets.REVGAME_ANDROID_STORE_PASS || '' }}
@@ -172,7 +177,7 @@ jobs:
 
       - name: 核验 IL2CPP、原生库及 AB
         if: '!inputs.import_only'
-        run: python -B tools/UnityCI/gameci_release.py verify --target ${{ inputs.platform }}
+        run: python -B tools/UnityCI/gameci_release.py verify --target ${{ inputs.platform }} ${{ inputs.test_package && '--test-package' || '' }}
 
       - name: 恢复平台资源并清除临时签名
         if: always() && (steps.prepare.outcome == 'success' || steps.prepare.outcome == 'failure')
@@ -181,7 +186,7 @@ jobs:
       - uses: actions/upload-artifact@v6
         if: '!inputs.import_only'
         with:
-          name: RevGame-gameci-${{ inputs.platform }}-il2cpp-${{ github.sha }}
+          name: RevGame-gameci-${{ inputs.platform }}${{ inputs.test_package && '-test' || '' }}-il2cpp-${{ github.sha }}
           path: build/${{ env.REVGAME_BUILD_TARGET }}/
           if-no-files-found: error
           retention-days: 3

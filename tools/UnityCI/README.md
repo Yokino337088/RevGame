@@ -40,3 +40,9 @@ Windows 只读 Unity 授权。正式签名放在 Android 专属步骤，签名�
 GameCI 按构建目标、runner 系统及架构、编辑器镜像和项目配置缓存 `Library` 的资源导入产物及索引。每批资源有独立缓存键，找不到完全相同的版本时，Unity 从兼容缓存检查并重导改动项。Player、Gradle 工作区与签名文件属于当次任务的临时数据。 [GitHub Actions 缓存说明](https://github.com/actions/cache#cache-action)
 
 通过 **RevGame GameCI 个人版导入验证 → android-cache** 可以提前生成 Android 出包所用的导入缓存。该任务使用与正式 Android 出包相同的 Unity 镜像、资源预检和缓存键，按本轮回执核对实际编辑器版本、平台和启动场景。首次导入成功时写入缓存，后续运行可在「核对本轮导入回执和资产缓存」中查看精确命中状态。它只需要 Unity 许可。 [导入工作流](https://github.com/Yokino337088/RevGame/actions/workflows/revgame-gameci-personal-smoke.yml)
+
+## Revolution 自动化测试包
+
+按当次需求手动运行 **RevGame GameCI Windows 测试包** 或 **RevGame GameCI Android 测试包**。两个平台各自构建，测试版产品名为「围棋大作战test」，Unity 应用 ID 设置为 `com.Tangmen.RevGameTest`。测试版沿用 IL2CPP 与目标平台已提交的 AB，开启 `REV_AUTOMATION` 和帧时统计。Android 复用仓库中配置的 Android 签名。 [Windows 测试包](https://github.com/Yokino337088/RevGame/actions/workflows/revgame-gameci-test-windows.yml) · [Android 测试包](https://github.com/Yokino337088/RevGame/actions/workflows/revgame-gameci-test-android.yml)
+
+Windows 通过 `-revAutomation` 显式启动自动化桥，可加 `-revTestSession` 隔离测试会话。Android 用 Revolution.Android 选中 `com.Tangmen.RevGameTest`，由工具通过 ADB 发起带会话身份的受控启动。接入后使用 `rev_discover` 核对运行时接口，再调用自动化或性能采样。 [Revolution Android 工具](https://github.com/Yokino337088/Revolution/tree/main/Revolution.Android)

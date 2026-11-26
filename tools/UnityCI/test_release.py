@@ -135,6 +135,35 @@ class ReleaseTests(unittest.TestCase):
         self.assertEqual(release.missing_secrets("windows", licensing), [])
         self.assertEqual(release.missing_secrets("android", licensing), list(release.ANDROID_SECRETS))
 
+    def test_gameci_separates_test_capabilities_and_checks_windows_product_name(self):
+        """带自动化与帧时统计的 Windows 包须用测试名称，并且无法冒充正式包。"""
+        output = self.project / "build/StandaloneWindows64"
+        data = output / "RevGame_Data"
+        data.mkdir(parents=True)
+        app_info = data / "app.info"
+        app_info.write_text("DefaultCompany\n围棋大作战test\n", encoding="utf-8")
+        build_report = {
+            "result": "Succeeded", "errors": 0, "backend": "IL2CPP", "target": "StandaloneWindows64",
+            "unityVersion": "2022.3.15f1", "development": False, "automation": True, "frameTiming": True,
+        }
+        (output / "rev-build.json").write_text(json.dumps(build_report), encoding="utf-8")
+        stash = self.project / "stash"
+        stash.mkdir()
+        (stash / gameci_release.INVENTORY_NAME).write_text(
+            json.dumps({"target": "StandaloneWindows64", "files": {}}), encoding="utf-8")
+        with patch.object(gameci_release, "STASH", stash), patch.object(
+            gameci_release, "streaming_root", return_value=self.streaming
+        ), patch.multiple(
+            release, REPO=self.project, assert_selected_streaming=lambda *_: None,
+            bundle_inventory=lambda *_: {}, check_windows=lambda *_: None,
+        ):
+            gameci_release.verify("windows", "StandaloneWindows64", "PC", test_package=True)
+            with self.assertRaisesRegex(ValueError, "测试能力配置不匹配"):
+                gameci_release.verify("windows", "StandaloneWindows64", "PC")
+            app_info.write_text("DefaultCompany\n围棋大作战\n", encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "实际产品名"):
+                gameci_release.verify("windows", "StandaloneWindows64", "PC", test_package=True)
+
 
 if __name__ == "__main__":
     unittest.main()

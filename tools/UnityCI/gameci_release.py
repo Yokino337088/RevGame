@@ -89,7 +89,7 @@ def restore():
     STASH.rmdir()
 
 
-def verify(target, build_target, platform):
+def verify(target, build_target, platform, test_package=False):
     """核验本轮 BuildReport、实际资源和原生库，同时检查 Android 成品的应用身份与签名。"""
     streaming = streaming_root()
     release.assert_selected_streaming(streaming, platform)
@@ -101,10 +101,16 @@ def verify(target, build_target, platform):
     report = json.loads((output / "rev-build.json").read_text(encoding="utf-8-sig"))
     if (report["result"] != "Succeeded" or report["errors"] != 0 or report["backend"] != "IL2CPP"
             or report["target"] != build_target or report["unityVersion"] != "2022.3.15f1"
-            or report["development"] or report["automation"]):
-        raise ValueError("Unity BuildReport 与本轮正式 IL2CPP 出包要求不匹配。")
+            or report["development"] or report["automation"] != test_package or report["frameTiming"] != test_package):
+        raise ValueError("Unity BuildReport 与本轮 IL2CPP 包的测试能力配置不匹配。")
+    product_name = "围棋大作战test" if test_package else "围棋大作战"
     if target == "windows":
         release.check_windows(output, expected)
+        if test_package:
+            # Windows 独立 Player 的 app.info 第二行是 Unity 写入成品的实际产品名。
+            identity = (output / "RevGame_Data/app.info").read_text(encoding="utf-8-sig").splitlines()
+            if identity[1:2] != [product_name]:
+                raise ValueError("Windows Player 的实际产品名与测试包配置不符。")
     else:
         apk = output / "RevGame.apk"
         release.check_android(apk, expected)
@@ -117,7 +123,8 @@ def verify(target, build_target, platform):
                                    "Android APK 应用身份校验", output, 180)
         package = re.search(r"^package: name='([^']+)'", badging, re.MULTILINE)
         label = re.search(r"^application-label:'([^']+)'$", badging, re.MULTILINE)
-        if not package or not label or (package.group(1), label.group(1)) != ("com.Tangmen.RevGame", "围棋大作战"):
+        application_id = "com.Tangmen.RevGameTest" if test_package else "com.Tangmen.RevGame"
+        if not package or not label or (package.group(1), label.group(1)) != (application_id, product_name):
             raise ValueError("Android APK 的应用 ID 或桌面名称与本轮出包配置不符。")
         print(f"Android 应用 {label.group(1)} ({package.group(1)})")
         signature = release.run_tool([str(tools[0]), "verify", "--print-certs", str(apk)],
@@ -134,13 +141,14 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("operation", choices=("prepare", "verify", "restore"))
     parser.add_argument("--target", choices=release.TARGETS, required=True)
+    parser.add_argument("--test-package", action="store_true", help="按带自动化和帧时采样的测试包验收")
     args = parser.parse_args()
     require_checkout()
     _, build_target, platform = release.TARGETS[args.target]
     if args.operation == "prepare":
         prepare(build_target, platform)
     elif args.operation == "verify":
-        verify(args.target, build_target, platform)
+        verify(args.target, build_target, platform, args.test_package)
     else:
         restore()
 
