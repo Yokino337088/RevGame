@@ -9,12 +9,13 @@ namespace RevGame.Endless
     /// <summary>推进无尽的固定步、波次和敌人出生。导演通过本局组件池提交新敌人。</summary>
     public sealed partial class EndlessService
     {
-        /// <summary>唯一推进入口；现实时间只用于改阵期限，其余计时共用战斗时间，暂停没有隐形刷怪。</summary>
+        /// <summary>先接收后台存档回执，再推进唯一固定步。暂停期间仍接收回执，战斗时间保持暂停。</summary>
         public void Tick(float realStep)
         {
             long began = System.Diagnostics.Stopwatch.GetTimestamp();
             try
             {
+                AdvanceRunCheckpoint();
                 TickCore(realStep);
             }
             finally
@@ -41,6 +42,7 @@ namespace RevGame.Endless
                 }
             }
         }
+        /// <summary>按固定顺序提交模拟和成长，同一步的波次、定时和领主保存触发合成一次检查点。</summary>
         private void TickCore(float realStep)
         {
             if (Run == null || Run.phase == EndlessPhase.Result)
@@ -83,6 +85,7 @@ namespace RevGame.Endless
                 return;
             }
             // 击杀/掉落在本步全部提交，再打开选择，避免弹窗截断一条死亡流水。
+            bool checkpoint = false;
             if (Run.pendingLevels > 0 && Run.seconds >= Run.nextChoiceAt)
             {
                 OfferUpgrade();
@@ -92,7 +95,7 @@ namespace RevGame.Endless
                 // 每波只做难度预算调整和存档，不再进“整备”停顿；手牌改由 RefillHand 定时补。
                 Run.nextMinute += V("MinuteSeconds");
                 UpdateMinuteBudget();
-                Save();
+                checkpoint = true;
                 // 新一波开始的小横幅：告诉玩家敌人又变强了（领主波由领主来袭的大横幅代替）。
                 // 领主在场（含刚刷出、还在外围排队）时不推，免得盖掉“领主来袭”的大横幅。
                 if (!HasBossIdentity())
@@ -110,12 +113,13 @@ namespace RevGame.Endless
             if (Run.seconds >= Run.nextSave)
             {
                 Run.nextSave = Run.seconds + V("SaveSeconds");
-                Save();
+                checkpoint = true;
             }
-            if (_saveAtStepEnd)
+            if (checkpoint || _saveAtStepEnd)
             {
+                // 两个保存期限重叠时留一份包含最新预算和期限的快照，减少同一步重复写入。
                 _saveAtStepEnd = false;
-                Save();
+                RequestRunCheckpoint();
             }
             RefillHand();
             if (PlayerCount(true) == 0 && !Run.rescueUsed)

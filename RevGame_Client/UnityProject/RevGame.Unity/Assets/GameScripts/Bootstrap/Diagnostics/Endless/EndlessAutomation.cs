@@ -118,6 +118,11 @@ namespace RevGame.Endless
             RevRuntimeAutomation.Register("endless.horde-vertex-mode", "Editor 隔离局 A/B。auto 恢复策略，cpu 与 gpu 比较同一份显示样本", hordeModeSchema, SetHordeVertexMode, owner: Owner);
 #endif
             RevRuntimeAutomation.Register("endless.save-recovery-check", "使用临时目录验证无尽棋局和战绩的备份恢复", Empty, _ => EndlessService.CheckSaveRecovery(), owner: Owner);
+#if UNITY_EDITOR
+            // 固定满池的同步/后台对照使用独立文件槽，不访问玩家档案。
+            RevRuntimeAutomation.Register("endless.checkpoint-bench", "同输入对比满池同步保存、后台提交与可观察的落盘耗时",
+                Empty, _ => EndlessService.BenchmarkFullPoolCheckpoints(), owner: Owner);
+#endif
             RevRuntimeAutomation.Register("endless.ecs-benchmark", "固定240/1024实体全扫描与空间桶查询CPU对照", Empty, _ => EndlessService.BenchmarkEcs(), owner: Owner);
             RevRuntimeAutomation.Register("endless.rules", "隔离实例验证占格、暂停、存档随机源、上限和重复结算", Empty, _ => EndlessChecks.Run(), owner: Owner);
             RevRuntimeAutomation.Register("endless.boss-rules", "隔离实例跑完六章领主：招式归属、专属技周期、献祭潮掉血与预警一致性", Empty, _ => EndlessService.CheckBossSkills(), owner: Owner);

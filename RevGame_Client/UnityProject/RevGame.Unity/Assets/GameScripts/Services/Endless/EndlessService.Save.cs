@@ -1,8 +1,14 @@
+#if UNITY_EDITOR || (!UNITY_WEBGL && !UNITY_WEIXINMINIGAME && !UNITY_BYTEDANCE_MINIGAME && !UNITY_BYTEDANCEMINIGAME)
+#define REV_ENDLESS_SAVE_WORKER
+#endif
 using System;
 using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 using System.Collections.Generic;
+#if REV_ENDLESS_SAVE_WORKER
+using System.Threading;
+#endif
 using Revolution;
 using RevGame.Board;
 using RevGame.Core;
@@ -27,6 +33,12 @@ namespace RevGame.Endless
         private bool _preserveRunBackup;
         /// <summary>新局首屏还在交割时冻结续档槽写入，直到本次流程提交或释放候选。</summary>
         private bool _awaitingFirstSave;
+#if REV_ENDLESS_SAVE_WORKER
+        /// <summary>本局当前唯一的后台写入。任务只持有脱离棋局的快照，主线程负责消费结果。</summary>
+        private CheckpointWrite _checkpointWrite;
+        /// <summary>已有写入时合并的新检查点请求。旧任务完成后才采集当前最新状态。</summary>
+        private bool _checkpointRequested;
+#endif
         /// <summary>本局最近一次快照写入失败。写入成功或切换棋局后清除，HUD 据此保留重试入口。</summary>
         public bool RunSavePending { get; private set; }
         private string SavePath => Path.Combine(_saveDirectory, RunFileName);
@@ -101,7 +113,7 @@ namespace RevGame.Endless
             }
         }
 
-        /// <summary>同步提交已交付的无尽局，临时档读回一致后才能替换主档。候选局禁止写入，失败时保留旧档并冻结计分。</summary>
+        /// <summary>显式保存等到落盘才返回结果。先收齐旧任务，再提交最新快照，失败时保留旧档并冻结计分。</summary>
         public bool Save()
         {
             if (_awaitingFirstSave)
@@ -114,62 +126,214 @@ namespace RevGame.Endless
             }
             try
             {
-                Run.units.Clear();
-                for (int i = 0; i < Units.Count; i++)
-                {
-                    EndlessUnit u = Units[i];
-                    Piece p = u.Piece;
-                    Run.units.Add(new EndlessSavedUnit
-                    {
-                        id = p.Id, kind = (int)p.Def.Kind, star = (int)p.Def.Star, side = (int)p.Side,
-                        x = p.Pos.X, y = p.Pos.Y, size = p.Size, hp = p.Hp, maxHp = p.MaxHp, attackScale = p.AttackScale,
-                        summoned = u.Summoned, stone = u.Stone, revived = u.Revived, elite = u.Elite,
-                        attackAt = u.AttackAt, moveAt = u.MoveAt, burnUntil = u.BurnUntil, burnAt = u.BurnAt,
-                        burnDamage = u.BurnDamage, slowUntil = u.SlowUntil, counterAt = u.CounterAt,
-                        brokenUntil = u.BrokenUntil, nextSkillAt = u.NextSkillAt, warningAt = u.WarningAt,
-                        skillCasts = u.SkillCasts, bossChapter = u.BossChapter, chapterSkill = u.ChapterSkill, skillStage = u.SkillStage,
-                        skillAX = u.SkillA.X, skillAY = u.SkillA.Y, skillBX = u.SkillB.X, skillBY = u.SkillB.Y, skillCX = u.SkillC.X, skillCY = u.SkillC.Y,
-                        bornAt = u.BornAt, bossTemplate = u.BossTemplate, warningLine = u.WarningLine,
-                        role = u.Role, gate = u.Gate, breakEyeAt = u.BreakEyeAt, breakEyeTarget = u.BreakEyeTarget,
-                        furyUntil = u.FuryUntil, stationarySince = u.StationarySince, steadyShield = u.SteadyShield,
-                        auraAt = u.AuraAt, comboCount = u.ComboCount,
-                        outside = u.Outside, centerX = u.Center.x, centerY = u.Center.y, damageBudgetAt = u.DamageBudgetAt, damageBudgetUsed = u.DamageBudgetUsed
-                    }
-                    );
-                }
-                Run.horde = Horde.Export();
-                string payload = JsonUtility.ToJson(Run);
-                Run.horde = null;
-                string encoded = JsonUtility.ToJson(new Envelope
-                {
-                    payload = payload, checksum = Digest(payload)
-                }
-                );
+                // 显式保存覆盖待合并的请求。等待已提交的旧快照，防止它在本次成功后再替换主档。
+                FinishRunCheckpoint();
+                EndlessRun snapshot = CaptureSaveSnapshot();
                 if (Isolated)
                 {
-                    _isolatedSave = encoded;
+                    _isolatedSave = EncodeSave(snapshot);
                 }
                 else
                 {
-                    // 本次快照来自内存棋局，先检查存档基本信息。框架刷新临时文件后完整读回，
-                    // 对比已编码文本即可确认读回的是这一份快照，无需再解析敌潮并重算校验和。
-                    ValidateSaveHeader(Run);
-                    RevFileSave.Write(SavePath, encoded, value => VerifySaveReadback(encoded, value), _preserveRunBackup);
+                    WriteSaveSnapshot(SavePath, snapshot, _preserveRunBackup);
                     _preserveRunBackup = false;
                 }
                 RunSavePending = false;
                 return true;
             }
-            catch (Exception e)
+            catch (Exception error)
             {
-                // 保存中生成的外围数据仅供序列化，失败也要归还这份临时快照。
-                Run.horde = null;
-                RunSavePending = true;
-                Run.scoreStopped = true;
-                Run.error = "保存失败，已停止计分；旧档保留：" + e.Message;
-                return Reject("存档未写入，本局已停止新增计分");
+                return FailRunSave(error);
             }
         }
+
+        /// <summary>在主线程复制演员、敌槽和局状态。从返回开始，编码仅使用这份独立快照。</summary>
+        private EndlessRun CaptureSaveSnapshot()
+        {
+            var units = new List<EndlessSavedUnit>(Units.Count);
+            for (int i = 0; i < Units.Count; i++)
+            {
+                EndlessUnit u = Units[i];
+                Piece p = u.Piece;
+                units.Add(new EndlessSavedUnit
+                {
+                    id = p.Id, kind = (int)p.Def.Kind, star = (int)p.Def.Star, side = (int)p.Side,
+                    x = p.Pos.X, y = p.Pos.Y, size = p.Size, hp = p.Hp, maxHp = p.MaxHp, attackScale = p.AttackScale,
+                    summoned = u.Summoned, stone = u.Stone, revived = u.Revived, elite = u.Elite,
+                    attackAt = u.AttackAt, moveAt = u.MoveAt, burnUntil = u.BurnUntil, burnAt = u.BurnAt,
+                    burnDamage = u.BurnDamage, slowUntil = u.SlowUntil, counterAt = u.CounterAt,
+                    brokenUntil = u.BrokenUntil, nextSkillAt = u.NextSkillAt, warningAt = u.WarningAt,
+                    skillCasts = u.SkillCasts, bossChapter = u.BossChapter, chapterSkill = u.ChapterSkill, skillStage = u.SkillStage,
+                    skillAX = u.SkillA.X, skillAY = u.SkillA.Y, skillBX = u.SkillB.X, skillBY = u.SkillB.Y, skillCX = u.SkillC.X, skillCY = u.SkillC.Y,
+                    bornAt = u.BornAt, bossTemplate = u.BossTemplate, warningLine = u.WarningLine,
+                    role = u.Role, gate = u.Gate, breakEyeAt = u.BreakEyeAt, breakEyeTarget = u.BreakEyeTarget,
+                    furyUntil = u.FuryUntil, stationarySince = u.StationarySince, steadyShield = u.SteadyShield,
+                    auraAt = u.AuraAt, comboCount = u.ComboCount,
+                    outside = u.Outside, centerX = u.Center.x, centerY = u.Center.y, damageBudgetAt = u.DamageBudgetAt, damageBudgetUsed = u.DamageBudgetUsed
+                });
+            }
+            return Run.CaptureForSave(units, Horde.Export());
+        }
+
+        /// <summary>将独立快照编码为既有存档信封，内层原文和 SHA-256 校验值一起写入。</summary>
+        private static string EncodeSave(EndlessRun snapshot)
+        {
+            string payload = JsonUtility.ToJson(snapshot);
+            return JsonUtility.ToJson(new Envelope { payload = payload, checksum = Digest(payload) });
+        }
+
+        /// <summary>检查快照并经框架原子提交。后台调用方提供清理异常回调，在工作结束后交回主线程。</summary>
+        private static void WriteSaveSnapshot(string path, EndlessRun snapshot, bool preserveBackup, Action<Exception> onCleanupError = null)
+        {
+            ValidateSaveHeader(snapshot);
+            string encoded = EncodeSave(snapshot);
+            RevFileSave.Write(path, encoded, value => VerifySaveReadback(encoded, value), preserveBackup, onCleanupError);
+        }
+
+        /// <summary>只在主线程交付写入失败。旧档继续可用，界面提供重试并停止新增计分。</summary>
+        private bool FailRunSave(Exception error)
+        {
+            RunSavePending = true;
+            Run.scoreStopped = true;
+            Run.error = "保存失败，已停止计分；旧档保留：" + error.Message;
+            return Reject("存档未写入，本局已停止新增计分");
+        }
+
+        /// <summary>接受一次战斗检查点请求。原生磁盘档延后完成，隔离档和网页走原同步流程。</summary>
+        private void RequestRunCheckpoint()
+        {
+#if REV_ENDLESS_SAVE_WORKER
+            if (!Isolated)
+            {
+                if (!_awaitingFirstSave && Run != null)
+                {
+                    _checkpointRequested = true;
+                    AdvanceRunCheckpoint();
+                }
+                return;
+            }
+#endif
+            Save();
+        }
+
+        /// <summary>接收已完成的后台结果，并在写槽空闲时采集一份最新棋局。战斗更新期间不等待磁盘任务。</summary>
+        private void AdvanceRunCheckpoint()
+        {
+#if REV_ENDLESS_SAVE_WORKER
+            CompleteRunCheckpoint(wait: false);
+            if (!_checkpointRequested || _checkpointWrite != null)
+            {
+                return;
+            }
+            _checkpointRequested = false;
+            try
+            {
+                // 先从上一笔的结果确定备份策略，随后把独立数据交给工作线程。
+                EndlessRun snapshot = CaptureSaveSnapshot();
+                string path = SavePath;
+                bool preserveBackup = _preserveRunBackup;
+                var write = new CheckpointWrite();
+                if (!ThreadPool.QueueUserWorkItem(_ => write.Run(path, snapshot, preserveBackup)))
+                {
+                    throw new InvalidOperationException("无法启动后台存档");
+                }
+                _checkpointWrite = write;
+            }
+            catch (Exception error)
+            {
+                FailRunSave(error);
+            }
+#endif
+        }
+
+        /// <summary>在显式保存、换局或退场前等待已经提交的检查点，并收走尚未采样的合并请求。</summary>
+        private void FinishRunCheckpoint()
+        {
+#if REV_ENDLESS_SAVE_WORKER
+            _checkpointRequested = false;
+            CompleteRunCheckpoint(wait: true);
+#endif
+        }
+
+#if REV_ENDLESS_SAVE_WORKER
+        /// <summary>消费一次写入结果。固定步只读取已完成任务，显式边界可以等待任务结束。</summary>
+        private void CompleteRunCheckpoint(bool wait)
+        {
+            CheckpointWrite write = _checkpointWrite;
+            if (write == null || !write.TryGetResult(wait, out Exception error))
+            {
+                return;
+            }
+            _checkpointWrite = null;
+            if (error != null)
+            {
+                FailRunSave(error);
+                return;
+            }
+            _preserveRunBackup = false;
+            RunSavePending = false;
+        }
+
+        /// <summary>一个原生文件工单的回执。工作线程完成后发布，主线程负责查询或在明确边界等待。</summary>
+        private sealed class CheckpointWrite
+        {
+            /// <summary>只保护回执字段，编码和磁盘操作都在锁外。</summary>
+            private readonly object _receipt = new object();
+            /// <summary>工作线程已完成文件操作，且结果可读取。</summary>
+            private bool _finished;
+            /// <summary>成功时为空，失败时保留原异常供主线程更新提示。</summary>
+            private Exception _error;
+
+            /// <summary>在线程池编码并提交快照，文件关闭后才发布回执和唤醒等待者。</summary>
+            internal void Run(string path, EndlessRun snapshot, bool preserveBackup)
+            {
+                Exception failure = null;
+                try
+                {
+                    WriteRunCheckpoint(path, snapshot, preserveBackup);
+                }
+                catch (Exception error)
+                {
+                    failure = error;
+                }
+                lock (_receipt)
+                {
+                    _error = failure;
+                    _finished = true;
+                    Monitor.PulseAll(_receipt);
+                }
+            }
+
+            /// <summary>取已完成结果。固定步使用非等待模式，显式保存和换局才等待发布。</summary>
+            internal bool TryGetResult(bool wait, out Exception error)
+            {
+                lock (_receipt)
+                {
+                    while (wait && !_finished)
+                    {
+                        Monitor.Wait(_receipt);
+                    }
+                    error = _error;
+                    return _finished;
+                }
+            }
+        }
+
+        /// <summary>工作线程只编码独立快照和写文件。临时文件删除失败也随原错误回传，由主线程更新提示。</summary>
+        private static void WriteRunCheckpoint(string path, EndlessRun snapshot, bool preserveBackup)
+        {
+            Exception cleanupError = null;
+            try
+            {
+                WriteSaveSnapshot(path, snapshot, preserveBackup, error => cleanupError = error);
+            }
+            catch (Exception error) when (cleanupError != null)
+            {
+                throw new IOException(error.Message + "，且清理临时档失败：" + cleanupError.Message,
+                    new AggregateException(error, cleanupError));
+            }
+        }
+#endif
 
         /// <summary>逐字符核对临时文件读回和本次已编码的快照。有差异时抛出异常，由框架放弃替换并清理临时文件。</summary>
         private static void VerifySaveReadback(string expected, string actual)
@@ -281,6 +445,8 @@ namespace RevGame.Endless
         {
             try
             {
+                // 先完成此前已提交的写入，再读取主备档。旧任务不会晚到并覆盖续玩的文件。
+                FinishRunCheckpoint();
                 bool fromBackup = false;
                 var snapshot = isolated ? PrepareRestore(_isolatedSave) : RevFileSave.Read(SavePath, PrepareRestore, out fromBackup);
                 EndlessRun loaded = snapshot.run;

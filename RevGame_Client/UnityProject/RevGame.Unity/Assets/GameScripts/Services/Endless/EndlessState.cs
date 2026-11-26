@@ -173,6 +173,33 @@ namespace RevGame.Endless
         public List<int> breakthroughs = new List<int>(), affixes = new List<int>();
         public List<EndlessSavedUnit> units = new List<EndlessSavedUnit>();
         public EndlessHorde[] horde;
+
+        /// <summary>
+        /// 由主线程生成存档专用数据。标量和字符串按值复制，每个可变容器有独立副本。
+        /// 调用方交出新建的棋子和敌潮数据，工作线程编码期间不再改动这些对象。
+        /// </summary>
+        internal EndlessRun CaptureForSave(List<EndlessSavedUnit> unitSnapshot, EndlessHorde[] hordeSnapshot)
+        {
+            var snapshot = (EndlessRun)MemberwiseClone();
+            snapshot.burnZoneUntil = (float[])burnZoneUntil?.Clone();
+            snapshot.burnZoneDamage = (float[])burnZoneDamage?.Clone();
+            snapshot.mains = (int[])mains?.Clone();
+            snapshot.seals = (int[])seals?.Clone();
+            snapshot.evolved = (bool[])evolved?.Clone();
+            snapshot.banned = (bool[])banned?.Clone();
+            snapshot.rare = (bool[])rare?.Clone();
+            snapshot.brokenEyeReady = (float[])brokenEyeReady?.Clone();
+            snapshot.damage = (double[])damage?.Clone();
+            snapshot.choices = (int[])choices?.Clone();
+            snapshot.gateWarnings = (float[])gateWarnings?.Clone();
+            snapshot.gateNext = (float[])gateNext?.Clone();
+            snapshot.hand = hand == null ? null : new List<int>(hand);
+            snapshot.breakthroughs = breakthroughs == null ? null : new List<int>(breakthroughs);
+            snapshot.affixes = affixes == null ? null : new List<int>(affixes);
+            snapshot.units = unitSnapshot;
+            snapshot.horde = hordeSnapshot;
+            return snapshot;
+        }
     }
     /// <summary>存档只写业务数据，不序列化Unity对象或Piece内部缓存。恢复时由Board.Place重建索引。</summary>
     [Serializable]

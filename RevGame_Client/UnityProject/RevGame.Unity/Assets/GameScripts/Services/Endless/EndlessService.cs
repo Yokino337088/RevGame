@@ -464,13 +464,15 @@ namespace RevGame.Endless
                 Run.score = value > long.MaxValue - Run.score ? long.MaxValue : Run.score + value;
             }
         }
+        /// <summary>离场先收齐已提交的磁盘任务，再释放当前棋局和所有战斗数据。</summary>
         public void Dispose()
         {
             Clear();
         }
-        /// <summary>统一重置单局棋盘、演员、战斗回执和缓存。新局、读档和离场共用。</summary>
+        /// <summary>新局、读档和离场先结清此前检查点，再统一重置棋盘、回执与缓存，避免旧任务覆盖新档。</summary>
         private void Clear()
         {
+            FinishRunCheckpoint();
             LastError = string.Empty;
             Units.Clear();
             World?.Horde.Clear();

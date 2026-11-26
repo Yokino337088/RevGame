@@ -59,6 +59,15 @@ namespace Revolution
         /// </summary>
         public static void Write(string path, string data, Action<string> validate, bool preserveBackup = false)
         {
+            Write(path, data, validate, preserveBackup, null);
+        }
+
+        /// <summary>
+        /// 提交完整快照，临时文件清理失败时由 onCleanupError 接收原异常，空回调沿用框架日志。
+        /// 原生平台的工作线程必须提供线程安全的校验与清理回调。网页持久目录写回由主线程发起。
+        /// </summary>
+        public static void Write(string path, string data, Action<string> validate, bool preserveBackup, Action<Exception> onCleanupError)
+        {
             if (data == null || validate == null)
             {
                 throw new ArgumentException("保存需要编码后的快照及其校验器。");
@@ -102,7 +111,15 @@ namespace Revolution
                         }
                         catch (Exception error) when (error is IOException || error is UnauthorizedAccessException)
                         {
-                            RevLog.Exception(error, "删除临时存档失败", "RevSave");
+                            // 原生工作线程将错误交回宿主，避免在文件线程读取 Unity 帧号或操作日志通道。
+                            if (onCleanupError != null)
+                            {
+                                onCleanupError(error);
+                            }
+                            else
+                            {
+                                RevLog.Exception(error, "删除临时存档失败", "RevSave");
+                            }
                         }
                     }
                 }

@@ -221,6 +221,7 @@ namespace RevGame.Endless
             }
             return config.Blessing + " · Lv" + (Run.mains[route] + 1) + "\n" + config.Description;
         }
+        /// <summary>提交有效的升级选择并回到战斗，随后请求检查点。返回值表示选择是否生效。</summary>
         public bool Choose(int index)
         {
             if (Run.phase != EndlessPhase.Upgrade || index < 0 || index >= Run.choices.Length)
@@ -273,7 +274,7 @@ namespace RevGame.Endless
                 Run.nextChoiceAt = Run.seconds + V("ChoiceBreather");
                 Run.upgradeStreak = 0;
             }
-            Save();
+            RequestRunCheckpoint();
             return true;
         }
         public bool Reroll()
@@ -297,6 +298,7 @@ namespace RevGame.Endless
             RollChoices();
             return true;
         }
+        /// <summary>消耗核心并提交有效进化，随后请求检查点。非法配方不改动棋局。</summary>
         public bool Evolve(int route)
         {
             if (route < 0 || route >= 6 || Run.phase == EndlessPhase.Result || Run.mains[route] < N("MainMax") || Run.seals[route] == 0 || Run.cores == 0 || Run.evolved[route])
@@ -306,7 +308,7 @@ namespace RevGame.Endless
             Run.cores--;
             Run.evolved[route] = true;
             Impact(new Vector2(4, 4), new Vector2(4, 4), route, V("AreaLimit"));
-            Save();
+            RequestRunCheckpoint();
             return true;
         }
         private void GiveCards(int count)
@@ -386,6 +388,7 @@ namespace RevGame.Endless
             Run.phase = EndlessPhase.Fighting;
             return true;
         }
+        /// <summary>应用本次巡回奖励后恢复战斗并请求检查点。返回值表示两项选择均已提交。</summary>
         public bool ContinueCircuit(int breakthrough, int affix)
         {
             if (Run.phase != EndlessPhase.Circuit || breakthrough < 0 || breakthrough >= 4 || affix < 0 || affix >= 4)
@@ -409,7 +412,7 @@ namespace RevGame.Endless
             Run.heart = Mathf.Min(V("HeartHp"), Run.heart + V("HeartHp") * V("CircuitHeal"));
             // 直接回到战斗：无尽全程不停顿。
             Run.phase = EndlessPhase.Fighting;
-            Save();
+            RequestRunCheckpoint();
             return true;
         }
         /// <summary>当前结算存在尚未成功写入的文件，允许保留结算界面重试。</summary>

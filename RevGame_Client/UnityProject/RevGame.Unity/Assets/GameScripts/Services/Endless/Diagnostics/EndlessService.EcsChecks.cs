@@ -151,13 +151,7 @@ namespace RevGame.Endless
             source.Begin(1, 0, 1101, deferFirstSave: true);
             source.CommitFirstSave();
             Check(source.StartWave(), "满池续玩夹具沿正式路径开战", checks);
-            for (int slot = 0; slot < source.Horde.Length; slot++)
-            {
-                if (!source.SpawnHorde())
-                {
-                    throw new InvalidOperationException("满池续玩夹具未完成敌潮出生");
-                }
-            }
+            FillSaveCheckHorde(source);
 
             source.Run.score = 80;
             Check(source.Save(), "满池首次写入真实磁盘", checks);
@@ -193,7 +187,162 @@ namespace RevGame.Endless
                 SameFullHorde(source.Horde, restored.Horde), "满池主档损坏后回退备份并保留随机状态和全部敌人", checks);
             Check(restored.Save() && File.ReadAllText(backupPath) == backup, "满池恢复后的首笔保存保留原有效备份", checks);
             Check(restored.Pause() && restored.Run.phase == EndlessPhase.Fighting, "从满池备份恢复后可确认继续战斗", checks);
+#if UNITY_EDITOR
+            CheckBackgroundCheckpoints(restored, path, backupPath, backup, checks);
+#endif
         }
+
+        /// <summary>测试与计时都沿正式出生入口填满外围槽。任何出生失败立即结束当前检查。</summary>
+        private static void FillSaveCheckHorde(EndlessService source)
+        {
+            for (int slot = 0; slot < source.Horde.Length; slot++)
+            {
+                if (!source.SpawnHorde())
+                {
+                    throw new InvalidOperationException("满池存档夹具未完成敌潮出生");
+                }
+            }
+        }
+
+#if UNITY_EDITOR
+        /// <summary>对临时磁盘槽检查后台快照隔离、备份保护、异常回执与显式保存顺序。</summary>
+        private static void CheckBackgroundCheckpoints(EndlessService service, string path, string backupPath, string backup, List<string> checks)
+        {
+            File.WriteAllText(path, "{}");
+            Check(service.Restore(false) && service.Run.score == 80, "后台回归先从同一份满池备份恢复", checks);
+            service.Run.score = 180;
+            string expected = EncodeSave(service.CaptureSaveSnapshot());
+            EndlessRun detached = service.CaptureSaveSnapshot();
+            // 遍历 Run 的公开字段。以后新增引用容器时，快照仍须持有独立副本。
+            foreach (var field in typeof(EndlessRun).GetFields())
+            {
+                object live = field.GetValue(service.Run);
+                if (live != null && !field.FieldType.IsValueType && field.FieldType != typeof(string) &&
+                    ReferenceEquals(live, field.GetValue(detached)))
+                {
+                    throw new InvalidOperationException("后台存档仍共享实时容器：" + field.Name);
+                }
+            }
+            service.RequestRunCheckpoint();
+            Check(service._checkpointWrite != null, "原生自动存档已交给后台工作线程", checks);
+            service.Run.score = 190;
+            service.Run.hand.Clear();
+            service.Horde[0] = default;
+            service.FinishRunCheckpoint();
+            Check(File.ReadAllText(path) == expected && File.ReadAllText(backupPath) == backup,
+                "后台仍保存请求时的完整敌潮，并保留恢复所用的备份", checks);
+
+            // 在旧任务仍可能写入时提交手动保存。完成后主档必须是手动保存的更新状态。
+            service.RequestRunCheckpoint();
+            service.RequestRunCheckpoint();
+            service.Run.score = 200;
+            Check(service.Save() && Decode(File.ReadAllText(path)).score == 200 && service._checkpointWrite == null &&
+                !service._checkpointRequested, "显式保存等待旧任务并覆盖合并请求", checks);
+
+            string recentMain = File.ReadAllText(path);
+            string recentBackup = File.ReadAllText(backupPath);
+            service.Run.score = -1;
+            service.RequestRunCheckpoint();
+            service.FinishRunCheckpoint();
+            Check(service.RunSavePending && service.Run.scoreStopped &&
+                File.ReadAllText(path) == recentMain && File.ReadAllText(backupPath) == recentBackup,
+                "后台失败回执在主线程冻结计分并保留主备档", checks);
+
+            service.Run.score = 210;
+            service.RequestRunCheckpoint();
+            service.Begin(1, 0, 1102, deferFirstSave: true);
+            Check(service.Run.seed == 1102 && service._checkpointWrite == null && Decode(File.ReadAllText(path)).score == 210,
+                "换局收齐后台任务，候选局首屏前保留旧档", checks);
+        }
+
+        /// <summary>真实文件上的满池保存对照。记录主线程调用窗口与从提交到观察到写完的时间，所有文件归临时目录。</summary>
+        public static object BenchmarkFullPoolCheckpoints()
+        {
+            string directory = Path.Combine(Path.GetTempPath(), "RevGame-Endless-Bench-" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(directory);
+            try
+            {
+                using var source = new EndlessService(directory);
+                source.Begin(1, 0, 1101, deferFirstSave: true);
+                source.CommitFirstSave();
+                if (!source.StartWave())
+                {
+                    throw new InvalidOperationException(source.LastError);
+                }
+                source.Run.nextId = 100;
+                source.Run.laneCursor = 0;
+                FillSaveCheckHorde(source);
+                const int samples = 96;
+                const int warmups = 3;
+                double millisecondsPerTick = 1000d / Stopwatch.Frequency;
+                var synchronous = new double[samples];
+                var foreground = new double[samples];
+                var observedCommit = new double[samples];
+                for (int round = -warmups; round < samples; round++)
+                {
+                    // 每对交换先后，快照内容和磁盘目录相同。轮询只用于计时台，不计入生产的主线程工作量。
+                    for (int order = 0; order < 2; order++)
+                    {
+                        bool background = ((round + order) & 1) != 0;
+                        long began = Stopwatch.GetTimestamp();
+                        if (background)
+                        {
+                            source.RequestRunCheckpoint();
+                            long returned = Stopwatch.GetTimestamp();
+                            var work = source._checkpointWrite;
+                            if (work == null || !System.Threading.SpinWait.SpinUntil(() => work.TryGetResult(wait: false, out _), 5000))
+                            {
+                                throw new InvalidOperationException("后台满池保存未完成");
+                            }
+                            long committed = Stopwatch.GetTimestamp();
+                            source.AdvanceRunCheckpoint();
+                            if (source.RunSavePending)
+                            {
+                                throw new InvalidOperationException(source.LastError);
+                            }
+                            if (round >= 0)
+                            {
+                                foreground[round] = (returned - began) * millisecondsPerTick;
+                                observedCommit[round] = (committed - began) * millisecondsPerTick;
+                            }
+                        }
+                        else
+                        {
+                            if (!source.Save())
+                            {
+                                throw new InvalidOperationException(source.LastError);
+                            }
+                            if (round >= 0)
+                            {
+                                synchronous[round] = (Stopwatch.GetTimestamp() - began) * millisecondsPerTick;
+                            }
+                        }
+                    }
+                }
+                string path = Path.Combine(directory, RunFileName);
+                string main = File.ReadAllText(path);
+                if (main != File.ReadAllText(path + ".bak") || Decode(main).horde.Length != source.Horde.Length ||
+                    source.Horde.ActiveCount != source.Horde.Length)
+                {
+                    throw new InvalidDataException("同步和后台未保存同一份满池快照");
+                }
+                return new Dictionary<string, object>
+                {
+                    ["enemyCount"] = source.Horde.Length, ["fileBytes"] = new FileInfo(path).Length,
+                    ["synchronousMs"] = synchronous, ["foregroundMs"] = foreground, ["observedCommitMs"] = observedCommit
+                };
+            }
+            finally
+            {
+                // 测量实例先释放后台任务，随后只删除本次工作目录中的文件。
+                foreach (string file in Directory.GetFiles(directory))
+                {
+                    File.Delete(file);
+                }
+                Directory.Delete(directory);
+            }
+        }
+#endif
 
         /// <summary>逐槽对照满池快照的值。容量、存活数或任一敌人的字段不同，均视为恢复失败。</summary>
         private static bool SameFullHorde(EndlessHordeComponents expected, EndlessHordeComponents actual)
