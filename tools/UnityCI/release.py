@@ -355,6 +355,8 @@ def release(target, editor, output):
 
 def main():
     """提供云端预检、授权和出包入口，命令失败只输出可执行的诊断。"""
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("operation", choices=("assets", "credentials", "activate", "return-license", "build"))
     parser.add_argument("--target", choices=TARGETS)
