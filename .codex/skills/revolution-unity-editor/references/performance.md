@@ -31,7 +31,7 @@ python Revolution.RevMCP/rev_mcp.py --project RevolutionFrameWork_Unity --compac
 
 活动窗口读取账本而非向 MCP 自查。最近 500 项、最多 64 个日志流、每次 Poll 共享 256 KiB / 128 行预算，积压跨刷新消化；缓存行说明和筛选结果，只绘制视口内控件，不在 OnGUI 读盘。无变化不主动持续 Repaint。半行 UTF-8 等下次完整后解析，坏行不阻塞后续事件。
 
-`editor.activity` 的 `pending=true` 表示预算积压，只读重查会继续原游标；此时不能用 total 宣称“全部日志”。单次最多8批并在批间检查20ms软预算（不含筛选/摘要，非硬期限）。`totalIsFinal=true` 仅对观察到的64流/新流尾部256KiB/最多500条视图表示无预算积压、无已记录读取错误，非全历史，也不保证下一页保持快照不变。半行/无效行不计入total；同时检查 error、invalidLines、scope。
+`editor.activity` 查询已打开窗口中的实时活动。一次 Unity 刷新最多消费 16 个临时事件，逐个读完即删。`pending=true` 表示本次读满预算，活动视图可能还有等待消费的事件。`totalIsFinal` 描述当前受限视图，窗口最多显示 500 行。关闭窗口会结束采集。
 
 ## 固定输入复测
 

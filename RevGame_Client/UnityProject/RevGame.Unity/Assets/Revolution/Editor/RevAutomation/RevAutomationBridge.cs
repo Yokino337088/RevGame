@@ -77,7 +77,9 @@ namespace Revolution.Editor
                 SessionState.SetString(SessionKey, Session);
             }
             Directory.CreateDirectory(Inbox);
-            RevAutomationActivity.Configure(Path.Combine(Root, "activity"));
+            RevAutomationActivity.RecoverAbandoned(RevMCPWindow.ActivityQueue);
+            AssemblyReloadEvents.beforeAssemblyReload += RevAutomationActivity.StopRecording;
+            EditorApplication.quitting += RevAutomationActivity.StopRecording;
             EditorApplication.update += Update;
             EditorApplication.quitting += OnQuit;
             EditorApplication.delayCall += Recover;
@@ -261,7 +263,7 @@ namespace Revolution.Editor
                         paused = EditorApplication.isPaused, updating = EditorApplication.isUpdating,
                         compilationFailed = EditorUtility.scriptCompilationFailed,
                         scene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().path,
-                        batchMode = Application.isBatchMode, activeRequest = _active?.id, memoryUrl = RevAutomationHttp.Url,
+                        batchMode = Application.isBatchMode, activityRecording = RevAutomationActivity.IsRecording, activeRequest = _active?.id, memoryUrl = RevAutomationHttp.Url,
                         memoryRequired = !Application.isBatchMode
                     });
                 }
@@ -367,6 +369,7 @@ namespace Revolution.Editor
             }
         }
 
+        /// <summary>完成活动记账并发布终态。兼容文件桥只留下客户端尚未领取的临时回执。</summary>
         private static void Reply(RevAutomationRequest request, bool success, string error, string message, object data)
         {
             string dataJson;
@@ -387,7 +390,7 @@ namespace Revolution.Editor
             if (request.memoryTransport) { RevAutomationHttp.Publish(request, response); }
             else
             {
-                // 文件桥回执不长期复制图像 base64；Python 从真实 PNG 路径读取 MCP image。
+                // 文件桥仅临时传递回执。截图文件由调用端在消费后独立清理。
                 response.dataJson = RevAutomationEvidence.WithoutImages(dataJson);
                 WriteJson(Path.Combine(JobDirectory(request.id), "response.json"), response);
             }

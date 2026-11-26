@@ -51,6 +51,13 @@ python Revolution.RevCLI/rev.py --project $project --mode live ui layout --objec
 
 `ui.layout` 读取 RectTransform 到根的父级链、CanvasGroup、最近/根 Canvas 的排序、实际采样纹理及可投影时的四角与屏幕范围。遇到 Prefab Mode 中的对象，使用当前选择的实例 `--id`。该动作只读取状态，不刷新布局。屏幕范围用于定位，真实命中仍查 `ui.dump` / `ui.click`。
 
+## 临时文件用完即删
+
+- 日常查询、UI、GM 和计划直接读取本次响应。AI 使用内联参数或标准输入传计划，需要临时输入文件时放系统临时目录，最后一次读取后在 `finally` 永久删除自己创建的文件。
+- `<Unity 工程>/Library/RevolutionAutomation/jobs`、`activity` 和 `screenshots` 由工具管理。把 JSON、截图、GIF 和报告的正式导出放在用户明确指定的位置。项目已有正式文档目录时按项目规范选择。
+- 临时截图和兼容工单交付后立即删除。取消、失败也执行收尾，原动作仍在跑时先等终态。窗口关闭时停止活动采集，活动文件供实时窗口读取，读完即删。
+- 升级 Unity 桥、RevCLI 和 RevMCP 后重启常驻工具。检查遗留占用用 `storage.status`，用 `storage.prune` 默认预览，`dryRun=false` 应用工具识别的回收。
+
 ## 后台工单与 UI 命中
 
 长任务可提交到在线 Editor，拿到工单 ID 后再等待或查询。提交时的 `--timeout` 是任务期限，查询时的 `--timeout` 是本次等待期限。

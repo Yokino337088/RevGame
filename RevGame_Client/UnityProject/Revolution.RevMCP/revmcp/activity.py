@@ -1,16 +1,13 @@
-"""给 Unity 活动窗口写旁路日志；写日志失败绝不重放或改变业务调用结果。
-
-每个 Python 进程使用独立 JSONL 流，避免多个 Agent 争写一个文件。每行是完整
-UTF-8 JSON；Unity 增量读取并按 id 合并开始/结束事件。日志不走 MCP stdout。
-"""
+"""只在用户打开当前工程的实时活动窗口时上报诊断。事件临时文件由 Unity 消费和回收。"""
 from contextlib import contextmanager
 import datetime as dt
 import json
-from pathlib import Path
 import re
 import threading
 import time
 import uuid
+
+from revautomation.errors import RevError
 
 
 _SECRET = re.compile(r"token|password|passwd|secret|credential|authorization|api.?key", re.I)
@@ -47,14 +44,13 @@ def safe_value(value, depth=0):
 
 
 class Activity:
-    """一个 Hub 一个写入器。每段最多 2 MiB，每进程保留最近 4 段；窗口最多显示 500 项。"""
-    def __init__(self, directory, source="Agent"):
-        self.directory = Path(directory)
-        self.source = source
-        self.session = uuid.uuid4().hex
+    """随当前工程会话发布活动元数据，缺少订阅时调用和收尾均无文件副作用。"""
+
+    def __init__(self, publish=None, enabled=None):
+        """绑定可选的发布方和采集状态查询。单独的 Player 和外部运行入口默认跳过上报。"""
+        self.publish = publish
+        self.enabled = enabled
         self.context = threading.local()
-        self.lock = threading.Lock()
-        self.segment = 0
         self.last_error = ""
 
     @contextmanager
@@ -68,13 +64,19 @@ class Activity:
             self.context.values = previous
 
     def start(self, target, action, arguments=None):
-        row = dict(id=uuid.uuid4().hex, source=self.source, target=target, action=action,
+        """实时窗口订阅后才构造摘要，普通自动化不分配日志 JSON。"""
+        if self.publish is None or (self.enabled is not None and not self.enabled()):
+            return None
+        row = dict(id=uuid.uuid4().hex, source="Agent", target=target, action=action,
                    argumentsJson=safe_text(json.dumps(safe_value(arguments or {}), ensure_ascii=False), 8192),
                    **getattr(self.context, "values", {}))
         self.write(dict(row, state="Running"))
         return row, time.monotonic()
 
     def finish(self, ticket, response=None, error=None):
+        """上报一次完成或失败，保留开始时的身份和步骤上下文。"""
+        if ticket is None:
+            return
         row, started = ticket
         response = response or {}
         success = not error and bool(response.get("success"))
@@ -91,23 +93,13 @@ class Activity:
                         resultJson=safe_text(json.dumps(safe_value(result), ensure_ascii=False, default=str), 8192)))
 
     def write(self, row):
-        """旁路写入失败只记 last_error；不能让已执行的命令因日志失败再执行一次。"""
+        """上报失败只记 last_error，业务结果和原工单不受影响。"""
         try:
             row = dict(row, utc=dt.datetime.now(dt.timezone.utc).isoformat(), schema=1)
             for key in ("source", "action", "plan", "phase", "step", "message", "error", "intent", "description"):
                 if key in row:
                     row[key] = safe_text(row[key], 512)
-            payload = json.dumps(row, ensure_ascii=False, allow_nan=False, separators=(",", ":")) + "\n"
-            with self.lock:
-                self.directory.mkdir(parents=True, exist_ok=True)
-                path = self.directory / f"agent-{self.session}-{self.segment:04d}.jsonl"
-                if path.exists() and path.stat().st_size >= 2 * 1024 * 1024:
-                    self.segment += 1
-                    path = self.directory / f"agent-{self.session}-{self.segment:04d}.jsonl"
-                with path.open("a", encoding="utf-8", newline="\n") as stream:
-                    stream.write(payload)
-                old = self.directory / f"agent-{self.session}-{self.segment - 4:04d}.jsonl"
-                old.unlink(missing_ok=True)
-                self.last_error = ""
-        except (OSError, ValueError, TypeError, RecursionError) as exc:
+            self.publish(row)
+            self.last_error = ""
+        except (OSError, RevError, ValueError, TypeError, RecursionError) as exc:
             self.last_error = str(exc)

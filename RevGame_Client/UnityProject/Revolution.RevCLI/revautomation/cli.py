@@ -11,7 +11,7 @@ import time
 
 from .client import RevClient, RevError, atomic_json, read_json
 from .errors import RevCompilationError
-from .media import write_gif
+from .media import capture_source, write_gif
 from .report import export_evidence, export_report
 from .storage import check_revmcp_output_path
 from .summary import compact_json, summarize
@@ -544,26 +544,16 @@ def run_pipeline(client, path, confirm):
 
 
 def capture_frames(client, args):
-    """连续抓帧：每次调用截图动作，收集 Unity 返回的绝对路径。
-
-    为什么在客户端循环而不是在 Unity 里一次抓完：
-    Unity 的截图动作是"下一帧末写出 PNG"，跨帧等待发生在客户端最稳；
-    编辑器重载/卡帧时也不会把一串帧压在同一个作业里，失败能立刻看出是第几帧。
-    """
+    """领取一帧并释放它的临时截图，按顺序交给 GIF 编码器。"""
     payload = read_json(args.json) if args.json else {}
-    shots = []
     total = max(1, args.frames)
     for index in range(total):
         response = invoke_action(client, args.action, payload, args.confirm)
         if not response.get("success", True):
             raise RevError("第 %d 帧抓取失败：%s" % (index + 1, response.get("message") or response.get("error") or "未知原因"))
-        path = (response.get("data") or {}).get("path")
-        if not path:
-            raise RevError("动作 %s 未返回 data.path，无法合成 GIF" % args.action)
-        shots.append(Path(path))
+        yield capture_source(response.get("data") or {})
         if index + 1 < total:
             time.sleep(max(0, args.interval) / 1000.0)
-    return shots
 
 
 def print_progress(update):
@@ -721,8 +711,8 @@ def main(argv=None):
                 if args.report:
                     result["report"] = export_evidence(
                         args.out.parent, "自动化测试报告",
-                        "连续 %d 帧 · 间隔 %d ms" % (len(frames), args.interval),
-                        {"帧数": len(frames), "帧间隔毫秒": args.interval, "GIF": args.out.name})
+                        "连续 %d 帧 · 间隔 %d ms" % (info["frames"], args.interval),
+                        {"帧数": info["frames"], "帧间隔毫秒": args.interval, "GIF": args.out.name})
             elif args.family == "pipeline":
                 def execute(c, action, payload, confirm):
                     return invoke_action(c, action, payload, confirm, progress=progress)

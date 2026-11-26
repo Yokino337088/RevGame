@@ -6,7 +6,7 @@
 
 ## 活动日志与用户可读目的（2026-10-29）
 
-Unity 控制台默认显示“活动日志”：操作的中文解释、用途、执行状态、耗时；点击查看原命令、脱敏参数/结果、计划与 finally 阶段。可搜索、筛选、跟随最新、复制日志、清空视图。清空不删除工单证据。`editor.activity` 提供同一账本的分页查询与 `summaries` 人话说明。
+打开 Unity 的 RevMCP 控制台后开始采集，可查看行动目的、执行状态、耗时和计划收尾。窗口读取临时事件后立即删除文件，并在关闭时释放视图与未读取的事件。窗口未打开时，`editor.activity` 返回 `recording: false`。窗口开启时可分页查询同一视图及 `summaries`。
 
 调用 `rev_call` 或动态工具时在外层提供可选 `intent`（最多 512 字符），讲清本步骤为什么要做；不要把 intent 塞进业务 `arguments`。例如：`{"target":"editor","action":"editor.status","intent":"确认编译完成后再测试按钮","arguments":{}}`。`rev_run` 的 plan 和每步也支持 intent，步骤覆盖计划说明。没有明确目的就省略，不伪造用户意图；窗口会按已注册的能力说明解释用途。
 

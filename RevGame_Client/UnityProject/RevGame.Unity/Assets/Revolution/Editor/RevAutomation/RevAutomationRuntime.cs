@@ -114,7 +114,7 @@ namespace Revolution.Editor
         public static object Back(RevAutomationRequest request) => Invoke(request);
         [RevAutomationAction("ui.close", Environment = "play", Keys = new[] { "id", "objectPath", "scene" }, Description = "经 RevUI.Close 关闭指定框架面板")]
         public static object Close(RevAutomationRequest request) => Invoke(request);
-        [RevAutomationAction("runtime.screenshot", Environment = "play", Keys = new string[0], Description = "在下一帧末捕获完整 GameView 到当前工单目录，等待 PNG 写完")]
+        [RevAutomationAction("runtime.screenshot", Environment = "play", Keys = new string[0], Description = "游戏帧绘制完成后捕获临时 PNG，调用端领取后回收")]
         public static object Screenshot(RevAutomationRequest request) => Invoke(request);
     }
 }

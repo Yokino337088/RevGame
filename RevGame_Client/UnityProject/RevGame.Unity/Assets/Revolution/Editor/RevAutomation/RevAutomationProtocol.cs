@@ -64,6 +64,8 @@ namespace Revolution.Editor
 
     internal sealed class RevAutomationEndpoint
     {
+        /// <summary>实时窗口开启时通知客户端上报活动数据，默认不采集。</summary>
+        public bool activityRecording;
         public int protocol = 1;
         public int pid;
         public string sessionId;

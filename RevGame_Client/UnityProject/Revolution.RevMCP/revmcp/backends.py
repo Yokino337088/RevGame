@@ -24,7 +24,8 @@ from revautomation.cli import editor_outcome, validate_action
 from .schema import validate, check_schema, object_schema
 from .activity import Activity
 from .reporting import check_output_path, workspace_for
-from revautomation import player
+from revautomation import memory_transport, player
+from revautomation.media import consume_runtime_capture, MAX_PNG_BYTES
 
 
 class RuntimeClient:
@@ -39,13 +40,16 @@ class RuntimeClient:
             raise RevError("Invalid runtime endpoint file")
         self.opener = urllib.request.build_opener(urllib.request.ProxyHandler({}), NoRedirect())
 
-    def request(self, method, path, data=None):
+    def request(self, method, path, data=None, *, png=False):
+        """发送同一会话的请求。截图单独读固定大小的二进制流，其余结果仍用 JSON。"""
         body = json.dumps(data, ensure_ascii=False, allow_nan=False).encode("utf-8") if data is not None else None
         req = urllib.request.Request(self.endpoint["url"].rstrip("/") + path, body, method=method,
             headers={"Authorization": "Bearer " + self.endpoint["token"], "X-Rev-Session": self.endpoint["sessionId"], "Content-Type": "application/json"})
         try:
             with self.opener.open(req, timeout=min(5, self.timeout)) as response:
-                raw = response.read(24 * 1024 * 1024 + 1)
+                raw = response.read((MAX_PNG_BYTES if png else 24 * 1024 * 1024) + 1)
+            if png:
+                return raw
             if len(raw) > 24 * 1024 * 1024:
                 raise RevError("Runtime response exceeds 24 MiB")
             return json.loads(raw)
@@ -75,6 +79,8 @@ class RuntimeClient:
                 if not response.get("pending"):
                     if response.get("id") != request_id or response.get("sessionId") != self.endpoint["sessionId"]:
                         raise RevError("Runtime response identity mismatch")
+                    if action == "runtime.screenshot":
+                        consume_runtime_capture(response, self.request)
                     if memory:
                         try:
                             self.request("POST", "/jobs/" + request_id + "/ack", {})
@@ -216,13 +222,21 @@ class Hub:
             check_output_path(reports)
         self.manifest = read_json(Path(cli_root) / "commands.json")
         self.known = {s["id"]: s for s in self.manifest["actions"]}
-        # Unity 执行日志由桥自身记录。Agent 活动流记录外部 CLI、参数拒绝和计划断言。
-        activity_root = self.editor.root if self.editor else (
-            self.runtime_endpoint.parent if self.runtime_endpoint else self.workspace / ".codex/work")
-        self.activity = Activity(activity_root / "activity")
+        # 活动窗口负责消费。关闭时跳过 Agent 日志，也不会退回逐进程 JSONL。
+        self.activity = Activity(self._publish_activity, self._activity_enabled)
         self._editor_catalog = None
         self._editor_catalog_key = None
         self._editor_catalog_until = 0.0
+
+    def _activity_enabled(self):
+        """读取目标 Editor 心跳，离线、旧版本与未订阅时都跳过日志。"""
+        endpoint = self.editor.endpoint() if self.editor else None
+        return bool(endpoint and endpoint.get("activityRecording") is True)
+
+    def _publish_activity(self, row):
+        """通过同一工程已认证的回环通道上报，失败不写磁盘也不重放。"""
+        info = memory_transport.credentials(self.editor)
+        memory_transport.request(info, "POST", "/activity", row, timeout=.25)
 
     def _editor_key(self):
         endpoint = self.editor.endpoint() if self.editor else None
@@ -308,7 +322,8 @@ class Hub:
             specs = catalog.get("commands", []) if target == "gm" else catalog.get("actions", [])
             spec = next((s for s in specs if (s.get("name") if target == "gm" else s.get("id")) == action
                          and (target == "gm" or s.get("target") == target)), {})
-            ticket[0]["description"] = spec.get("description", "")
+            if ticket is not None:
+                ticket[0]["description"] = spec.get("description", "")
             response = self._call(target, action, arguments, confirm, cancel, catalog)
         except (Exception, KeyboardInterrupt) as exc:
             self._editor_catalog = None

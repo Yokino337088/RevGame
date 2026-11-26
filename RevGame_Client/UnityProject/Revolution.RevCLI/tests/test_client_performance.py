@@ -1,5 +1,7 @@
 """Heartbeat read races and domain-aware ready barrier regression."""
+from base64 import b64decode
 from pathlib import Path
+import json
 import sys
 import tempfile
 import threading
@@ -45,10 +47,11 @@ class ClientPerformanceTests(unittest.TestCase):
         self.assertFalse((self.client.root / "inbox").exists())
         self.assertEqual(list((self.client.root / "jobs").iterdir()), [])
 
-    def test_terminal_file_bridge_cleans_consumed_files_but_keeps_requested_output(self):
-        """旧桥的响应一经消费就删除控制文件，但截图等实际产物仍可读取。"""
+    def test_terminal_file_bridge_returns_image_and_removes_temporary_files(self):
+        """旧桥的 PNG 随响应返回，原截图和协议文件一起回收。"""
         endpoint = dict(sessionId="same")
-        outputs = []
+        png = b64decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+omFYAAAAASUVORK5CYII=")
+
         def write(path, value):
             """模拟 Unity 从 inbox 领到请求后返回一个可读输出。"""
             atomic_json(path, value)
@@ -56,26 +59,30 @@ class ClientPerformanceTests(unittest.TestCase):
                 path.unlink()
                 work = self.client.root / "jobs" / value["id"]
                 screenshot = work / "scene-capture.png"
-                screenshot.write_bytes(b"image")
-                outputs.append(screenshot)
+                screenshot.write_bytes(png)
                 atomic_json(work / "progress.json", {"completed": 1})
-                atomic_json(work / "response.json", dict(protocol=1, id=value["id"], success=True))
+                atomic_json(work / "response.json", dict(protocol=1, id=value["id"], success=True,
+                                                           dataJson='{"path":' + json.dumps(str(screenshot)) + '}'))
         with patch.object(self.client, "ready_endpoint", return_value=endpoint), patch("revautomation.client.atomic_json", side_effect=write):
             response = self.client.call("scene.capture")
         self.assertTrue(response["success"])
-        self.assertEqual(list(Path(response["jobDirectory"]).iterdir()), outputs)
+        self.assertEqual(b64decode(response["data"]["base64"]), png)
+        self.assertNotIn("path", response["data"])
+        self.assertNotIn("jobDirectory", response)
+        self.assertEqual(list((self.client.root / "jobs").iterdir()), [])
 
     def test_scenario_only_exports_when_requested_and_removes_scratch(self):
         """两种用法都读到实际轮数，明示的 HTML 在原始逐轮文件删除前生成。"""
         endpoint = dict(sessionId="same", memoryRequired=True)
         destination = self.client.project / "Docs/性能"
         def run(client, request, *_args, **_kwargs):
-            """预备旧版 Unity scenario 仍会写入的三类中间文件。"""
+            """预备旧版 Unity scenario 的结果、日志、逐轮数据和进度。"""
             work = client.root / "jobs" / request["id"]
             result = work / "scenario-result.json"
             log = work / "unity-errors.jsonl"
             data = dict(success=True, completed=1, resultPath=str(result), unityLogPath=str(log))
             atomic_json(result, data)
+            atomic_json(work / "progress.json", {"id": request["id"], "completed": 1})
             log.touch()
             (work / "iterations.jsonl").write_text('{"iteration":1}\n', encoding="utf-8")
             return dict(success=True, id=request["id"], data=data, jobDirectory=str(work))

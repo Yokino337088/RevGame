@@ -444,10 +444,10 @@ namespace Revolution.Editor
         // ---------------------------------------------------------------- 看见场景
 
         [Serializable] private sealed class CaptureOptions { public string id, objectPath, scene, view = "iso"; public int width = 1280, height = 720; }
-        [Serializable] public sealed class CaptureResult { public string path, view, camera, limitation; public int width, height, renderers; }
 
         [RevAutomationAction("scene.capture", Environment = "either", Keys = new[] { "id", "objectPath", "scene", "view", "width", "height" },
-            Description = "把场景渲染成 PNG 交回路径，让 AI 看见搭建结果：view 为 iso/top/front/side（自动框住全部 Renderer）、camera（用 id/objectPath 或主相机）、sceneview（当前 Scene 窗口）。不含 Screen Space Overlay UI")]
+            Description = "把场景渲染成临时 PNG 供 AI 查看：view 为 iso/top/front/side（自动框住全部 Renderer）、camera（用 id/objectPath 或主相机）、sceneview（当前 Scene 窗口）。不含 Screen Space Overlay UI")]
+        /// <summary>渲染一张临时相机画面，释放纹理并返回临时截图位置和视角信息，调用端读完后负责删除。</summary>
         public static object Capture(RevAutomationRequest request)
         {
             var p = JsonUtility.FromJson<CaptureOptions>(request.payloadJson ?? "{}");
@@ -483,14 +483,21 @@ namespace Revolution.Editor
                 RenderTexture.active = target;
                 image.ReadPixels(new Rect(0, 0, p.width, p.height), 0, 0);
                 image.Apply();
-                // 只写进本工单目录：截图是证据而不是工程资产，不能让 AI 借这个动作往工程里塞文件。
-                string path = Path.Combine(RevAutomationBridge.JobDirectory(request.id), "scene-capture.png");
-                Directory.CreateDirectory(Path.GetDirectoryName(path));
-                File.WriteAllBytes(path, image.EncodeToPNG());
-                return new CaptureResult
+                // 写入本工单的唯一截图文件，不在 Unity 内存账本中保存 PNG。领取终态后由调用端读完即删。
+                string work = RevAutomationBridge.JobDirectory(request.id);
+                Directory.CreateDirectory(work);
+                string path = Path.Combine(work, "scene-capture-" + Guid.NewGuid().ToString("N") + ".png");
+                byte[] png = image.EncodeToPNG();
+                if (png.Length > RevRuntimeScreenshot.MaxPngBytes)
                 {
-                    path = Path.GetFullPath(path), view = p.view, camera = camera.name, width = p.width, height = p.height, renderers = renderers.Length,
-                    limitation = "只含相机渲染内容，不含 Screen Space Overlay UI；画面不等于玩法正确"
+                    throw new InvalidOperationException("截图超过 8 MiB，请降低分辨率");
+                }
+                File.WriteAllBytes(path, png);
+                return new Dictionary<string, object>
+                {
+                    ["path"] = path, ["bytes"] = png.Length, ["mimeType"] = "image/png", ["view"] = p.view, ["camera"] = camera.name,
+                    ["width"] = p.width, ["height"] = p.height, ["renderers"] = renderers.Length,
+                    ["limitation"] = "只含相机渲染内容，不含 Screen Space Overlay UI；画面需配合玩法断言"
                 };
             }
             finally

@@ -21,10 +21,18 @@ namespace Revolution.Editor
         [NonSerialized] private int _editorState = -1;
         [NonSerialized] private string _logError;
         [NonSerialized] private bool _clearActivity, _runtimeEndpointExists;
+        /// <summary>活动窗口数，最后一个窗口关闭才停止采集。</summary>
+        private static int _viewers;
+        /// <summary>共享的读取器由已打开窗口持有，避免多窗口争抢同一临时事件。</summary>
+        internal static RevMCPActivityReader LiveActivity { get; private set; }
+        /// <summary>本窗口使用共享活动视图，关闭时归还引用。</summary>
         [NonSerialized] private RevMCPActivityReader _reader;
+        /// <summary>最近一次刷新看到的共享读取器版本，多窗口也能收到一次消费后的刷新。</summary>
+        [NonSerialized] private int _lastActivityVersion = -1;
         [NonSerialized] private GUIStyle _titleStyle, _cardStyle;
+        /// <summary>只在实时窗口工作时创建的固定槽位目录。</summary>
+        internal static string ActivityQueue => Path.Combine(RevAutomationBridge.Root, "activity", "live");
         private static string EndpointPath => Path.Combine(RevAutomationBridge.Root, "runtime.json");
-        internal static string ActivityPath => Path.Combine(RevAutomationBridge.Root, "activity");
 
         [MenuItem("Revolution.Tools/AI/RevMCP 控制台", false, 50)]
         public static void Open()
@@ -50,32 +58,58 @@ namespace Revolution.Editor
             return window;
         }
 
+        /// <summary>窗口启用后初始化当前会话的活动视图并开始轮询。</summary>
         private void OnEnable()
         {
             minSize = new Vector2(480, 360);
-            _reader = new RevMCPActivityReader(ActivityPath);
+            if (_viewers++ == 0)
+            {
+                LiveActivity = new RevMCPActivityReader();
+                RevAutomationActivity.StartRecording(ActivityQueue);
+            }
+            _reader = LiveActivity;
+            _lastActivityVersion = -1;
             _viewVersion = -1;
             _script = EditorPrefs.GetString(Preference("Script"), _script ?? "");
             _python = EditorPrefs.GetString(Preference("Python"), _python ?? "python");
             ResolveScript();
             EditorApplication.update += UpdateActivity;
         }
-        private void OnDisable() { EditorApplication.update -= UpdateActivity; }
+        /// <summary>关闭时停止刷新，最后一个窗口还负责清空待消费事件和活动视图。</summary>
+        private void OnDisable()
+        {
+            EditorApplication.update -= UpdateActivity;
+            if (_reader == null)
+            {
+                return;
+            }
+            _reader = null;
+            if (--_viewers == 0)
+            {
+                RevAutomationActivity.StopRecording();
+                LiveActivity = null;
+            }
+        }
 
         /// <summary>仅窗口打开时每 250ms 刷新一次；不通过 MCP 自我查询，所以不会制造日志循环。</summary>
         private void UpdateActivity()
         {
             if (EditorApplication.timeSinceStartup < _refresh) { return; }
             _refresh = EditorApplication.timeSinceStartup + .25;
-            _reader ??= new RevMCPActivityReader(ActivityPath);
+            if (_reader == null)
+            {
+                return;
+            }
             bool cleared = _clearActivity;
             if (cleared) { _reader.ClearView(); _clearActivity = false; }
-            bool changed = _reader.Poll() || cleared;
+            _reader.Poll();
+            bool changed = _lastActivityVersion != _reader.Version || cleared;
+            _lastActivityVersion = _reader.Version;
             if (changed && _follow) { _activityScroll.y = float.MaxValue; }
             RefreshActivityRows();
             int state = (EditorApplication.isCompiling ? 1 : 0) | (EditorApplication.isPlaying ? 2 : 0)
                 | (EditorApplication.isPaused ? 4 : 0) | (EditorApplication.isUpdating ? 8 : 0);
-            string error = (_reader.LastError ?? "") + (RevAutomationActivity.LastError ?? "");
+            string error = _reader.LastError ?? "";
             bool endpointExists = File.Exists(EndpointPath);
             if (changed || state != _editorState || error != _logError || endpointExists != _runtimeEndpointExists) { Repaint(); }
             _editorState = state; _logError = error; _runtimeEndpointExists = endpointExists;

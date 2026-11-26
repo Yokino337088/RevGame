@@ -45,9 +45,16 @@ description: 在 Revolution Unity 项目中执行真实测试、检查功能完�
 - `finally` 放清理；取消后仍执行清理。清理失败要保留并继续尝试剩余步骤，不能报整体通过。工具 confirm 字段表示调用参数要求，不增加也不替代用户授权；按照已有任务授权判断。
 - 读取 Editor Console 或 `runtime.logs`，比较本次新增 Error/Exception；画面要求用 `runtime.screenshot` 的真实 PNG/MCP image 证据。截图能证明看到的画面，不能替代业务数值断言。
 
+## 临时文件用完即删
+
+- 日常查询、UI、GM 和计划直接读取本次响应。AI 使用内联参数或标准输入传计划，需要临时输入文件时放系统临时目录，最后一次读取后在 `finally` 永久删除自己创建的文件。
+- `<Unity 工程>/Library/RevolutionAutomation/jobs`、`activity` 和 `screenshots` 由工具管理。把 JSON、截图、GIF 和报告的正式导出放在用户明确指定的位置。项目已有正式文档目录时按项目规范选择。
+- 临时截图和兼容工单交付后立即删除。取消、失败也执行收尾，原动作仍在跑时先等终态。窗口关闭时停止活动采集，活动文件供实时窗口读取，读完即删。
+- 升级 Unity 桥、RevCLI 和 RevMCP 后重启常驻工具。检查遗留占用用 `storage.status`，用 `storage.prune` 默认预览，`dryRun=false` 应用工具识别的回收。
+
 ## 正式业务测试的报告与证据
 
-正式业务测试交付可分享的 HTML 报告。完整性审查或缺陷闭环还要记录覆盖、缺陷及回归，见 [报告规范](references/report.md)。
+用户明确要求时交付可分享的 HTML 报告。完整性审查或缺陷闭环还要记录覆盖、缺陷及回归，见 [报告规范](references/report.md)。
 
 - **文件名是 `<中文标题>_<YYYY-MM-DD>.html`**，例如 `第一章流程自动化测试_2026-10-26.html`；日期取数据产生当天。不要叫 `report.html`：一个目录躺三份 `report.html`，事后分不清哪次是哪次。`rev.py evidence`、`capture --report` 和 `rev_run` 都按这个规则命名。
 - **版式沿用项目已有的工程手册风**（纸色底、绿金主色、顶栏 + hero + 章节卡片 + 表格 + 图墙），样式来自 `revautomation/report.py` 的 `REPORT_CSS`。项目里已经有同类文档时，以那份文档的样式为准，不要另发明一套配色。

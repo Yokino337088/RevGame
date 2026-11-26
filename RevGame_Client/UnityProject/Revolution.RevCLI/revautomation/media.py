@@ -9,10 +9,53 @@
     统一量化到 3-3-2（R/G/B 各取高位，共 256 色）。游戏截图有渐变，
     会出现轻微色带，但换来做动图的零依赖与稳定体积，是划算的。
 """
+import base64
+import http.client
+import re
 import struct
 import zlib
 from pathlib import Path
+from .errors import RevError
 from .storage import check_revmcp_output_path
+
+# 单帧的限制与 Unity 截图动作一致，客户端拒绝超限或不完整的响应。
+MAX_PNG_BYTES = 8 * 1024 * 1024
+_PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
+
+
+def encode_capture(image, raw):
+    """读取完成的临时 PNG 后补齐内联图像。调用方负责回收原临时文件。"""
+    if len(raw) > MAX_PNG_BYTES or not raw.startswith(_PNG_SIGNATURE) or len(raw) < 32 or raw[-8:-4] != b"IEND":
+        raise ValueError("没有收到完整的 PNG 或画面超过 8 MiB")
+    image.update(mimeType="image/png", bytes=len(raw), base64=base64.b64encode(raw).decode("ascii"))
+
+
+def consume_runtime_capture(response, request):
+    """在 ACK 之前消费 Player 的一次性截图，保留旧版缺少 captureId 的兼容响应。"""
+    image = response.get("data")
+    if not response.get("success") or not isinstance(image, dict) or "captureId" not in image:
+        return
+    capture = image.pop("captureId")
+    image.pop("path", None)
+    try:
+        if not isinstance(capture, str) or not re.fullmatch(r"[0-9a-f]{32}", capture):
+            raise ValueError("运行时截图身份无效")
+        encode_capture(image, request("GET", "/captures/" + capture, png=True))
+    except (OSError, RevError, ValueError, http.client.HTTPException) as error:
+        response.update(success=False, error="CaptureReadFailed", message=str(error))
+
+
+def capture_source(image):
+    """为显式 GIF/报告导出提供已经领取的 PNG，兼容旧桥的文件路径。"""
+    if image.get("base64"):
+        encoded = image["base64"]
+        if not isinstance(encoded, str) or len(encoded) > ((MAX_PNG_BYTES + 2) // 3) * 4:
+            raise ValueError("截图大小超出限制")
+        return base64.b64decode(encoded, validate=True)
+    if isinstance(image.get("path"), str) and image["path"]:
+        return Path(image["path"])
+    raise ValueError("响应中没有可用的截图")
+
 
 # ---------------------------------------------------------------- PNG 解码
 
@@ -24,15 +67,15 @@ def _paeth(a, b, c):
     return b if pb <= pc else c
 
 
-def read_png(path):
+def read_png(source):
     """读 8 位、非隔行的 PNG（Unity 的 EncodeToPNG 输出正是这种）。
 
     返回 (width, height, rows)；rows 是每行 bytes，RGB 三通道。
     遇到不支持的类型直接抛错——宁可明确失败，也不要产出一张糊图。
     """
-    raw = Path(path).read_bytes()
-    if raw[:8] != b"\x89PNG\r\n\x1a\n":
-        raise ValueError("不是 PNG: %s" % path)
+    raw = source if isinstance(source, bytes) else Path(source).read_bytes()
+    if not raw.startswith(_PNG_SIGNATURE):
+        raise ValueError("无法读取 PNG 画面")
 
     pos = 8
     width = height = bit_depth = color_type = interlace = None
@@ -109,7 +152,7 @@ def fit_rows(width, height, rows, max_width):
 
 
 def write_png_preview(source, target, max_width=1280):
-    """复用截图解码，只缩小完整画面并重新压缩 PNG。原图仍留在原始证据路径。"""
+    """把已领取的 PNG 缩放，写到显式证据路径。"""
     target = check_revmcp_output_path(target)
     width, height, rows = fit_rows(*read_png(source), max_width)
     # 相邻像素之差更易压缩。PNG 的 Sub 过滤无损，图像颜色仍与缩放后的 RGB 一致。
@@ -204,23 +247,21 @@ def _blocks(data):
     return bytes(out)
 
 
-def write_gif(frame_paths, gif_path, delay_ms=120, max_width=640, loop=0):
+def write_gif(frame_sources, gif_path, delay_ms=120, max_width=640, loop=0):
     """把若干 PNG 合成为动图，返回写出信息（帧数、尺寸、字节数）。
 
     delay_ms 是每帧停留毫秒；GIF 用 1/100 秒为单位，所以按 10ms 取整，最小 20ms。
     """
     target = check_revmcp_output_path(gif_path)
-    paths = [Path(p) for p in frame_paths]
-    if not paths:
-        raise ValueError("至少需要一帧才能生成 GIF")
-
     delay_cs = max(2, int(round(delay_ms / 10.0)))
     parts = [b"GIF89a"]
     width = height = None
     body = bytearray()
 
-    for path in paths:
-        w, h, rows = read_png(path)
+    count = 0
+    for source in frame_sources:
+        count += 1
+        w, h, rows = read_png(source)
         w, h, rows = fit_rows(w, h, rows, max_width)
         if width is None:
             width, height = w, h
@@ -237,13 +278,15 @@ def write_gif(frame_paths, gif_path, delay_ms=120, max_width=640, loop=0):
         body += b"\x21\xF9\x04" + bytes((0x04,)) + struct.pack("<H", delay_cs) + b"\x00\x00"
         body += b"\x2C" + struct.pack("<HHHH", 0, 0, w, h) + b"\x00"
         body += bytes((8,)) + _blocks(_lzw(indices))
+    if count == 0:
+        raise ValueError("至少需要一帧才能生成 GIF")
     parts.append(bytes(body))
     parts.append(b"\x3B")
 
     data = b"".join(parts)
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_bytes(data)
-    return dict(path=str(target), frames=len(paths), width=width, height=height,
+    return dict(path=str(target), frames=count, width=width, height=height,
                 bytes=len(data), delayMs=delay_cs * 10)
 
 

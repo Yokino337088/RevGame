@@ -78,18 +78,16 @@ def document_directory(hub, requested=None):
     return first_document
 
 
-def screenshot_paths(value):
-    """按步骤遇到截图的顺序读取来源，正式报告仅保留本次用例的画面。"""
+def screenshots(value):
+    """按步骤列出已经领取的 PNG，只在生成预览时解码选中的帧。"""
     if isinstance(value, dict):
-        if value.get("mimeType") == "image/png" and isinstance(value.get("path"), str):
-            path = Path(value["path"]).resolve()
-            if path.is_file():
-                yield path
+        if value.get("mimeType") == "image/png" and (value.get("base64") or isinstance(value.get("path"), str)):
+            yield value
         for item in value.values():
-            yield from screenshot_paths(item)
+            yield from screenshots(item)
     elif isinstance(value, list):
         for item in value:
-            yield from screenshot_paths(item)
+            yield from screenshots(item)
 
 
 def representative(items, limit):
@@ -101,25 +99,26 @@ def representative(items, limit):
 
 def write_evidence(result, destination):
     """为本次导出分配独立目录，写一份 HTML 和必要的缩放画面。"""
-    from revautomation.media import write_gif, write_png_preview
+    from revautomation.media import capture_source, write_gif, write_png_preview
     from revautomation.report import export_evidence
 
     stamp = dt.datetime.now().strftime("%Y%m%d-%H%M%S-") + uuid.uuid4().hex[:8]
     directory = check_output_path(destination / stamp)
     directory.mkdir(parents=True, exist_ok=False)
     media = directory / "画面"
-    shots = list(dict.fromkeys(screenshot_paths(result)))
+    # 同一结果可能被计划摘要重复引用，按截图 ID 或旧路径去重。
+    shots = list({shot.get("captureId") or shot.get("path") or id(shot): shot for shot in screenshots(result)}.values())
     notes = ["结果覆盖本次已执行步骤、等待、断言及清理。功能覆盖和缺陷位置以验收说明为准。"]
     if shots:
         media.mkdir()
         for index, source in enumerate(representative(shots, 3), 1):
             try:
-                write_png_preview(source, media / f"{index:02d}.png")
+                write_png_preview(capture_source(source), media / f"{index:02d}.png")
             except (OSError, ValueError, struct.error, zlib.error, IndexError):
-                notes.append(f"第 {index} 张截图无法生成预览，可用调用响应中的路径核对原图。")
+                notes.append(f"第 {index} 张截图无法生成预览，可查看本轮截图调用响应。")
         if len(shots) > 1:
             try:
-                write_gif(representative(shots, 12), media / "实际连拍.gif", delay_ms=120, max_width=520)
+                write_gif((capture_source(shot) for shot in representative(shots, 12)), media / "实际连拍.gif", delay_ms=120, max_width=520)
             except (OSError, ValueError, struct.error, zlib.error, IndexError):
                 notes.append("画面尺寸不一致或存在不可读取的帧，保留能打开的静帧。")
     title = f"{result.get('name') or '计划'} 自动化测试"

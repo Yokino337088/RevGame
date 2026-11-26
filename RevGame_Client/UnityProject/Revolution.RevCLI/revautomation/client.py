@@ -4,6 +4,7 @@ from __future__ import annotations
 import datetime as dt
 import json
 import os
+import re
 from pathlib import Path
 import subprocess
 import time
@@ -13,11 +14,12 @@ from .errors import RevCancelled, RevError  # noqa: F401  保持 `from revautoma
 from .errors import RevCompilationError
 
 _COMMANDS_CACHE = {}
-# 文件桥的控制文件由调用方消费后回收。截图、构建清单和 Test Runner 结果有独立的调用契约。
+# 文件桥控制文件和 batch 日志由调用方回收。动作专用文件另按身份清理。
 _FILE_JOB_FILES = ("request.json", "response.json", "response.json.tmp",
-                   "progress.json", "progress.json.tmp", "cancel", "target-started")
+                   "progress.json", "progress.json.tmp", "cancel", "target-started", "unity.log")
 # 旧 scenario 逐轮落盘来限制内存占用。完成后先做显式导出，再清理这些中间文件。
-_SCENARIO_FILES = ("scenario-result.json", "scenario-result.json.tmp", "iterations.jsonl", "unity-errors.jsonl")
+_SCENARIO_FILES = ("scenario-result.json", "scenario-result.json.tmp", "iterations.jsonl", "unity-errors.jsonl",
+                   "progress.json", "progress.json.tmp")
 # 文件桥只检查 cancel 是否存在。此内容让终态查询知道原调用已经交出清理权。
 _RELEASED_JOB = "client-released"
 
@@ -101,8 +103,11 @@ def read_job_release(path):
 
 def clean_job_files(work, names):
     """只清理本任务已知的文件。保留仍有其他输出的目录，并回报清理失败。"""
+    from .storage import linked
     try:
-        if work.resolve() != work.parent.resolve() / work.name:
+        if not work.is_dir():
+            return None
+        if linked(work) or linked(work.parent) or work.resolve() != work.parent.resolve() / work.name:
             raise ValueError("临时工单目录指向其他位置")
         for name in names:
             unlink_job_file(work / name)
@@ -140,16 +145,91 @@ def consume_scenario(response, work, report_dir=None):
     return response
 
 
+def consume_editor_image(response, work, action):
+    """领取工具生成的临时 PNG 并删除文件，调用者只收到本次图像。"""
+    from .media import encode_capture, MAX_PNG_BYTES
+    from .storage import linked
+
+    image = response.get("data")
+    if not isinstance(image, dict) or not isinstance(image.get("path"), str):
+        return
+    source = Path(image["path"])
+    if action == "scene.capture":
+        name = source.name
+        if name != "scene-capture.png" and not re.fullmatch(r"scene-capture-[0-9a-f]{32}\.png", name):
+            response.update(success=False, error="CaptureReadFailed", message="场景截图文件名不属于本次工单")
+            return
+        expected = work / name
+    else:
+        capture = image.get("captureId")
+        if not isinstance(capture, str) or not re.fullmatch(r"[0-9a-f]{32}", capture):
+            return  # 兼容仍返回旧式截图路径的 Player。
+        expected = work.parent.parent / "screenshots" / ("rev-shot-" + capture + ".png")
+    try:
+        if source != expected or not source.is_file() or any(linked(path) for path in (source, source.parent, source.parent.parent)):
+            raise ValueError("临时截图位置不属于本次工单或已过期")
+    except (OSError, ValueError) as error:
+        response.update(success=False, error="CaptureReadFailed", message=str(error))
+        return
+    try:
+        with source.open("rb") as stream:
+            encode_capture(image, stream.read(MAX_PNG_BYTES + 1))
+    except (OSError, ValueError) as error:
+        response.update(success=False, error="CaptureReadFailed", message=str(error))
+    finally:
+        try:
+            unlink_job_file(source)
+        except OSError as error:
+            response["jobCleanupError"] = str(error)
+        else:
+            image.pop("path", None)
+
+
+def batch_log_tail(path):
+    """失败时读出 batch 日志末尾 8 KiB，随后照常删除临时日志。"""
+    try:
+        with path.open("rb") as stream:
+            stream.seek(max(0, path.stat().st_size - 8192))
+            return stream.read(8192).decode("utf-8", errors="replace")
+    except OSError:
+        return ""
+
+
 def consume_editor_result(response, work, action, report_dir=None):
     """领取终态后清理动作专用的临时文件，跨域重载期间由 Unity 继续使用。"""
     if action == "scenario.run":
         return consume_scenario(response, work, report_dir)
+    if action in ("scene.capture", "runtime.screenshot", "runtime.call") and response.get("success"):
+        consume_editor_image(response, work, action)
+    data = response.get("data")
+    names, field, scratch = (), None, work
+    if action == "batch.call" and isinstance(data, dict):
+        # 同一批可能有多张图，每一张先交付给调用方，再永久删除对应临时文件。
+        for step in data.get("results", []):
+            if step.get("action") == "scene.capture" and step.get("dataJson"):
+                image_result = {"data": json.loads(step["dataJson"]), "success": step.get("success")}
+                consume_editor_image(image_result, work, "scene.capture")
+                step["dataJson"] = json.dumps(image_result["data"], ensure_ascii=False)
+                error = image_result.get("jobCleanupError") or image_result.get("message")
+                if error:
+                    step["captureError"] = error
     if action == "build.target":
-        cleanup_error = clean_job_files(work, ("target-started",))
+        names = ("target-started",)
+    elif action == "build.player":
+        names, field = ("build-result.json", "build-result.json.tmp"), "reportPath"
+    elif action in ("test.run", "test.result") and isinstance(data, dict) and data.get("finished") is True:
+        test_id = data.get("id")
+        if isinstance(test_id, str) and re.fullmatch(r"[a-f0-9]{32}", test_id):
+            scratch = work.parent / test_id
+            names, field = ("tests-started", "tests-result.json", "tests-result.json.tmp"), "resultPath"
+    if names or action in ("scene.capture", "batch.call"):
+        cleanup_error = clean_job_files(scratch, names)
         if cleanup_error:
             response["jobCleanupError"] = cleanup_error
-        if not work.is_dir():
-            response.pop("jobDirectory", None)
+        elif field and isinstance(data, dict):
+            data.pop(field, None)
+    if not work.is_dir():
+        response.pop("jobDirectory", None)
     return response
 
 
@@ -350,7 +430,8 @@ class RevClient:
                 if process is not None and process.poll() is not None:
                     if response_path.exists():
                         break
-                    raise RevError(f"Unity 提前退出（{process.returncode}），请看 {work / 'unity.log'}")
+                    detail = batch_log_tail(work / "unity.log")
+                    raise RevError(f"Unity 提前退出（{process.returncode}）。\n{detail}")
                 if time.monotonic() >= end:
                     raise TimeoutError(f"等待超时；请求 {request_id}，日志目录 {work}")
                 if progress and (work / "progress.json").exists():
@@ -376,14 +457,15 @@ class RevClient:
                     raise RevError(f"操作已返回，但 batch Unity 未退出。PID={process.pid}，请看 {work / 'unity.log'}")
                 completed = True
                 if process.returncode != (0 if response.get("success") else 1):
-                    raise RevError(f"Unity 退出码与响应不一致：{process.returncode}，{work}")
+                    detail = batch_log_tail(work / "unity.log")
+                    raise RevError(f"Unity 退出码与响应不一致：{process.returncode}。\n{detail}")
             completed = True
             response["jobDirectory"] = str(work)
             if response.get("dataJson"):
                 response["data"] = json.loads(response.pop("dataJson"))
-            if action == "scenario.run":
-                consume_scenario(response, work, report_dir)
-            return response
+            if process is not None and not response.get("success"):
+                response["unityLogTail"] = batch_log_tail(work / "unity.log")
+            return consume_editor_result(response, work, action, report_dir)
         except (TimeoutError, KeyboardInterrupt, RevCancelled):
             # 已发布且尚未完成的请求仍可能由 Unity 使用，写取消信号后留给终态查询收尾。
             if submitted and not completed:
@@ -399,8 +481,7 @@ class RevClient:
         finally:
             # 无消费者或已确认结束时才能删除控制文件，避免等到一半破坏正在运行的动作。
             if not submitted or completed or (process is not None and process.poll() is not None):
-                names = _FILE_JOB_FILES + ("unity.log",) if completed and process and process.returncode == 0 else _FILE_JOB_FILES
-                cleanup_error = clean_job_files(work, names)
+                cleanup_error = clean_job_files(work, _FILE_JOB_FILES)
                 if response is not None and completed:
                     if not work.is_dir():
                         response.pop("jobDirectory", None)
@@ -525,6 +606,10 @@ class RevClient:
         cancel_file = work / "cancel"
         if (response and response.get("id") == request_id and response.get("protocol") == 1
                 and result["cancelRequested"] and read_job_release(cancel_file)):
+            action = read_json_settled(work / "request.json").get("action")
+            if response.get("dataJson"):
+                response["data"] = json.loads(response.pop("dataJson"))
+            consume_editor_result(response, work, action)
             names = _FILE_JOB_FILES + _SCENARIO_FILES if "scenario-result" in result else _FILE_JOB_FILES
             cleanup_error = clean_job_files(work, names)
             if cleanup_error:

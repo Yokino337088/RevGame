@@ -30,9 +30,9 @@
     {"id":"gal.ui.layout-set","keys":["path","document","expectedHash","checkOnly"],"description":"按控件名调整大小位置，支持预检和内容摘要保护","environment":"edit","readOnly":false},
     {"id":"gal.ui.designer","keys":["path"],"description":"打开主题的可视化面板布局设计器","environment":"edit","readOnly":false},
     {"id":"gal.editor.open","keys":["path"],"description":"打开 Gal 剧情工作台","environment":"edit","readOnly":false},
-    {"id":"storage.status","keys":[],"description":"预览自动化缓存容量与保留策略","environment":"either","readOnly":true},
+    {"id":"storage.status","keys":[],"description":"预览遗留活动分段、自动化缓存与可回收工单","environment":"either","readOnly":true},
     {"id":"storage.configure","keys":["configJson"],"description":"设置自动化工单、截图和报告保留期限与容量","environment":"either","readOnly":false},
-    {"id":"storage.prune","keys":["dryRun"],"description":"回收已完成的自动化缓存；默认只预览","environment":"either","readOnly":false},
+    {"id":"storage.prune","keys":["dryRun"],"description":"回收遗留活动分段和已过期自动化缓存；默认只预览","environment":"either","readOnly":false},
     {
       "id": "editor.activity-window",
       "keys": [
@@ -692,7 +692,7 @@
     {
       "id": "runtime.screenshot",
       "keys": [],
-      "description": "在下一帧末捕获完整 GameView 到当前工单目录，等待 PNG 写完",
+      "description": "游戏帧绘制完成后捕获临时 PNG，调用端领取后回收",
       "environment": "play"
     },
     {
@@ -1446,7 +1446,7 @@
         "width",
         "height"
       ],
-      "description": "把场景渲染成 PNG 交回路径，让 AI 看见搭建结果：view 为 iso/top/front/side（自动框住全部 Renderer）、camera（用 id/objectPath 或主相机）、sceneview（当前 Scene 窗口）。不含 Screen Space Overlay UI",
+      "description": "把场景渲染成临时 PNG 供 AI 查看，视角见 view，不含 Screen Space Overlay UI",
       "environment": "either",
       "readOnly": true
     },

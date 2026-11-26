@@ -31,6 +31,8 @@
 
 ## 自动化工单与报告
 
+- 工具只在 Unity 工程的 `Library/RevolutionAutomation/jobs`、`activity`、`screenshots` 和 `detached-jobs` 暂存当前操作。收到结果后由消费者清理文件。实时活动窗口只在开启期间采集，读取即删。异常退出遗留可用 `storage.status` 检查，再用 `storage.prune` 预览与回收。
+
 - 优先使用内联计划、内存回执和标准输入。确需临时工单时，保存在系统临时目录或 `.codex/work/`，最后一次读取后立即永久删除本次生成的文件。`RevGame_Client/UnityProject/Revolution.RevMCP/results/` 禁止写入运行产物。
 - 自动化默认在对话汇报实测、断言、失败和清理结果。只有用户明确要求报告时才生成文件。指定路径用 `reportDirectory`，只要求报告时用 `report: true` 发现已有的 `RevGame_Client/文档/AI自动化测试报告/`。导出后核对 `evidencePath`。
 - 文档目录只保留 HTML 与必要截图/GIF。禁止生成 ZIP，确需另存的采样数据放 `.codex/work/`。

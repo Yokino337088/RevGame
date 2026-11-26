@@ -2,7 +2,6 @@
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -54,7 +53,7 @@ namespace Revolution
             RevRuntimeAutomation.Register("ui.input", "填写 UGUI/TMP 输入框；submit 触发 onEndEdit", Schema(TargetProperties + ",\"text\":{\"type\":\"string\"},\"submit\":{\"type\":\"boolean\"}"), Input);
             RevRuntimeAutomation.Register("ui.back", "RevUI.Back 返回上一界面", Empty, Back);
             RevRuntimeAutomation.Register("ui.close", "RevUI.Close 关闭指定面板", Schema(TargetProperties), Close);
-            RevRuntimeAutomation.Register("runtime.screenshot", "等待下一帧完整 PNG，返回路径和 base64 视觉证据", Empty, Screenshot, true);
+            RevRuntimeAutomation.Register("runtime.screenshot", "等待画面渲染结束，返回消费后回收的临时 PNG", Empty, _ => RevRuntimeScreenshot.StartCapture(), true);
             RevRuntimeAutomation.Register("runtime.ping", "运行实例身份", Empty, _ => new TextResult { text = Application.productName + " / " + Application.platform }, true);
             RevRuntimeAutomation.RegisterPerformance();
             RevRuntimeAutomation.Register("runtime.logs", "最近 128 条运行日志及本局累计 Error/Exception 数", Empty, _ => RevRuntimeAutomation.RecentLogs(), true);
@@ -91,7 +90,6 @@ namespace Revolution
             public bool truncated;
             public UIHit[] hits;
         }
-        [Serializable] private sealed class CaptureResult { public string path; public long bytes; public string source = "GameView"; }
 
         public static object State(string json)
         {
@@ -385,33 +383,6 @@ namespace Revolution
             var panel = Find(JsonUtility.FromJson<Options>(json)).GetComponent<RevUIPanel>();
             if (panel == null || !RevUI.Close(panel)) { throw new InvalidOperationException("目标不是可关闭的 RevUIPanel"); }
             return new TextResult { text = "已请求关闭；界面动画完成请查询 runtime.state" };
-        }
-
-        public static object Screenshot(string json)
-        {
-            string folder = Path.Combine(Application.persistentDataPath, "RevolutionAutomation", "screenshots");
-            Directory.CreateDirectory(folder);
-            string path = Path.Combine(folder, Guid.NewGuid().ToString("N") + ".png");
-            ScreenCapture.CaptureScreenshot(path);
-            return new CaptureOperation(path);
-        }
-        private sealed class CaptureOperation : RevRuntimeOperation
-        {
-            private readonly string _path;
-            private readonly int _frame = Time.frameCount;
-            public CaptureOperation(string path) { _path = path; }
-            public override bool Tick()
-            {
-                if (!Application.isPlaying) { Success = false; Message = "游戏已停止"; return true; }
-                if (Time.frameCount <= _frame || !File.Exists(_path)) { return false; }
-                byte[] png;
-                try { png = File.ReadAllBytes(_path); } catch (IOException) { return false; }
-                if (png.Length < 32 || png[0] != 137 || png[1] != 80 || png[png.Length - 8] != 73 || png[png.Length - 5] != 68) { return false; }
-                if (png.Length > 8 * 1024 * 1024) { Success = false; Message = "截图超过 8 MiB，请降低游戏分辨率"; return true; }
-                // 图片已经在本机路径，不再编码进所有工单回执。MCP 需要 image 时由 Python 读取此 PNG。
-                Result = new Dictionary<string, object> { ["path"] = _path, ["bytes"] = png.Length, ["mimeType"] = "image/png" };
-                return true;
-            }
         }
     }
 }

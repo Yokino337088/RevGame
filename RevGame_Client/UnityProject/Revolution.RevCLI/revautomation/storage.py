@@ -11,13 +11,16 @@ DEFAULT = dict(automatic=True, jobDays=7, failureDays=14, jobMaxMiB=256,
 
 
 def check_revmcp_output_path(path):
-    """拒绝工具旧 results 树的写入。校验请求路径和解析后的目标，目录别名也不能绕过。"""
+    """禁止向工具暂存区导出。请求路径和实际目标都要校验，避免目录别名绕过。"""
     requested = Path(path).absolute()
     resolved = requested.resolve()
     for candidate in (requested, resolved):
         parts = tuple(part.casefold().rstrip(" .") for part in candidate.parts)
         if ("revolution.revmcp", "results") in zip(parts, parts[1:]):
             raise ValueError("Revolution.RevMCP/results 已停用。需要导出报告时请选择项目文档目录。")
+        if any(owner == "library" and name == "revolutionautomation" and folder in ("jobs", "activity", "screenshots")
+               for owner, name, folder in zip(parts, parts[1:], parts[2:])):
+            raise ValueError("请把正式产物导出到临时工单、活动和截图目录以外。")
     return resolved
 
 

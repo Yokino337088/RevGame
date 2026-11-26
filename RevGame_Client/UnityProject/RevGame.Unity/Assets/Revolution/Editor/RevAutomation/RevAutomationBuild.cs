@@ -127,10 +127,5 @@ namespace Revolution.Editor
             return RevAutomationPlayerBuild.Execute(request);
         }
 
-        private sealed class CompletedBuild : RevAutomationOperation
-        {
-            public CompletedBuild(object result, bool success) { Result = result; Success = success; Message = success ? "Player 构建完成" : "Player 构建失败，请检查 build-result.json 与 Console"; }
-            public override bool Tick() => true;
-        }
     }
 }

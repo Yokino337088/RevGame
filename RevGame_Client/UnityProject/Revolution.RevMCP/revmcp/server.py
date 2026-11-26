@@ -175,8 +175,9 @@ class Server:
             return value
         # 发现结果已经分页。显式截图动作直接返回画面，完整计划画面可随 full 返回。
         full = arguments.get("full", False)
-        if full or arguments.get("action") == "runtime.screenshot" or (
-                name in self.dynamic and self.dynamic[name][1] == "runtime.screenshot"):
+        screenshot_actions = ("runtime.screenshot", "scene.capture")
+        if full or arguments.get("action") in screenshot_actions or (
+                name in self.dynamic and self.dynamic[name][1] in screenshot_actions):
             result = visual_evidence(result)
         else:
             def strip_images(value):

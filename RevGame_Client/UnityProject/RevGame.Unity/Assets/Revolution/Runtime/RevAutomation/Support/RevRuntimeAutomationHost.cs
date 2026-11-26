@@ -42,6 +42,10 @@ namespace Revolution
         private Thread _thread;
         private Job _active;
         private string _token, _session, _endpoint, _health;
+        /// <summary>主线程获取的临时截图位置，后台 HTTP 线程用它下发并回收 PNG。</summary>
+        private string _captureDirectory;
+        /// <summary>运行期后台回收器的下次执行时间，间隔至少一分钟。</summary>
+        private float _nextCaptureCleanup;
         private bool _wasBackground;
         /// <summary>仅在已接管后台运行开关时恢复原值，启动失败可以发生在接管之前。</summary>
         private bool _ownsBackground;
@@ -78,6 +82,7 @@ namespace Revolution
             {
                 host._token = token ?? Guid.NewGuid().ToString("N") + Guid.NewGuid().ToString("N");
                 host._session = androidLaunchId ?? Guid.NewGuid().ToString("N");
+                host._captureDirectory = RevRuntimeScreenshot.ScreenshotFolder();
                 host._listener = new HttpListener();
                 string url = "http://127.0.0.1:" + port;
                 host._listener.Prefixes.Add(url + "/"); host._listener.Start();
@@ -111,7 +116,7 @@ namespace Revolution
             }
         }
 
-        /// <summary>为桌面或显式启动入口写出本会话凭据，保留原路径规则和活动记录。</summary>
+        /// <summary>为桌面或显式启动入口写出本会话凭据，默认跳过无人查看的活动事件。</summary>
         private void PublishEndpoint(Dictionary<string, object> endpoint)
         {
             string folder = Application.isEditor ? Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Library", "RevolutionAutomation")) : Path.Combine(Application.persistentDataPath, "RevolutionAutomation");
@@ -131,7 +136,6 @@ namespace Revolution
                 _endpoint = Path.Combine(folder, "runtime.json");
             }
             Directory.CreateDirectory(folder);
-            RevAutomationActivity.Configure(Path.Combine(folder, "activity"));
             string temporary = _endpoint + ".tmp";
             File.WriteAllText(temporary, RevAutomationJson.Write(endpoint), new UTF8Encoding(false));
             if (File.Exists(_endpoint))
@@ -221,6 +225,7 @@ namespace Revolution
                 ThreadPool.QueueUserWorkItem(_ => { try { Handle(context); } finally { Interlocked.Decrement(ref _connections); } });
             }
         }
+        /// <summary>校验本机凭据和会话后接单、返回结果或流式交付临时截图。</summary>
         private void Handle(HttpListenerContext context)
         {
             // 认证、session、参数解析都是纯数据工作，可以留在后台线程。
@@ -233,6 +238,15 @@ namespace Revolution
                 if (req.Headers["X-Rev-Session"] != _session) { Send(context, 409, "{\"success\":false,\"error\":\"SessionChanged\"}"); return; }
                 string path = req.Url.AbsolutePath;
                 if (path == "/health" && req.HttpMethod == "GET") { Send(context, 200, _health); return; }
+                const string capturePrefix = "/captures/";
+                if (req.HttpMethod == "GET" && path.StartsWith(capturePrefix, StringComparison.Ordinal))
+                {
+                    if (!Guid.TryParseExact(path.Substring(capturePrefix.Length), "N", out Guid captureId) || !SendCapture(context, captureId))
+                    {
+                        Send(context, 404, "{\"success\":false,\"error\":\"CaptureExpired\"}");
+                    }
+                    return;
+                }
                 if (path == "/call" && req.HttpMethod == "POST")
                 {
                     if (req.ContentLength64 < 0 || req.ContentLength64 > 4 * 1024 * 1024) { throw new ArgumentException("body 必须声明长度且不能超过 4 MiB"); }
@@ -283,6 +297,38 @@ namespace Revolution
             }
             catch (Exception e) { Send(context, 400, RevAutomationJson.Write(new Dictionary<string, object> { ["success"] = false, ["error"] = e.GetType().Name, ["message"] = e.Message })); }
         }
+        /// <summary>从本会话受控缓存读取完整 PNG。响应成功写完即删除，网络中断只留给兜底回收。</summary>
+        private bool SendCapture(HttpListenerContext context, Guid id)
+        {
+            string path = RevRuntimeScreenshot.ScreenshotPath(_captureDirectory, id);
+            if (!File.Exists(path) || (File.GetAttributes(_captureDirectory) & FileAttributes.ReparsePoint) != 0 ||
+                (File.GetAttributes(path) & FileAttributes.ReparsePoint) != 0)
+            {
+                return false;
+            }
+            try
+            {
+                using (var source = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.None))
+                {
+                    if (source.Length <= 0 || source.Length > RevRuntimeScreenshot.MaxPngBytes)
+                    {
+                        return false;
+                    }
+                    context.Response.ContentType = "image/png";
+                    context.Response.ContentLength64 = source.Length;
+                    context.Response.Headers["Cache-Control"] = "no-store";
+                    source.CopyTo(context.Response.OutputStream);
+                }
+                context.Response.Close();
+                File.Delete(path);
+            }
+            catch (Exception error) when (error is IOException || error is HttpListenerException || error is ObjectDisposedException)
+            {
+                context.Response.Abort();
+            }
+            return true;
+        }
+
         private static void Send(HttpListenerContext context, int status, string json)
         {
             try
@@ -294,11 +340,18 @@ namespace Revolution
             catch (Exception e) when (e is IOException || e is HttpListenerException || e is ObjectDisposedException) { }
             finally { try { context.Response.Close(); } catch (ObjectDisposedException) { } }
         }
+        /// <summary>推进 Unity 主线程动作，同时按固定周期回收无人领取的过期截图。</summary>
         private void Update()
         {
             // 唯一执行 Unity 业务的位置。始终只推进一个 active 工单；
             // Editor 文件桥持有忙标记时让出执行权，避免两个入口同时改场景/游戏状态。
             if (_stopping) { return; }
+            if (Time.realtimeSinceStartup >= _nextCaptureCleanup)
+            {
+                _nextCaptureCleanup = Time.realtimeSinceStartup + 60;
+                string directory = _captureDirectory;
+                ThreadPool.QueueUserWorkItem(_ => RevAutomationStorage.TemporaryScreenshots(directory, false));
+            }
 #if UNITY_EDITOR
             if (RevRuntimeAutomation.EditorBusy) { return; }
 #endif

@@ -1,4 +1,4 @@
-// Player构建适配：输出目录由调用者明确给出，临时设置在finally还原；失败保留BuildReport，不重放构建。
+// Player 构建使用显式输出目录，临时设置在 finally 还原，真实 BuildReport 摘要随终态返回。
 using System;
 using System.IO;
 using System.Linq;
@@ -20,7 +20,7 @@ namespace Revolution.Editor
         [Serializable]
         private sealed class Result
         {
-            public string path, target, backend, result, buildId, unityVersion, reportPath;
+            public string path, target, backend, result, buildId, unityVersion;
             public bool development, automation, frameTiming;
             public ulong bytes;
             public int errors, warnings;
@@ -107,10 +107,8 @@ namespace Revolution.Editor
                     path = path, target = target.ToString(), backend = backend.ToString(), result = s.result.ToString(),
                     buildId = s.guid.ToString(), unityVersion = Application.unityVersion, development = p.development,
                     automation = p.automation, frameTiming = p.frameTiming, bytes = s.totalSize,
-                    errors = (int)s.totalErrors, warnings = (int)s.totalWarnings, seconds = s.totalTime.TotalSeconds,
-                    reportPath = Path.Combine(RevAutomationBridge.JobDirectory(request.id), "build-result.json")
+                    errors = (int)s.totalErrors, warnings = (int)s.totalWarnings, seconds = s.totalTime.TotalSeconds
                 };
-                RevAutomationBridge.WriteJson(result.reportPath, result);
                 bool success = s.result == BuildResult.Succeeded && s.totalErrors == 0;
                 if (success)
                 {

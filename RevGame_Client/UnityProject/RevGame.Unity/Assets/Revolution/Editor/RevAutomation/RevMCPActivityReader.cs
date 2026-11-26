@@ -1,4 +1,4 @@
-// RevMCPActivityReader —— 按文件偏移增量读取活动账本，不在每次 OnGUI 中重扫全部工单。
+// 活动读取器从临时队列消费实时事件，也可离线增量读取旧 JSONL。
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -9,12 +9,13 @@ using UnityEngine;
 namespace Revolution.Editor
 {
     /// <summary>
-    /// Unity 和 Python 写入同一活动目录的不同 JSONL 文件，本类负责合并开始/结束记录。
+    /// 实时窗口读取即回收临时事件，离线读取已有 JSONL 时合并同一活动 ID 的开始和结束记录。
     /// 只读完整换行，外部恰好写到半行时等下一次刷新；同一 id 更新同一行。
     /// 整次刷新共享 256 KiB / 128 行预算，轮转最近 64 个文件；每次合并即限制最近 500 条。
     /// </summary>
     public sealed class RevMCPActivityReader
     {
+        /// <summary>离线读取和当前活动视图沿用相同的行数上限。</summary>
         public const int Capacity = 500;
         public const int PollByteBudget = 256 * 1024;
         public const int PollLineBudget = 128;
@@ -24,6 +25,7 @@ namespace Revolution.Editor
             public DateTime ObservedWrite;
             public bool SkipFirst;
         }
+        /// <summary>离线日志目录，空值表示实时窗口的临时事件。</summary>
         private readonly string _directory;
         private readonly byte[] _buffer = new byte[PollByteBudget];
         private readonly Dictionary<string, Cursor> _offsets = new Dictionary<string, Cursor>(StringComparer.Ordinal);
@@ -40,13 +42,39 @@ namespace Revolution.Editor
         public string LastError { get; private set; }
         public int InvalidLines { get; private set; }
 
-        public RevMCPActivityReader(string directory) { _directory = Path.GetFullPath(directory); }
+        /// <summary>省略目录时消费实时事件。显式指定目录时只读旧日志。</summary>
+        public RevMCPActivityReader(string directory = null)
+        {
+            _directory = directory == null ? null : Path.GetFullPath(directory);
+        }
 
         /// <summary>由窗口每 0.25 秒调用；日志刷新不发 MCP 请求，不产生“读取日志又写一条日志”的循环。</summary>
         public bool Poll()
         {
             bool changed = false;
             LastPollBytes = 0; LastPollLines = 0; HasPendingData = false;
+            if (_directory == null)
+            {
+                LastPollLines = RevAutomationActivity.Drain(16, json =>
+                {
+                    LastPollBytes += Encoding.UTF8.GetByteCount(json);
+                    if (TryParse(json, out var entry, out DateTimeOffset utc))
+                    {
+                        changed |= Merge(entry, utc);
+                    }
+                    else
+                    {
+                        InvalidLines++;
+                    }
+                });
+                HasPendingData = LastPollLines == 16;
+                LastError = RevAutomationActivity.LastError;
+                if (changed)
+                {
+                    Version++;
+                }
+                return changed;
+            }
             if (!Directory.Exists(_directory)) { return false; }
             try
             {
@@ -109,14 +137,14 @@ namespace Revolution.Editor
                     else
                     {
                         string json = Encoding.UTF8.GetString(_buffer, start, i - start);
-                        try
+                        if (TryParse(json, out var entry, out DateTimeOffset utc))
                         {
-                            var entry = JsonUtility.FromJson<RevAutomationActivityEntry>(json);
-                            if (entry == null || entry.schema != 1 || string.IsNullOrEmpty(entry.id) || string.IsNullOrEmpty(entry.action)
-                                || !DateTimeOffset.TryParse(entry.utc, out DateTimeOffset utc)) { InvalidLines++; }
-                            else { changed |= Merge(entry, utc); }
+                            changed |= Merge(entry, utc);
                         }
-                        catch (ArgumentException) { InvalidLines++; }
+                        else
+                        {
+                            InvalidLines++;
+                        }
                     }
                     start = i + 1; consumed = start;
                     if (LastPollLines >= PollLineBudget) { limited = true; break; }
@@ -130,6 +158,23 @@ namespace Revolution.Editor
                 if (!limited && previous + count >= length)
                 { cursor.ObservedLength = file.Length; cursor.ObservedWrite = file.LastWriteTimeUtc; }
                 return changed;
+            }
+        }
+
+        /// <summary>验证实时事件与离线行的相同字段，并让无效文件也能被消费和清除。</summary>
+        private static bool TryParse(string json, out RevAutomationActivityEntry entry, out DateTimeOffset utc)
+        {
+            utc = default;
+            try
+            {
+                entry = JsonUtility.FromJson<RevAutomationActivityEntry>(json);
+                return entry != null && entry.schema == 1 && !string.IsNullOrEmpty(entry.id) &&
+                    !string.IsNullOrEmpty(entry.action) && DateTimeOffset.TryParse(entry.utc, out utc);
+            }
+            catch (ArgumentException)
+            {
+                entry = null;
+                return false;
             }
         }
 
@@ -157,11 +202,16 @@ namespace Revolution.Editor
             return true;
         }
 
-        /// <summary>清空当前视图，不删除证据；记住现有文件尾部，下次只收新事件。</summary>
+        /// <summary>清空实时视图及待消费事件。离线读取时记住文件尾部，继续接收新的行。</summary>
         public void ClearView()
         {
             _entries.Clear(); _byId.Clear(); _times.Clear(); _offsets.Clear(); Version++;
             InvalidLines = 0; LastError = null; _nextFile = 0;
+            if (_directory == null)
+            {
+                RevAutomationActivity.Drain(int.MaxValue, _ => { });
+                return;
+            }
             try
             {
                 if (!Directory.Exists(_directory)) { return; }

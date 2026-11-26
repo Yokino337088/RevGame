@@ -70,6 +70,7 @@ namespace Revolution.Editor
                 ThreadPool.QueueUserWorkItem(_ => { try { Handle(context); } finally { Interlocked.Decrement(ref _connections); } });
             }
         }
+        /// <summary>检查本机身份与会话后分发请求，活动上报直接入账，无需创建 Unity 工单。</summary>
         private static void Handle(HttpListenerContext context)
         {
             try
@@ -80,6 +81,28 @@ namespace Revolution.Editor
                 if (request.Headers["X-Rev-Session"] != _session) { Send(context, 409, "{\"success\":false,\"error\":\"SessionChanged\"}"); return; }
                 string path = request.Url.AbsolutePath;
                 if (path == "/health" && request.HttpMethod == "GET") { Send(context, 200, "{\"success\":true,\"transport\":\"http-memory\"}"); return; }
+                if (path == "/activity" && request.HttpMethod == "POST")
+                {
+                    if (!RevAutomationActivity.IsRecording)
+                    {
+                        Send(context, 200, "{\"success\":true,\"recording\":false}");
+                        return;
+                    }
+                    if (request.ContentLength64 <= 0 || request.ContentLength64 > 128 * 1024)
+                    {
+                        throw new ArgumentException("活动事件缺少长度或超过 128 KiB");
+                    }
+                    if (request.InputStream.CanTimeout)
+                    {
+                        request.InputStream.ReadTimeout = 1000;
+                    }
+                    using (var reader = new StreamReader(request.InputStream, Encoding.UTF8))
+                    {
+                        RevAutomationActivity.PublishAgent(JsonUtility.FromJson<RevAutomationActivityEntry>(reader.ReadToEnd()));
+                    }
+                    Send(context, 200, "{\"success\":true}");
+                    return;
+                }
                 if (path == "/call" && request.HttpMethod == "POST")
                 {
                     if (request.ContentLength64 < 0 || request.ContentLength64 > 4 * 1024 * 1024) { throw new ArgumentException("请求超过 4MiB 或没有长度"); }

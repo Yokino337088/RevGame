@@ -1,5 +1,6 @@
 // 活动页：摘要 → 可筛选的实时列表 → 一条记录的参数/结果。
 using System;
+using System.IO;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
@@ -150,8 +151,10 @@ namespace Revolution.Editor
             if (_selectedId != null) { _rows.TryGetValue(_selectedId, out selected); }
             if (selected != null) { DrawActivityDetail(selected); }
             else { GUILayout.Label("点击记录查看参数与结果。Agent 请求和 Unity 实际执行分开显示，成功仍需业务断言确认。", EditorStyles.wordWrappedMiniLabel); }
-            if (!string.IsNullOrEmpty(_reader.LastError) || !string.IsNullOrEmpty(RevAutomationActivity.LastError))
-            { EditorGUILayout.HelpBox("日志读取/写入异常：" + (_reader.LastError ?? RevAutomationActivity.LastError), MessageType.Warning); }
+            if (!string.IsNullOrEmpty(_reader.LastError))
+            {
+                EditorGUILayout.HelpBox("活动读取异常：" + _reader.LastError, MessageType.Warning);
+            }
             GUILayout.Label("最近最多显示 500 条 · 250ms 刷新 · 常见凭据字段已隐藏", EditorStyles.centeredGreyMiniLabel);
         }
 
@@ -200,7 +203,14 @@ namespace Revolution.Editor
                     GUILayout.Label(row.Title, EditorStyles.wordWrappedLabel, GUILayout.MinWidth(80));
                     GUILayout.FlexibleSpace();
                     if (GUILayout.Button("复制详情", EditorStyles.miniButton, GUILayout.Width(64))) { GUIUtility.systemCopyBuffer = RevAutomationJson.Write(entry); }
-                    if (ValidJobId(entry.jobId) && GUILayout.Button("工单", EditorStyles.miniButton, GUILayout.Width(42))) { OpenDirectory(RevAutomationBridge.JobDirectory(entry.jobId)); }
+                    if (ValidJobId(entry.jobId))
+                    {
+                        string work = RevAutomationBridge.JobDirectory(entry.jobId);
+                        if (Directory.Exists(work) && GUILayout.Button("临时工单", EditorStyles.miniButton, GUILayout.Width(62)))
+                        {
+                            OpenDirectory(work);
+                        }
+                    }
                 }
                 _detailScroll = EditorGUILayout.BeginScrollView(_detailScroll);
                 GUILayout.Label(StateLabel(entry.state) + " · " + row.Source + " · " + row.Time, EditorStyles.miniLabel);

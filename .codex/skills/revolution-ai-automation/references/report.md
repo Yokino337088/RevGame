@@ -20,7 +20,7 @@
 
 先读取目标项目用户与 AGENTS 约定。RevGame 文档只留 HTML 与必要图片/GIF，实际需要单独保存的采样明细放忽略目录 `.codex/work/`，禁止生成 ZIP 或 Profiler 原始录制。独立规则或编译检查应在正文标注实际范围。
 
-**`Revolution.RevMCP/results/` 已停用。** 计划与响应优先通过内联参数和内存传递。确需临时工单时放系统临时目录或项目忽略目录，消费后立即彻底删除。涉及用户已有计划时，保留原文件。
+**`Revolution.RevMCP/results/` 已停用。** 使用内联参数和本次响应。AI 自建的临时文件放系统临时目录，并在最后一次读取后的 `finally` 删除。正式报告和截图导出避开 `Library/RevolutionAutomation/jobs`、`activity` 和 `screenshots`。涉及用户已有计划时，保留原文件。
 
 明确指定路径时使用 `plan.reportDirectory`，可填项目内绝对路径或相对仓库根的路径。用户只要求报告时，设置 `plan.report: true`，沿绑定工程向上查现有文档，优先既有测试报告子目录。找不到时通过 `evidenceError` 提示，继续返回实际测试结果。RevCLI 的旧 scenario 可用 `--report-dir <目录>` 明确导出。
 

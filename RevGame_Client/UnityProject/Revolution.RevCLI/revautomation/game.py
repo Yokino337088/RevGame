@@ -19,6 +19,7 @@ import urllib.request
 import uuid
 
 from .errors import RevCancelled, RevError
+from .media import consume_runtime_capture, MAX_PNG_BYTES
 
 MAX_RESPONSE = 24 * 1024 * 1024
 
@@ -55,14 +56,15 @@ class GameClient:
             raise RevError("凭据文件格式不对，可能是旧版本或已损坏")
         self.opener = urllib.request.build_opener(urllib.request.ProxyHandler({}), _NoRedirect())
 
-    def request(self, method, path, data=None):
+    def request(self, method, path, data=None, *, png=False):
+        """保持原会话认证。截图由专用短期端点传 PNG，业务请求继续返回 JSON。"""
         body = json.dumps(data, ensure_ascii=False, allow_nan=False).encode("utf-8") if data is not None else None
         req = urllib.request.Request(self.endpoint["url"].rstrip("/") + path, body, method=method, headers={
             "Authorization": "Bearer " + self.endpoint["token"], "X-Rev-Session": self.endpoint["sessionId"],
             "Content-Type": "application/json"})
         try:
             with self.opener.open(req, timeout=min(5, self.timeout)) as response:
-                raw = response.read(MAX_RESPONSE + 1)
+                raw = response.read((MAX_PNG_BYTES if png else MAX_RESPONSE) + 1)
         except urllib.error.HTTPError as exc:
             detail = exc.read(4096).decode("utf-8", errors="replace")
             if exc.code == 409:
@@ -70,6 +72,8 @@ class GameClient:
             raise RevError(f"运行时 HTTP {exc.code}：{detail}") from None
         except (urllib.error.URLError, ConnectionError, TimeoutError) as exc:
             raise RevError(f"连不上运行时服务（游戏可能已退出 Play）：{exc}") from None
+        if png:
+            return raw
         if len(raw) > MAX_RESPONSE:
             raise RevError("运行时返回超过 24 MiB")
         return json.loads(raw)
@@ -93,6 +97,8 @@ class GameClient:
                 if not result.get("pending"):
                     if result.get("id") != request_id or result.get("sessionId") != self.endpoint["sessionId"]:
                         raise RevError("运行时返回的身份与请求不符")
+                    if action == "runtime.screenshot":
+                        consume_runtime_capture(result, self.request)
                     if self.endpoint.get("memoryJobs"):
                         try:
                             self.request("POST", "/jobs/" + request_id + "/ack", {})

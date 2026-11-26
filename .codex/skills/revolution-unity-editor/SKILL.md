@@ -23,6 +23,13 @@ description: 用 Revolution RevCLI 操作 Unity 编辑器、场景、脚本挂�
 
 在 Codex 中使用 Revolution 插件时，优先用工程相邻的 RevCLI 做短命令和制作。工程没有本地工具副本时，用 `rev_bind` 返回的 `bundledRevCli` 路径，仍显式传 `--project`。常驻 MCP 先用 `rev_bind` 指定工程绝对路径，再用 `rev_discover` 查实际动作。直接启动的 RevMCP 仍通过启动参数绑定工程。
 
+## 临时文件用完即删
+
+- 日常查询、UI、GM 和计划直接读取本次响应。AI 使用内联参数或标准输入传计划，需要临时输入文件时放系统临时目录，最后一次读取后在 `finally` 永久删除自己创建的文件。
+- `<Unity 工程>/Library/RevolutionAutomation/jobs`、`activity` 和 `screenshots` 由工具管理。把 JSON、截图、GIF 和报告的正式导出放在用户明确指定的位置。项目已有正式文档目录时按项目规范选择。
+- 临时截图和兼容工单交付后立即删除。取消、失败也执行收尾，原动作仍在跑时先等终态。窗口关闭时停止活动采集，活动文件供实时窗口读取，读完即删。
+- 升级 Unity 桥、RevCLI 和 RevMCP 后重启常驻工具。检查遗留占用用 `storage.status`，用 `storage.prune` 默认预览，`dryRun=false` 应用工具识别的回收。
+
 ## 开工第一步：连接
 
 需要启动 Unity 或恢复连接时使用 `connect`。它会体检环境、打开 Unity、等编译、起常驻服务并比对能力。已有在线连接先读 `editor.status`；仅查询仓库或编辑文档无需启动 Unity。

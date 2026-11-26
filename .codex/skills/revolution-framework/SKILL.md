@@ -53,6 +53,7 @@ description: 使用或维护 Revolution Unity 框架时选择公开门面、FSM�
 - 玩法、跨帧场景、资源和设备各按实际目标验收。关键业务在开发态留受控 GM 或 `RevRuntimeAutomation` 入口，复用玩家路径，核对成功、拒绝和退出。真实自动化先发现，按断言和清理判结果。见 [RevGame 交付实践](references/revgame-ai-workflow.md)。
 - UI 布局改动核对基准画幅及项目支持的较宽、较窄或带内缩的画幅。在正式入口确认控件落在所属区域、文字实际绘制、点按命中。验收口径见 [排查文字与越界](references/ui-and-layering.md#排查文字与越界)。
 - 功能验收和修 Bug 使用 [缺陷闭环](../revolution-ai-automation/references/defect-closure.md)。按需求明确覆盖，失败用实测和当前源码定位。任务包含修复时落实最小改动，并用原失败断言与受影响的回归确认结果。
+- 开发态工具临时文件在最后一次读取后删除。日常调试通过结果和实时活动视图查证，正式导出按用户指定路径。详见 [自动化临时文件规则](../revolution-ai-automation/SKILL.md#临时文件用完即删)。
 - 修改框架公开行为时同步模块使用说明和架构文档的 Markdown/HTML。按现有源仓库工作流导出 `package`、`demo`、`hotupdate`、`skill` 或自动化工具分支。只在用户要求时提交或发布。
 
 ## 基础模块总览（新增开发态 RevAutomation 见自动化接入参考）
