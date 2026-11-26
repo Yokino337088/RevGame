@@ -11,7 +11,7 @@ namespace RevGame.Endless
 {
     public sealed partial class EndlessService
     {
-        /// <summary>用独立临时目录验证候选局写入门禁、正式落盘、试盘恢复与战绩读取。</summary>
+        /// <summary>用独立临时目录验证写入门禁、满池落盘、主备档恢复与战绩读取，退出前清理测试文件。</summary>
         public static object CheckSaveRecovery()
         {
             string directory = Path.Combine(Path.GetTempPath(), "RevGame-Endless-" + Guid.NewGuid().ToString("N"));
@@ -128,6 +128,7 @@ namespace RevGame.Endless
                     "结束的局提供只读战绩摘要，保留原始结算存档", checks);
                 CheckResultSaveRetry(Path.Combine(directory, "blocked-result"), checks);
                 CheckHordeSaveSlots(directory, checks);
+                CheckFullPoolSaveRecovery(directory, checks);
                 return new Dictionary<string, object> { ["success"] = true, ["passed"] = checks.Count, ["checks"] = checks };
             }
             finally
@@ -138,6 +139,77 @@ namespace RevGame.Endless
                 }
                 Directory.Delete(directory);
             }
+        }
+
+        /// <summary>通过临时磁盘槽验证满池保存、异常读回、主档损坏后的续玩及备份保留。</summary>
+        private static void CheckFullPoolSaveRecovery(string directory, List<string> checks)
+        {
+            using var source = new EndlessService(directory);
+            using var restored = new EndlessService(directory);
+            string path = Path.Combine(directory, RunFileName);
+            string backupPath = path + ".bak";
+            source.Begin(1, 0, 1101, deferFirstSave: true);
+            source.CommitFirstSave();
+            Check(source.StartWave(), "满池续玩夹具沿正式路径开战", checks);
+            for (int slot = 0; slot < source.Horde.Length; slot++)
+            {
+                if (!source.SpawnHorde())
+                {
+                    throw new InvalidOperationException("满池续玩夹具未完成敌潮出生");
+                }
+            }
+
+            source.Run.score = 80;
+            Check(source.Save(), "满池首次写入真实磁盘", checks);
+            string backup = File.ReadAllText(path);
+            source.Run.score = 120;
+            Check(source.Save() && File.ReadAllText(backupPath) == backup, "满池新档提交时留下上一份有效备份", checks);
+            string main = File.ReadAllText(path);
+            Check(restored.Restore(false, pauseOnEntry: true) && restored.Run.score == 120 &&
+                restored.Run.phase == EndlessPhase.Paused && restored.Run.runId == source.Run.runId &&
+                SameFullHorde(source.Horde, restored.Horde), "满池主档恢复同一局以及每个敌人的槽号和状态", checks);
+
+            // 两份文本都可读且各有正确校验和。故意提交不同的一份，验证读回比较能拒绝这次替换。
+            bool rejectedReceipt = false;
+            try
+            {
+                RevFileSave.Write(path, backup, value => VerifySaveReadback(main, value));
+            }
+            catch (InvalidDataException)
+            {
+                rejectedReceipt = true;
+            }
+            Check(rejectedReceipt && File.ReadAllText(path) == main && File.ReadAllText(backupPath) == backup &&
+                Directory.GetFiles(directory, "*.tmp").Length == 0, "读回不同快照时拒绝替换、保留两份旧档并清除临时档", checks);
+
+            source.Run.score = -1;
+            Check(!source.Save() && source.RunSavePending && source.Run.scoreStopped &&
+                File.ReadAllText(path) == main && File.ReadAllText(backupPath) == backup,
+                "存档基本信息非法时暂停计分且保留主档和备份", checks);
+
+            File.WriteAllText(path, "{}");
+            Check(restored.Restore(false, pauseOnEntry: true) && restored.Run.score == 80 &&
+                restored.Run.phase == EndlessPhase.Paused && restored.Run.random == source.Run.random &&
+                SameFullHorde(source.Horde, restored.Horde), "满池主档损坏后回退备份并保留随机状态和全部敌人", checks);
+            Check(restored.Save() && File.ReadAllText(backupPath) == backup, "满池恢复后的首笔保存保留原有效备份", checks);
+            Check(restored.Pause() && restored.Run.phase == EndlessPhase.Fighting, "从满池备份恢复后可确认继续战斗", checks);
+        }
+
+        /// <summary>逐槽对照满池快照的值。容量、存活数或任一敌人的字段不同，均视为恢复失败。</summary>
+        private static bool SameFullHorde(EndlessHordeComponents expected, EndlessHordeComponents actual)
+        {
+            if (actual.Length != expected.Length || actual.ActiveCount != expected.Length)
+            {
+                return false;
+            }
+            for (int slot = 0; slot < expected.Length; slot++)
+            {
+                if (!actual[slot].Equals(expected[slot]))
+                {
+                    return false;
+                }
+            }
+            return true;
         }
 
         /// <summary>用临时槽验证零敌快照、完整长度旧档和含空洞的新档。续玩后还要按原槽号复用。</summary>

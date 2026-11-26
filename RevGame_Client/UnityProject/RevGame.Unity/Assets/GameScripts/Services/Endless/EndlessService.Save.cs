@@ -11,6 +11,7 @@ using RevGame.Pieces;
 using UnityEngine;
 namespace RevGame.Endless
 {
+    /// <summary>无尽局持有棋盘与存档状态，通过框架存档门面提交可继续的快照。</summary>
     public sealed partial class EndlessService
     {
         [Serializable]
@@ -100,7 +101,7 @@ namespace RevGame.Endless
             }
         }
 
-        /// <summary>原子保存已交付的无尽局。加载候选禁止写入；写失败保留旧档并冻结计分。</summary>
+        /// <summary>同步提交已交付的无尽局，临时档读回一致后才能替换主档。候选局禁止写入，失败时保留旧档并冻结计分。</summary>
         public bool Save()
         {
             if (_awaitingFirstSave)
@@ -150,8 +151,10 @@ namespace RevGame.Endless
                 }
                 else
                 {
-                    // 编码与棋局规则不变，临时写入、读回校验、备份替换由框架提交。
-                    RevFileSave.Write(SavePath, encoded, value => Decode(value), _preserveRunBackup);
+                    // 本次快照来自内存棋局，先检查存档基本信息。框架刷新临时文件后完整读回，
+                    // 对比已编码文本即可确认读回的是这一份快照，无需再解析敌潮并重算校验和。
+                    ValidateSaveHeader(Run);
+                    RevFileSave.Write(SavePath, encoded, value => VerifySaveReadback(encoded, value), _preserveRunBackup);
                     _preserveRunBackup = false;
                 }
                 RunSavePending = false;
@@ -167,6 +170,16 @@ namespace RevGame.Endless
                 return Reject("存档未写入，本局已停止新增计分");
             }
         }
+
+        /// <summary>逐字符核对临时文件读回和本次已编码的快照。有差异时抛出异常，由框架放弃替换并清理临时文件。</summary>
+        private static void VerifySaveReadback(string expected, string actual)
+        {
+            if (!string.Equals(expected, actual, StringComparison.Ordinal))
+            {
+                throw new InvalidDataException("无尽存档读回内容与本次快照不一致");
+            }
+        }
+
         /// <summary>验证存档原文的校验和，再读取当前业务字段。Unity 忽略旧版多出的保持计时，原坐标继续用于恢复占格。</summary>
         private static EndlessRun Decode(string encoded)
         {
@@ -176,12 +189,18 @@ namespace RevGame.Endless
                 throw new InvalidDataException("无尽存档校验失败");
             }
             EndlessRun run = JsonUtility.FromJson<EndlessRun>(envelope.payload);
+            ValidateSaveHeader(run);
+            return run;
+        }
+
+        /// <summary>提交前和读档解码后共用的基本信息检查，包括棋局身份、分数及阵容范围。棋盘完整性由恢复预检负责。</summary>
+        private static void ValidateSaveHeader(EndlessRun run)
+        {
             if (run == null || string.IsNullOrEmpty(run.runId) || run.score < 0 || run.bankedScore < 0
                 || run.difficulty < 0 || run.difficulty > 2 || run.formation < 0 || run.formation > 2)
             {
                 throw new InvalidDataException("无尽存档版本或结构不兼容");
             }
-            return run;
         }
         /// <summary>在独立试盘验证快照，验证通过后才允许 Restore 替换当前棋局。</summary>
         private static (EndlessRun run, List<EndlessUnit> units) PrepareRestore(string encoded)
