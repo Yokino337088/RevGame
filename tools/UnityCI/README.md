@@ -24,3 +24,9 @@ Windows 只读 Unity 授权。正式签名放在 Android 专属步骤，签名�
 ## 失败后的检查
 
 看 Actions 中最先失败的步骤。资源预检可以在配置许可前验证隔离与恢复。缺少授权或签名时，出包任务会先列出待配的 Secret 名称。下载、Unity BuildReport、Gradle 或签名失败各自保留错误边界。正式包经验证后的公开发布由现有发行流程处理。
+
+## GameCI 个人版导入验证
+
+在仓库的 Actions Secrets 中添加 `UNITY_LICENSE`、`UNITY_EMAIL` 和 `UNITY_PASSWORD`。`UNITY_LICENSE` 保存 Unity Hub 激活个人版后生成的 `.ulf` 文件全文，另外两项来自同一 Unity 账号。 [GameCI 个人版授权说明](https://game.ci/docs/github/activation/#personal-license)
+
+在 Actions 中手动运行 **RevGame GameCI 个人版导入验证**，选择 `main`。该任务用 GitHub 标准 Ubuntu 托管 runner 和国际版 `2022.3.15f1` 导入工程。通过条件是 Unity 完成脚本编译并实际加载启动场景，随后生成本轮回执。通过后才进入 Windows IL2CPP 和 Android 正式签名适配。 [验证工作流](https://github.com/Yokino337088/RevGame/actions/workflows/revgame-gameci-personal-smoke.yml)

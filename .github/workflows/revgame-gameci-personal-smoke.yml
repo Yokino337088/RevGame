@@ -1,0 +1,92 @@
+name: RevGame GameCI 个人版导入验证
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/revgame-gameci-personal-smoke.yml
+      - tools/UnityCI/RevGameGameCiImportProbe.cs
+
+permissions:
+  contents: read
+
+concurrency:
+  group: revgame-gameci-personal-smoke
+  cancel-in-progress: false
+
+jobs:
+  import:
+    name: 验证授权与工程导入
+    if: github.repository == 'Yokino337088/RevGame' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 55
+    env:
+      REVGAME_SMOKE_PROJECT: RevGame_Client/UnityProject/RevGame.Unity
+      REVGAME_SMOKE_VERSION: 2022.3.15f1
+      REVGAME_SMOKE_REVISION: b58023a2b463
+    steps:
+      - name: 检查 GameCI 个人版凭据
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        run: |
+          missing=()
+          for name in UNITY_LICENSE UNITY_EMAIL UNITY_PASSWORD; do
+            value="${!name:-}"
+            if [[ -z "${value//[[:space:]]/}" ]]; then
+              missing+=("$name")
+            fi
+          done
+          if (( ${#missing[@]} > 0 )); then
+            printf '::error title=GameCI 个人版凭据缺失::请配置 Actions Secrets %s\n' "${missing[*]}"
+            exit 1
+          fi
+
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: 在本次检出准备国际版工程
+        run: |
+          project="$REVGAME_SMOKE_PROJECT"
+          probe="$project/Assets/Editor/RevGameGameCiImportProbe.cs"
+          test -f "$project/ProjectSettings/ProjectSettings.asset"
+          test -d "$project/Assets/Editor"
+          test ! -e "$probe"
+          printf 'm_EditorVersion: %s\nm_EditorVersionWithRevision: %s (%s)\n' \
+            "$REVGAME_SMOKE_VERSION" "$REVGAME_SMOKE_VERSION" "$REVGAME_SMOKE_REVISION" \
+            > "$project/ProjectSettings/ProjectVersion.txt"
+          cp tools/UnityCI/RevGameGameCiImportProbe.cs "$probe"
+
+      - name: 激活个人版并导入 RevGame
+        # 固定 GameCI v4 发布提交和 2022.3.15f1 Linux 编辑器镜像。
+        uses: game-ci/unity-builder@4423ee75828dff56037d1d1cfdac6b68e3a6ba00
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          unityVersion: ${{ env.REVGAME_SMOKE_VERSION }}
+          projectPath: ${{ env.REVGAME_SMOKE_PROJECT }}
+          targetPlatform: StandaloneWindows64
+          customImage: unityci/editor@sha256:85e36ba3d9143454fdca169d02c4549fc99671a596e06716d877b89df60a91e1
+          buildMethod: RevGame.Editor.RevGameGameCiImportProbe.Verify
+          versioning: None
+          # 探针与版本文件只在本轮检出生成，允许 GameCI 使用这些预期写入。
+          allowDirtyBuild: true
+
+      - name: 核对 Unity 导入证据
+        run: |
+          receipt="$REVGAME_SMOKE_PROJECT/Library/RevGameGameCiImport.txt"
+          if [[ ! -s "$receipt" ]]; then
+            echo '::error title=RevGame 导入未验证::Unity 未生成本轮导入证据。'
+            exit 1
+          fi
+          mapfile -t imported < "$receipt"
+          if [[ "${imported[0]:-}" != "$REVGAME_SMOKE_VERSION" || ! "${imported[1]:-}" =~ ^[0-9a-f]{32}$ ]]; then
+            echo '::error title=RevGame 导入结果不符::请检查实际编辑器版本和启动场景。'
+            exit 1
+          fi
+          echo "RevGame 已在 Unity ${imported[0]} 完成脚本编译和启动场景导入。"
