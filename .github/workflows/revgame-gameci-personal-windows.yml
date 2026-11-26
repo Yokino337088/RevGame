@@ -1,0 +1,17 @@
+name: RevGame GameCI Windows 手动出包
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    uses: ./.github/workflows/revgame-gameci-personal-release.yml
+    with:
+      platform: windows
+    secrets:
+      UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+      UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+      UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}

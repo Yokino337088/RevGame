@@ -1,41 +1,44 @@
-name: RevGame GameCI 个人版 IL2CPP 出包
+name: RevGame GameCI 通用出包流程
 
 on:
-  workflow_dispatch:
+  workflow_call:
     inputs:
       platform:
-        description: 选择构建目标
-        type: choice
-        default: windows
-        options: [windows, android, both]
-  push:
-    branches: [main]
-    paths:
-      - .github/workflows/revgame-gameci-personal-release.yml
-      - tools/UnityCI/gameci_release.py
-      - tools/UnityCI/RevGameGameCiRelease.cs
+        description: 来自手动入口的固定构建目标
+        required: true
+        type: string
+    secrets:
+      UNITY_LICENSE:
+        required: true
+      UNITY_EMAIL:
+        required: true
+      UNITY_PASSWORD:
+        required: true
+      REVGAME_ANDROID_KEYSTORE_B64:
+        required: false
+      REVGAME_ANDROID_STORE_PASS:
+        required: false
+      REVGAME_ANDROID_KEY_ALIAS:
+        required: false
+      REVGAME_ANDROID_KEY_PASS:
+        required: false
 
 permissions:
   contents: read
 
 concurrency:
-  group: revgame-gameci-personal-release
+  group: revgame-gameci-personal-${{ inputs.platform }}
   cancel-in-progress: false
 
 jobs:
   release:
-    name: GameCI 正式包 ${{ matrix.target }}
-    if: github.repository == 'Yokino337088/RevGame' && github.ref == 'refs/heads/main'
-    strategy:
-      fail-fast: false
-      max-parallel: 1
-      matrix:
-        target: ${{ fromJSON(inputs.platform == 'both' && '["windows","android"]' || inputs.platform == 'android' && '["android"]' || '["windows"]') }}
-    runs-on: ${{ matrix.target == 'windows' && 'windows-2022' || 'ubuntu-22.04' }}
+    name: GameCI 正式包 ${{ inputs.platform }}
+    if: github.repository == 'Yokino337088/RevGame' && github.ref == 'refs/heads/main' && (inputs.platform == 'windows' || inputs.platform == 'android')
+    runs-on: ${{ inputs.platform == 'windows' && 'windows-2022' || 'ubuntu-22.04' }}
     timeout-minutes: 320
     env:
-      REVGAME_TARGET: ${{ matrix.target }}
-      REVGAME_BUILD_TARGET: ${{ matrix.target == 'windows' && 'StandaloneWindows64' || 'Android' }}
+      REVGAME_TARGET: ${{ inputs.platform }}
+      REVGAME_BUILD_TARGET: ${{ inputs.platform == 'windows' && 'StandaloneWindows64' || 'Android' }}
       PYTHONIOENCODING: utf-8
     steps:
       - name: 检查授权和目标签名
@@ -44,10 +47,10 @@ jobs:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
-          REVGAME_ANDROID_KEYSTORE_B64: ${{ matrix.target == 'android' && secrets.REVGAME_ANDROID_KEYSTORE_B64 || '' }}
-          REVGAME_ANDROID_STORE_PASS: ${{ matrix.target == 'android' && secrets.REVGAME_ANDROID_STORE_PASS || '' }}
-          REVGAME_ANDROID_KEY_ALIAS: ${{ matrix.target == 'android' && secrets.REVGAME_ANDROID_KEY_ALIAS || '' }}
-          REVGAME_ANDROID_KEY_PASS: ${{ matrix.target == 'android' && secrets.REVGAME_ANDROID_KEY_PASS || '' }}
+          REVGAME_ANDROID_KEYSTORE_B64: ${{ inputs.platform == 'android' && secrets.REVGAME_ANDROID_KEYSTORE_B64 || '' }}
+          REVGAME_ANDROID_STORE_PASS: ${{ inputs.platform == 'android' && secrets.REVGAME_ANDROID_STORE_PASS || '' }}
+          REVGAME_ANDROID_KEY_ALIAS: ${{ inputs.platform == 'android' && secrets.REVGAME_ANDROID_KEY_ALIAS || '' }}
+          REVGAME_ANDROID_KEY_PASS: ${{ inputs.platform == 'android' && secrets.REVGAME_ANDROID_KEY_PASS || '' }}
         run: |
           $required = @('UNITY_LICENSE','UNITY_EMAIL','UNITY_PASSWORD')
           if ($env:REVGAME_TARGET -eq 'android') {
@@ -59,7 +62,7 @@ jobs:
           }
 
       - name: 等待 Windows 容器服务就绪
-        if: matrix.target == 'windows'
+        if: inputs.platform == 'windows'
         shell: pwsh
         # 某些托管 Windows runner 在分配任务后 Docker 服务仍然停止，先确认服务端可以响应。
         run: |
@@ -85,11 +88,11 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: 准备国际版出包入口与平台资源隔离
+      - name: 核对已提交 AB 并隔离其它平台资源
         id: prepare
-        run: python -B tools/UnityCI/gameci_release.py prepare --target ${{ matrix.target }}
+        run: python -B tools/UnityCI/gameci_release.py prepare --target ${{ inputs.platform }}
 
-      - name: 激活个人版、重建 AB 并构建 Player
+      - name: 激活个人版并使用现有 AB 构建 Player
         # 固定支持 Node.js 24 的 GameCI v5.0.1 发布提交，两个平台各自使用实际编辑器模块。
         uses: game-ci/unity-builder@adaf7cd8f42fd48fbbf2d4f5f67ca30d87f819f1
         env:
@@ -100,28 +103,28 @@ jobs:
           unityVersion: 2022.3.15f1
           projectPath: RevGame_Client/UnityProject/RevGame.Unity
           targetPlatform: ${{ env.REVGAME_BUILD_TARGET }}
-          customImage: ${{ matrix.target == 'windows' && 'unityci/editor@sha256:b3be4bb2ac15241bf932efa0f5d00d2f93f41afadc74a4b07656985fb7113ea2' || 'unityci/editor@sha256:509ad2bbc977d029a9c8d642f1b6cc10f42e2d66e307befa73ebe359a3db58a9' }}
+          customImage: ${{ inputs.platform == 'windows' && 'unityci/editor@sha256:b3be4bb2ac15241bf932efa0f5d00d2f93f41afadc74a4b07656985fb7113ea2' || 'unityci/editor@sha256:509ad2bbc977d029a9c8d642f1b6cc10f42e2d66e307befa73ebe359a3db58a9' }}
           buildMethod: RevGame.Editor.RevGameGameCiRelease.Build
           buildName: RevGame
           buildsPath: build
           versioning: None
           allowDirtyBuild: true
-          androidKeystoreName: ${{ matrix.target == 'android' && 'revgame-gameci-release.keystore' || '' }}
-          androidKeystoreBase64: ${{ matrix.target == 'android' && secrets.REVGAME_ANDROID_KEYSTORE_B64 || '' }}
-          androidKeystorePass: ${{ matrix.target == 'android' && secrets.REVGAME_ANDROID_STORE_PASS || '' }}
-          androidKeyaliasName: ${{ matrix.target == 'android' && secrets.REVGAME_ANDROID_KEY_ALIAS || '' }}
-          androidKeyaliasPass: ${{ matrix.target == 'android' && secrets.REVGAME_ANDROID_KEY_PASS || '' }}
+          androidKeystoreName: ${{ inputs.platform == 'android' && 'revgame-gameci-release.keystore' || '' }}
+          androidKeystoreBase64: ${{ inputs.platform == 'android' && secrets.REVGAME_ANDROID_KEYSTORE_B64 || '' }}
+          androidKeystorePass: ${{ inputs.platform == 'android' && secrets.REVGAME_ANDROID_STORE_PASS || '' }}
+          androidKeyaliasName: ${{ inputs.platform == 'android' && secrets.REVGAME_ANDROID_KEY_ALIAS || '' }}
+          androidKeyaliasPass: ${{ inputs.platform == 'android' && secrets.REVGAME_ANDROID_KEY_PASS || '' }}
 
       - name: 核验 IL2CPP、原生库及 AB
-        run: python -B tools/UnityCI/gameci_release.py verify --target ${{ matrix.target }}
+        run: python -B tools/UnityCI/gameci_release.py verify --target ${{ inputs.platform }}
 
       - name: 恢复平台资源并清除临时签名
         if: always() && (steps.prepare.outcome == 'success' || steps.prepare.outcome == 'failure')
-        run: python -B tools/UnityCI/gameci_release.py restore --target ${{ matrix.target }}
+        run: python -B tools/UnityCI/gameci_release.py restore --target ${{ inputs.platform }}
 
       - uses: actions/upload-artifact@v6
         with:
-          name: RevGame-gameci-${{ matrix.target }}-il2cpp-${{ github.sha }}
+          name: RevGame-gameci-${{ inputs.platform }}-il2cpp-${{ github.sha }}
           path: build/${{ env.REVGAME_BUILD_TARGET }}/
           if-no-files-found: error
           retention-days: 3

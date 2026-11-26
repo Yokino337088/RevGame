@@ -5,8 +5,10 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
 from zipfile import ZipFile
 
+import gameci_release
 import release
 
 
@@ -48,8 +50,8 @@ class ReleaseTests(unittest.TestCase):
                 pass
         self.assertTrue((self.streaming / "Android/Android").is_file())
 
-    def test_checks_manifest_identity_and_bundle_hashes(self):
-        """清单描述 Windows 也须逐个验实际文件，一处内容变动就拒绝出包。"""
+    def write_pc_bundle_manifest(self):
+        """构造一个能通过预检的 PC 主包和资源包，供坏文件与构建期替换用例复用。"""
         folder = self.streaming / "PC"
         for name in ("PC.manifest", "ui", "ui.manifest"):
             (folder / name).write_bytes(name.encode())
@@ -62,11 +64,39 @@ class ReleaseTests(unittest.TestCase):
                          "manifestSha256": release.file_hash(folder / "ui.manifest")}],
         }
         (folder / "BuildManifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+        return folder, manifest
+
+    def test_checks_manifest_identity_and_bundle_hashes(self):
+        """清单描述 Windows 也须逐个验实际文件，一处内容变动就拒绝出包。"""
+        folder, _ = self.write_pc_bundle_manifest()
         expected = release.bundle_inventory(self.streaming, "StandaloneWindows64", "PC")
         self.assertEqual(len(expected), 5)
         (folder / "ui").write_text("changed", encoding="utf-8")
         with self.assertRaisesRegex(ValueError, "资源文件校验失败"):
             release.bundle_inventory(self.streaming, "StandaloneWindows64", "PC")
+
+    def test_gameci_rejects_replaced_bundle_even_with_a_matching_manifest(self):
+        """即使换入的 AB 与其新清单相符，也须用出包前记录的那批资源；失败后归还其它平台。"""
+        folder, manifest = self.write_pc_bundle_manifest()
+        entry = self.project / "Assets/Editor/RevGameGameCiRelease.cs"
+        entry.parent.mkdir(parents=True)
+        (self.project / "ProjectSettings").mkdir()
+        stash = self.project.parent / ".revgame-gameci-streaming"
+        key = self.project / "revgame-gameci-release.keystore"
+        with patch.object(release, "PROJECT", self.project), patch.multiple(gameci_release, STASH=stash, ENTRY=entry, KEYSTORE=key):
+            gameci_release.prepare("StandaloneWindows64", "PC")
+            try:
+                self.assertFalse((self.streaming / "Android").exists())
+                (folder / "ui").write_bytes(b"fresh valid replacement")
+                manifest["bundles"][0]["sha256"] = release.file_hash(folder / "ui")
+                (folder / "BuildManifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+                self.assertEqual(len(release.bundle_inventory(self.streaming, "StandaloneWindows64", "PC")), 5)
+                with self.assertRaisesRegex(ValueError, "目标 AB 在 Player 构建期间发生变化"):
+                    gameci_release.verify("windows", "StandaloneWindows64", "PC")
+            finally:
+                gameci_release.restore()
+        self.assertTrue((self.streaming / "Android/Android").is_file())
+        self.assertFalse(stash.exists())
 
     def test_android_package_checks_abi_and_cross_platform_files(self):
         """读取真实 ZIP 名单验证 Android AB 和 ARM64 IL2CPP，拒绝额外 PC 目录。"""

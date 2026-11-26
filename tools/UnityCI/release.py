@@ -317,7 +317,7 @@ def android_build(editor, output, expected, scratch, build_env):
 
 
 def release(target, editor, output):
-    """在本轮检出重建和隔离 AB，成功验包前不会向 GitHub 发布任何文件。"""
+    """在本轮检出隔离并核对已有 AB，使用构建前记录的摘要验收 Player。"""
     if not editor.is_file() or not PROJECT.is_dir():
         raise ValueError("Unity Editor 或 RevGame 工程不存在")
     if output.exists() and any(output.iterdir()):
@@ -339,10 +339,9 @@ def release(target, editor, output):
     build_env = {key: value for key, value in os.environ.items() if key not in UNITY_SECRETS + ANDROID_SECRETS}
     with tempfile.TemporaryDirectory(prefix="revgame-release-") as folder, isolate_streaming(PROJECT, platform) as streaming:
         scratch = Path(folder)
-        batch_action(editor, flag, "game.background.build", {"target": build_target}, scratch, env=build_env)
         assert_selected_streaming(streaming, platform)
         expected = bundle_inventory(streaming, build_target, platform)
-        print(f"通过 {platform} AB 构建清单校验，核对 {len(expected)} 个文件。")
+        print(f"本轮直接使用检出中的 {platform} AB，已核对 {len(expected)} 个清单文件。")
         if target == "windows":
             batch_action(editor, flag, "build.player",
                          dict(target=build_target, path=str(output / "RevGame.exe"), backend="il2cpp",
@@ -371,9 +370,10 @@ def main():
         parser.error("需要 --output")
     try:
         if args.operation == "assets":
-            _, _, platform = TARGETS[args.target]
-            with isolate_streaming(PROJECT, platform):
-                print(f"{platform} 的真实 StreamingAssets 布局通过隔离检查。")
+            _, build_target, platform = TARGETS[args.target]
+            with isolate_streaming(PROJECT, platform) as streaming:
+                expected = bundle_inventory(streaming, build_target, platform)
+                print(f"{platform} 的 StreamingAssets 通过隔离与 {len(expected)} 个清单文件校验。")
         elif args.operation == "credentials":
             missing = missing_secrets(args.target, os.environ)
             if missing:

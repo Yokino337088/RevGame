@@ -12,6 +12,8 @@ import release
 
 # 隔离目录和 StreamingAssets 在同一检出盘，且位于 Unity 的 Assets 之外。
 STASH = release.PROJECT.parent / ".revgame-gameci-streaming"
+# 记录启动 Unity 前的目标包摘要，供最终验包认领本次检出的输入。
+INVENTORY_NAME = ".prebuilt-ab.json"
 # GameCI 入口与项目资源构建脚本使用同一个程序集，沿用它对 Revolution.Editor 的显式引用。
 ENTRY = release.PROJECT / "Assets/Editor/RevGame/ResourceBuild/RevGameGameCiRelease.cs"
 # 本轮生成的密钥库由 GameCI 放在项目根目录。
@@ -37,14 +39,15 @@ def streaming_root():
     return streaming
 
 
-def prepare(platform):
-    """在 Unity 导入前隔离非目标平台，并安装本次固定版本和 Editor 入口。"""
+def prepare(build_target, platform):
+    """验收检出里的目标 AB，记录摘要，再隔离其它平台并安装本次 Editor 入口。"""
     streaming = streaming_root()
     selected = streaming / platform
     if not selected.is_dir() or release.is_link(selected):
         raise ValueError(f"缺少目标 AB 目录 {platform}。")
     if ENTRY.exists() or ENTRY.is_symlink() or KEYSTORE.exists() or KEYSTORE.is_symlink():
         raise ValueError("GameCI 临时入口或密钥库路径已经存在。")
+    expected = release.bundle_inventory(streaming, build_target, platform)
     STASH.mkdir(exist_ok=False)
     for item in sorted(streaming.iterdir()):
         folder = release.platform_entry(item.name)
@@ -54,6 +57,9 @@ def prepare(platform):
                 raise ValueError(f"非目标 StreamingAssets 路径异常 {item.name}。")
             item.rename(saved)
     release.assert_selected_streaming(streaming, platform)
+    with (STASH / INVENTORY_NAME).open("x", encoding="utf-8") as receipt:
+        json.dump({"target": build_target, "files": expected}, receipt)
+    print(f"本轮直接使用检出中的 {platform} AB，已核对 {len(expected)} 个清单文件。")
     version = release.PROJECT / "ProjectSettings/ProjectVersion.txt"
     version.write_text("m_EditorVersion: 2022.3.15f1\nm_EditorVersionWithRevision: 2022.3.15f1 (b58023a2b463)\n",
                        encoding="utf-8")
@@ -61,13 +67,14 @@ def prepare(platform):
 
 
 def restore():
-    """归还其它平台资源和对应 .meta 文件，清除 GameCI 本轮写入的签名文件。"""
+    """归还其它平台资源和 .meta，并清除本轮验包回执、临时入口与签名文件。"""
     streaming = streaming_root()
     if not STASH.is_dir():
         return
     KEYSTORE.unlink(missing_ok=True)
     ENTRY.unlink(missing_ok=True)
     ENTRY.with_suffix(".cs.meta").unlink(missing_ok=True)
+    (STASH / INVENTORY_NAME).unlink(missing_ok=True)
     for item in sorted(STASH.iterdir()):
         destination = streaming / item.name
         if (release.platform_entry(item.name) not in release.PLATFORM_FOLDERS or release.is_link(item)
@@ -82,7 +89,10 @@ def verify(target, build_target, platform):
     """核验本轮 BuildReport、实际资源和原生库，同时检查 Android 成品的应用身份与签名。"""
     streaming = streaming_root()
     release.assert_selected_streaming(streaming, platform)
-    expected = release.bundle_inventory(streaming, build_target, platform)
+    receipt = json.loads((STASH / INVENTORY_NAME).read_text(encoding="utf-8"))
+    expected = receipt["files"]
+    if receipt["target"] != build_target or release.bundle_inventory(streaming, build_target, platform) != expected:
+        raise ValueError("目标 AB 在 Player 构建期间发生变化，请检查本次出包检出。")
     output = release.REPO / "build" / build_target
     report = json.loads((output / "rev-build.json").read_text(encoding="utf-8-sig"))
     if (report["result"] != "Succeeded" or report["errors"] != 0 or report["backend"] != "IL2CPP"
@@ -124,7 +134,7 @@ def main():
     require_checkout()
     _, build_target, platform = release.TARGETS[args.target]
     if args.operation == "prepare":
-        prepare(platform)
+        prepare(build_target, platform)
     elif args.operation == "verify":
         verify(args.target, build_target, platform)
     else:

@@ -2,11 +2,6 @@ name: RevGame GameCI 个人版导入验证
 
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - .github/workflows/revgame-gameci-personal-smoke.yml
-      - tools/UnityCI/RevGameGameCiImportProbe.cs
 
 permissions:
   contents: read

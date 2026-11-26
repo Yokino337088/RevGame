@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace RevGame.Editor
 {
-    /// <summary>GameCI 专用的正式出包入口。在同一已经激活的 Unity 进程内重建 AB 并调用原有 Player 构建。</summary>
+    /// <summary>GameCI 专用的正式出包入口。使用检出中已验证的目标平台 AB，调用原有 Player 构建。</summary>
     public static class RevGameGameCiRelease
     {
         /// <summary>使用托管 runner 上已经导入的目标平台，真实构建失败时向 GameCI 抛出异常。</summary>
@@ -34,8 +34,6 @@ namespace RevGame.Editor
             {
                 throw new InvalidOperationException("检测到未隔离的其它平台 StreamingAssets。");
             }
-            Debug.Log(GameResourceBuild.BuildAndCopy(target));
-
             string output = ReadArgument("-customBuildPath");
             if (!android)
             {

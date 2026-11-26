@@ -1,0 +1,21 @@
+name: RevGame GameCI Android 手动出包
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  android:
+    uses: ./.github/workflows/revgame-gameci-personal-release.yml
+    with:
+      platform: android
+    secrets:
+      UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+      UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+      UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+      REVGAME_ANDROID_KEYSTORE_B64: ${{ secrets.REVGAME_ANDROID_KEYSTORE_B64 }}
+      REVGAME_ANDROID_STORE_PASS: ${{ secrets.REVGAME_ANDROID_STORE_PASS }}
+      REVGAME_ANDROID_KEY_ALIAS: ${{ secrets.REVGAME_ANDROID_KEY_ALIAS }}
+      REVGAME_ANDROID_KEY_PASS: ${{ secrets.REVGAME_ANDROID_KEY_PASS }}
