@@ -36,3 +36,5 @@ Windows 只读 Unity 授权。正式签名放在 Android 专属步骤，签名�
 导入验证通过后，按需求单独打开 **RevGame GameCI Windows 手动出包** 或 **RevGame GameCI Android 手动出包**，从 `main` 运行。Windows 在标准托管 Windows runner 构建，ARM64 Android 在标准托管 Ubuntu runner 构建。Android 沿用上文的四项签名 Secrets，验包读取成品中的应用 ID `com.Tangmen.RevGame`、桌面名称「围棋大作战」和公开证书指纹。 [Windows 出包](https://github.com/Yokino337088/RevGame/actions/workflows/revgame-gameci-personal-windows.yml) · [Android 出包](https://github.com/Yokino337088/RevGame/actions/workflows/revgame-gameci-personal-android.yml)
 
 两个入口分别校验本轮提交里的目标 AB，记录摘要后才启动 Unity。构建完成再比对检出和实际成品，成功后从对应该平台的 Artifacts 下载。`Library` 是 Unity 的导入缓存，首次检出出现缓存提示时会执行完整导入。 [Unity 导入缓存说明](https://docs.unity3d.com/2022.3/Documentation/Manual/AssetDatabaseCustomizingWorkflow.html)
+
+GameCI 按构建目标、runner 系统及架构、编辑器镜像和项目配置缓存 `Library` 的资源导入产物及索引。第一次成功出包保存缓存。此后在同一兼容范围内，Unity 可复用已经导入的图集和纹理，只更新改动或缺失的部分。Player、Gradle 工作区与签名文件属于当次任务的临时数据。 [GitHub Actions 缓存说明](https://github.com/actions/cache#cache-action)

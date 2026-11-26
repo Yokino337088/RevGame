@@ -92,6 +92,34 @@ jobs:
         id: prepare
         run: python -B tools/UnityCI/gameci_release.py prepare --target ${{ inputs.platform }}
 
+      - name: 计算 Unity 导入缓存键
+        id: import-cache-key
+        shell: pwsh
+        continue-on-error: true
+        env:
+          # 工具链、导入入口、包依赖或项目设置变了，就从新的兼容范围恢复缓存。
+          REVGAME_IMPORT_COMPATIBILITY: ${{ hashFiles('.github/workflows/revgame-gameci-personal-release.yml', 'tools/UnityCI/gameci_release.py', 'tools/UnityCI/RevGameGameCiRelease.cs', 'RevGame_Client/UnityProject/RevGame.Unity/Packages/**', 'RevGame_Client/UnityProject/RevGame.Unity/ProjectSettings/**') }}
+        run: |
+          $assets = git rev-parse HEAD:RevGame_Client/UnityProject/RevGame.Unity/Assets
+          if ($LASTEXITCODE -ne 0) {
+            exit $LASTEXITCODE
+          }
+          $prefix = "revgame-import-v1-$($env:RUNNER_OS)-$($env:RUNNER_ARCH)-$($env:REVGAME_TARGET)-$($env:REVGAME_IMPORT_COMPATIBILITY)-"
+          Add-Content -LiteralPath $env:GITHUB_OUTPUT -Encoding utf8 -Value @("key=$prefix$assets", "prefix=$prefix")
+
+      - name: 复用本平台 Unity 资源导入缓存
+        if: steps.import-cache-key.outputs.key != ''
+        uses: actions/cache@v5
+        continue-on-error: true
+        with:
+          # 精确保留资源导入产物和索引。Gradle 工作区、Player 产物和签名文件留在本轮 runner。
+          path: |
+            RevGame_Client/UnityProject/RevGame.Unity/Library/Artifacts
+            RevGame_Client/UnityProject/RevGame.Unity/Library/ArtifactDB
+            RevGame_Client/UnityProject/RevGame.Unity/Library/SourceAssetDB
+          key: ${{ steps.import-cache-key.outputs.key }}
+          restore-keys: ${{ steps.import-cache-key.outputs.prefix }}
+
       - name: 激活个人版并使用现有 AB 构建 Player
         # 固定支持 Node.js 24 的 GameCI v5.0.1 发布提交，两个平台各自使用实际编辑器模块。
         uses: game-ci/unity-builder@adaf7cd8f42fd48fbbf2d4f5f67ca30d87f819f1
