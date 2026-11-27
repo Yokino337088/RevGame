@@ -110,9 +110,9 @@ namespace RevGame.Core
             return GameBattleDeviceTier.Balanced;
         }
 
-        /// <summary>把档位转为明确预算。能力不足或测试需要固定显示条件时，沿兼容路径执行。</summary>
+        /// <summary>把档位转为明确预算。安卓在过热或本阶段无法维持目标时可显式选择保守节奏。</summary>
         public static GameBattleDevicePlan Create(GameBattlePlatform platform, GameBattleGpuKind gpuKind,
-            GameBattleDeviceTier tier, int shaderLevel, int refreshRate, bool fixedTest)
+            GameBattleDeviceTier tier, int shaderLevel, int refreshRate, bool fixedTest, bool androidConservative = false)
         {
             bool gpu = shaderLevel >= 35 && tier == GameBattleDeviceTier.High &&
                 ((platform == GameBattlePlatform.Windows && gpuKind == GameBattleGpuKind.Discrete) ||
@@ -120,12 +120,11 @@ namespace RevGame.Core
             int gpuMinimum = platform == GameBattlePlatform.Android ? 384 : 192;
             int webPixels = tier == GameBattleDeviceTier.Economy ? 1280 * 720 :
                 tier == GameBattleDeviceTier.High ? 1920 * 1080 : 1600 * 900;
-            int mobileCap = tier == GameBattleDeviceTier.Economy ? 30 : tier == GameBattleDeviceTier.High ? 120 : 60;
             // 网页的试降只改像素。保持那里的弹道容量固定，便于比较同一个调整项的收益。
             bool limitProjectiles = !fixedTest && tier == GameBattleDeviceTier.Economy &&
                 (platform == GameBattlePlatform.Windows || platform == GameBattlePlatform.Android);
             return new GameBattleDevicePlan(platform, gpuKind, tier, !fixedTest && gpu, gpuMinimum,
-                !fixedTest && platform == GameBattlePlatform.Android ? DisplayDivisor(refreshRate, mobileCap) : 0,
+                !fixedTest && platform == GameBattlePlatform.Android ? AndroidCadence(tier, refreshRate, androidConservative) : 0,
                 !fixedTest && platform == GameBattlePlatform.Web ? webPixels : 0, limitProjectiles);
         }
 
@@ -137,12 +136,30 @@ namespace RevGame.Core
                 (afterSeconds <= beforeSeconds * 1.02f && afterSlow <= beforeSlow - .05f);
         }
 
-        /// <summary>选择最接近预算上限的屏幕整数分频，避免在 90 Hz 屏幕上要求不均匀的 60 FPS。</summary>
-        private static int DisplayDivisor(int refreshRate, int cap)
+        /// <summary>目标按整屏刷新间隔请求。省电档先试接近 40 的节奏，保守模式才退到约 30。</summary>
+        public static int AndroidCadence(GameBattleDeviceTier tier, int refreshRate, bool conservative)
         {
             int refresh = refreshRate >= 24 && refreshRate <= 360 ? refreshRate : 60;
-            int divisor = Math.Max(1, (refresh + cap - 1) / cap);
-            return Math.Max(1, refresh / divisor);
+            int divisor;
+            if (!conservative && tier == GameBattleDeviceTier.Economy)
+            {
+                // 60 Hz 按 60 尝试，失败再到 30。90 Hz 两刷一帧，120 Hz 三刷一帧。
+                divisor = refresh > 60 && refresh < 80 ? 2 : Math.Max(1, refresh / 40);
+            }
+            else
+            {
+                int cap = conservative ? 30 : tier == GameBattleDeviceTier.High ? 144 : 60;
+                divisor = (refresh + cap - 1) / cap;
+            }
+            // 先取整屏间隔，再向上取整请求值，避免 Unity 把 37.5 Hz 节奏进一步降档。
+            return (refresh + divisor - 1) / divisor;
+        }
+
+        /// <summary>以实际可请求的帧率限制平均目标，留出小量计时与送屏偏差。</summary>
+        public static float AndroidAverageGoal(GameBattleDeviceTier tier, int targetFrameRate)
+        {
+            float requested = tier == GameBattleDeviceTier.High ? 100f : 40f;
+            return Math.Min(requested, targetFrameRate * .97f);
         }
     }
 }

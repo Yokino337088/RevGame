@@ -130,6 +130,9 @@ namespace RevGame.Endless
                 CheckResultSaveRetry(Path.Combine(directory, "blocked-result"), checks);
                 CheckHordeSaveSlots(directory, checks);
                 CheckFullPoolSaveRecovery(directory, checks);
+#if UNITY_EDITOR || UNITY_ANDROID
+                CheckIsolatedBackgroundCheckpoints(directory, checks);
+#endif
                 return new Dictionary<string, object> { ["success"] = true, ["passed"] = checks.Count, ["checks"] = checks };
             }
             finally
@@ -206,6 +209,52 @@ namespace RevGame.Endless
         }
 
 #if UNITY_EDITOR || UNITY_ANDROID
+        /// <summary>验证满池内存档在线程池编码，旧快照能交付，显式保存和换局仍遵守原有顺序。</summary>
+        private static void CheckIsolatedBackgroundCheckpoints(string directory, List<string> checks)
+        {
+            string previousIsolatedSave = _isolatedSave;
+            string path = Path.Combine(directory, RunFileName);
+            string backupPath = path + ".bak";
+            string diskBefore = File.ReadAllText(path);
+            string backupBefore = File.ReadAllText(backupPath);
+            try
+            {
+                using var source = new EndlessService(directory);
+                source.Begin(0, 0, 1101, isolated: true, deferFirstSave: true);
+                source.CommitFirstSave();
+                Check(source.DebugStress(source.Horde.Length, backgroundCheckpoints: true),
+                    "隔离满池压力局显式开启后台内存档", checks);
+
+                source.Run.score = 80;
+                string expected = EncodeSave(source.CaptureSaveSnapshot());
+                string oldMemory = _isolatedSave;
+                source.RequestRunCheckpoint();
+                Check(source._checkpointWrite != null && _isolatedSave == oldMemory,
+                    "工作线程接单后由主线程决定内存档提交", checks);
+                source.Run.score = 90;
+                source.Horde[0] = default;
+                source.FinishRunCheckpoint();
+                Check(_isolatedSave == expected && source._isolatedCheckpointCommits == 1,
+                    "后台结果保留提交当下的满池棋局", checks);
+
+                // 显式保存覆盖合并的自动请求，旧工单不能在手动结果之后覆盖续玩槽。
+                source.RequestRunCheckpoint();
+                source.RequestRunCheckpoint();
+                source.Run.score = 100;
+                Check(source.Save() && Decode(_isolatedSave).score == 100
+                    && source._checkpointWrite == null && !source._checkpointRequested,
+                    "显式隔离保存收完旧工单并发布最新快照", checks);
+                source.Begin(0, 0, 1102, isolated: true, deferFirstSave: true);
+                Check(!source._backgroundIsolatedCheckpoints && source._isolatedCheckpointRequests == 0
+                    && File.ReadAllText(path) == diskBefore && File.ReadAllText(backupPath) == backupBefore,
+                    "换局清除对照模式，主档与备份原样保留", checks);
+            }
+            finally
+            {
+                _isolatedSave = previousIsolatedSave;
+            }
+        }
+
         /// <summary>对临时磁盘槽检查后台快照隔离、备份保护、异常回执与显式保存顺序。</summary>
         private static void CheckBackgroundCheckpoints(EndlessService service, string path, string backupPath, string backup, List<string> checks)
         {
@@ -291,7 +340,7 @@ namespace RevGame.Endless
                             source.RequestRunCheckpoint();
                             long returned = Stopwatch.GetTimestamp();
                             var work = source._checkpointWrite;
-                            if (work == null || !System.Threading.SpinWait.SpinUntil(() => work.TryGetResult(wait: false, out _), 5000))
+                            if (work == null || !System.Threading.SpinWait.SpinUntil(() => work.TryGetResult(wait: false, out _, out _), 5000))
                             {
                                 throw new InvalidOperationException("后台满池保存未完成");
                             }
@@ -533,12 +582,16 @@ namespace RevGame.Endless
             }
         }
 
-        /// <summary>显式压力造局只允许隔离局：沿正式出生入口填满预算，不访问玩家存档。</summary>
-        public bool DebugStress(int enemies)
+        /// <summary>隔离压力局沿正式出生入口造敌，并可开启内存档的后台编码。返回值只表示造局完成。</summary>
+        public bool DebugStress(int enemies, bool backgroundCheckpoints = false)
         {
             if (!Isolated || Run == null || enemies < 1 || enemies > Horde.Length)
             {
                 return Reject("压力夹具需要隔离局与有效并发数");
+            }
+            if (!SetIsolatedCheckpointBackground(backgroundCheckpoints))
+            {
+                return Reject("当前平台无法后台编码隔离检查点");
             }
             Horde.Clear();
             for (int i = 0; i < enemies; i++)

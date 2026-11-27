@@ -67,8 +67,13 @@ namespace RevGame.Endless
                 return Accepted(Service.ClickCell(p.x, p.y));
             }
             , owner: Owner);
-            const string stressSchema = "{\"type\":\"object\",\"properties\":{\"enemies\":{\"type\":\"integer\",\"minimum\":1,\"maximum\":1024}},\"required\":[\"enemies\"],\"additionalProperties\":false}";
-            RevRuntimeAutomation.Register("endless.stress", "隔离压力局沿正式出生入口创建指定敌数", stressSchema, json => Accepted(Service.DebugStress(JsonUtility.FromJson<StressArgs>(json).enemies)), owner: Owner);
+            const string stressSchema = "{\"type\":\"object\",\"properties\":{\"enemies\":{\"type\":\"integer\",\"minimum\":1,\"maximum\":1024},\"backgroundCheckpoints\":{\"type\":\"boolean\"}},\"required\":[\"enemies\"],\"additionalProperties\":false}";
+            RevRuntimeAutomation.Register("endless.stress", "隔离压力局沿正式出生入口创建指定敌数，可显式对照后台内存检查点",
+                stressSchema, json =>
+                {
+                    StressArgs options = JsonUtility.FromJson<StressArgs>(json);
+                    return Accepted(Service.DebugStress(options.enemies, options.backgroundCheckpoints));
+                }, owner: Owner);
             RevRuntimeAutomation.Register("endless.thrust-preview", "隔离横向四格目标真实刺客突刺与美术预览", Empty, _ => Service.PreviewThrust(), owner: Owner);
             RevRuntimeAutomation.Register("endless.card-rules", "单卡随机/指定升级与非法手牌原子性检查", Empty, _ => EndlessService.CheckCardRules(), owner: Owner);
             RevRuntimeAutomation.Register("endless.upgrade-preview", "隔离局建立两枚同名主力，验真实箭头吸附与松手升级", Empty, _ => Service.PreviewUpgradeDrag(), owner: Owner);
@@ -268,6 +273,7 @@ namespace RevGame.Endless
                 ["isolated"] = s.Isolated, ["settled"] = r?.settled ?? false, ["random"] = r?.random ?? 0,
                 ["tickCount"] = s.TickCount, ["tickTotalMs"] = s.TickMilliseconds, ["tickMaxMs"] = s.MaxTickMilliseconds,
                 ["simulationTiming"] = s.World.SimulationTiming(),
+                ["checkpoints"] = s.DebugCheckpointState(),
                 ["units"] = s.Units.Count, ["logicCount"] = RevLogic.Count, ["pool"] = RevPool.DumpStats(),
                 ["hasEnemies"] = r != null && (s.HordeCount() > 0 || s.Occupied(GameSide.Enemy) > 0),
                 ["hasKills"] = r != null && r.kills + r.invaderKills > 0,
@@ -321,9 +327,14 @@ namespace RevGame.Endless
         {
             public int index, x, y;
         }
-        [Serializable] private sealed class StressArgs
+        /// <summary>隔离造局的请求，可单独切换自动检查点的编码线程。</summary>
+        [Serializable]
+        private sealed class StressArgs
         {
+            /// <summary>走正式出生入口创建的敌人数。</summary>
             public int enemies;
+            /// <summary>真表示后台编码且只提交到内存。留空保留同步隔离档。</summary>
+            public bool backgroundCheckpoints;
         }
         [Serializable] private sealed class FormationArgs
         {

@@ -10,23 +10,27 @@ namespace RevGame.Bootstrap
     {
         /// <summary>两个完整窗口用于比较。请求尺寸后的第一帧由外层丢弃。</summary>
         private const int TrialWindows = 2;
+        /// <summary>由清晰到省像素的两档。先验证已知有效的 0.75，仍低于目标才试更小档。</summary>
+        private static readonly float[] Candidates = { .75f, 2f / 3f };
         /// <summary>当前借用的世界相机；销毁相机后仍须还原 Unity 全局缩放。</summary>
         private Camera _camera;
         /// <summary>持有全局缩放时为真。调用前要求两轴都为 1，确保不接管其他控制方。</summary>
         private bool _ownsScale;
-        /// <summary>本交火阶段已试过一次时记录阶段编号，零表示尚未申请。</summary>
-        private int _attemptedStage;
+        /// <summary>本交火阶段下一个候选序号，换阶段由设备宿主清零。</summary>
+        private int _nextCandidate;
+        /// <summary>最近一次实测保留的等比缩放。试验失败或中断退回这里。</summary>
+        private float _retainedScale = 1f;
         /// <summary>剩余对照窗口数。零表示已下结论、已取消，或由隔离测试手动设置。</summary>
         private int _remainingWindows;
         /// <summary>缩放前一整窗的平均帧间隔，单位秒。</summary>
         private float _beforeSecondsPerFrame;
-        /// <summary>缩放前一整窗超出 33.33 ms 的帧占比。</summary>
+        /// <summary>试验前一整窗超出当时帧预算的占比。</summary>
         private float _beforeLateShare;
         /// <summary>缩放后两窗累计的有效墙钟秒数。</summary>
         private float _trialSeconds;
         /// <summary>缩放后两窗累计的可见帧数。</summary>
         private int _trialFrames;
-        /// <summary>缩放后超过 33.33 ms 的可见帧数。</summary>
+        /// <summary>缩放后超过与原生档相同帧预算的可见帧数。</summary>
         private int _trialLate;
         /// <summary>向 Unity 请求的等比缩放值。实际尺寸以相机回读为准。</summary>
         private float _requestedScale = 1f;
@@ -34,16 +38,20 @@ namespace RevGame.Bootstrap
         private int _nativeWidth;
         /// <summary>请求缩放前的原生高度，单位像素。用于核对试验阶段的输入是否一致。</summary>
         private int _nativeHeight;
+        /// <summary>试验前有效的相机宽度，单位像素。第二档要相对于已保留的第一档继续缩小。</summary>
+        private int _beforeWidth;
+        /// <summary>试验前有效的相机高度，单位像素。两轴都要确实缩小才比较收益。</summary>
+        private int _beforeHeight;
 
         /// <summary>只有自动试验仍在采证时为真；已保留的档位无需继续收集试验窗口。</summary>
         public bool Measuring => _remainingWindows > 0;
 
-        /// <summary>设备预算只减少高像素画面的工作，短边目标至少 800 像素。返回 1 表示沿用原始画布。</summary>
-        internal static float CandidateScale(int width, int height)
+        /// <summary>只尝试降低高像素画布。短边受画质档的下限约束，返回 1 表示保持原生尺寸。</summary>
+        internal static float CandidateScale(int width, int height, float scale = .75f, int minimumShortSide = 800)
         {
             int shortSide = Math.Min(width, height);
-            return shortSide > 800 && (long)width * height >= 2_000_000L
-                ? Math.Max(.75f, 800f / shortSide)
+            return shortSide > minimumShortSide && (long)width * height >= 2_000_000L
+                ? Math.Max(scale, (float)minimumShortSide / shortSide)
                 : 1f;
         }
 
@@ -53,35 +61,31 @@ namespace RevGame.Bootstrap
             return after <= before * .92f || (after <= before * 1.02f && afterLate <= beforeLate - .10f);
         }
 
-        /// <summary>同一交火阶段尝试一次候选尺寸。调用者要在收集原生档窗口后调用并重开帧计时。</summary>
-        public bool TryBegin(int stage, string scene, float secondsPerFrame, float lateShare)
+        /// <summary>同一交火阶段按顺序试档。调用者在同一个帧率目标下比较，并跳过切换首帧。</summary>
+        public bool TryBegin(string scene, int minimumShortSide, float secondsPerFrame, float lateShare)
         {
-            if (_attemptedStage == stage)
+            while (_nextCandidate < Candidates.Length)
             {
-                return false;
+                if (TryScale(scene, Candidates[_nextCandidate++], minimumShortSide))
+                {
+                    _beforeSecondsPerFrame = secondsPerFrame;
+                    _beforeLateShare = lateShare;
+                    _trialSeconds = 0;
+                    _trialFrames = 0;
+                    _trialLate = 0;
+                    _remainingWindows = TrialWindows;
+                    return true;
+                }
             }
-
-            _attemptedStage = stage;
-            if (!TryScale(scene))
-            {
-                return false;
-            }
-
-            _beforeSecondsPerFrame = secondsPerFrame;
-            _beforeLateShare = lateShare;
-            _trialSeconds = 0;
-            _trialFrames = 0;
-            _trialLate = 0;
-            _remainingWindows = TrialWindows;
-            return true;
+            return false;
         }
 
-        /// <summary>汇总两段同条件窗口。尺寸若未实际缩小或收益不足，立即恢复原生档。</summary>
+        /// <summary>汇总同条件窗口。尺寸未缩小或收益不足时，立即回到最近一次已验证的档位。</summary>
         public string RecordWindow(float seconds, int frames, int late)
         {
             if (_camera == null || _camera.pixelWidth != _nativeWidth || _camera.pixelHeight != _nativeHeight)
             {
-                Restore();
+                Reset();
                 return "android-pixels-viewport-changed";
             }
 
@@ -93,23 +97,24 @@ namespace RevGame.Bootstrap
                 return null;
             }
 
-            bool effective = _camera.scaledPixelWidth < _nativeWidth && _camera.scaledPixelHeight < _nativeHeight;
+            bool effective = _camera.scaledPixelWidth < _beforeWidth && _camera.scaledPixelHeight < _beforeHeight;
             if (effective && Helps(_beforeSecondsPerFrame, _beforeLateShare, _trialSeconds / _trialFrames,
                 (float)_trialLate / _trialFrames))
             {
+                _retainedScale = _requestedScale;
                 return "android-pixels-kept";
             }
 
-            Restore();
+            RestoreRetainedScale();
             return effective ? "android-pixels-no-gain" : "android-pixels-no-effective-scale";
         }
 
-        /// <summary>中断在途试验并恢复原尺寸。保留阶段编号，避免暂停或切回来频繁闪动。</summary>
+        /// <summary>中断在途试验并恢复已验证尺寸。保留尝试过的档位，避免反复切换。</summary>
         public void CancelTrial()
         {
             if (Measuring)
             {
-                Restore();
+                RestoreRetainedScale();
             }
         }
 
@@ -117,14 +122,16 @@ namespace RevGame.Bootstrap
         public void Reset()
         {
             Restore();
-            _attemptedStage = 0;
+            _nextCandidate = 0;
+            _retainedScale = 1f;
         }
 
         /// <summary>隔离测试可显式切换单一像素变量。返回 false 代表当前配置无法获取世界相机缩放。</summary>
         public bool SetForComparison(string scene, bool reduced)
         {
             Reset();
-            return !reduced || TryScale(scene);
+            // 手动对照保留旧口径，让已发布的 81 棋 0.75 倍数据可以继续复测。
+            return !reduced || TryScale(scene, .75f, 800);
         }
 
         /// <summary>从 Unity 实际相机读取两套尺寸，供隔离试验核对缩放生效以及退场恢复。</summary>
@@ -134,6 +141,7 @@ namespace RevGame.Bootstrap
             return new Dictionary<string, object>
             {
                 ["requestedScale"] = _requestedScale,
+                ["retainedScale"] = _retainedScale,
                 ["measuring"] = Measuring,
                 ["nativeWidth"] = camera == null ? 0 : camera.pixelWidth,
                 ["nativeHeight"] = camera == null ? 0 : camera.pixelHeight,
@@ -144,25 +152,41 @@ namespace RevGame.Bootstrap
             };
         }
 
-        /// <summary>仅接管指定场景内直接显示的正交主相机。专题试验只启用安卓 Vulkan 的内置管线路径。</summary>
-        private bool TryScale(string scene)
+        /// <summary>接管指定场景的直接显示正交相机，或者在已持有的相机上继续试较低档。</summary>
+        private bool TryScale(string scene, float preferredScale, int minimumShortSide)
         {
-            if (SystemInfo.graphicsDeviceType != GraphicsDeviceType.Vulkan || GraphicsSettings.currentRenderPipeline != null
-                || ScalableBufferManager.widthScaleFactor != 1f || ScalableBufferManager.heightScaleFactor != 1f)
+            if (SystemInfo.graphicsDeviceType != GraphicsDeviceType.Vulkan || GraphicsSettings.currentRenderPipeline != null)
             {
                 return false;
             }
 
             Camera camera = FindCamera(scene);
-            if (camera == null || camera.allowDynamicResolution || camera.targetTexture != null || !camera.orthographic)
+            if (camera == null || camera.targetTexture != null || !camera.orthographic)
             {
                 return false;
             }
 
             int width = camera.pixelWidth;
             int height = camera.pixelHeight;
-            float scale = CandidateScale(width, height);
-            if (scale >= 1f)
+            if (_ownsScale)
+            {
+                if (camera != _camera || width != _nativeWidth || height != _nativeHeight)
+                {
+                    // 原生尺寸已经变化，本窗不能继续当作新画布的基线。
+                    Restore();
+                    _retainedScale = 1f;
+                    _nextCandidate = Candidates.Length;
+                    return false;
+                }
+            }
+            else if (camera.allowDynamicResolution || ScalableBufferManager.widthScaleFactor != 1f
+                || ScalableBufferManager.heightScaleFactor != 1f)
+            {
+                return false;
+            }
+
+            float scale = CandidateScale(width, height, preferredScale, minimumShortSide);
+            if (scale >= _requestedScale - .01f)
             {
                 return false;
             }
@@ -173,9 +197,24 @@ namespace RevGame.Bootstrap
             _requestedScale = scale;
             _nativeWidth = width;
             _nativeHeight = height;
+            _beforeWidth = camera.scaledPixelWidth;
+            _beforeHeight = camera.scaledPixelHeight;
             camera.allowDynamicResolution = true;
             ScalableBufferManager.ResizeBuffers(scale, scale);
             return true;
+        }
+
+        /// <summary>回退到最近有效尺寸。原生档可直接归还全局缓冲和相机所有权。</summary>
+        private void RestoreRetainedScale()
+        {
+            _remainingWindows = 0;
+            if (_retainedScale >= 1f)
+            {
+                Restore();
+                return;
+            }
+            _requestedScale = _retainedScale;
+            ScalableBufferManager.ResizeBuffers(_retainedScale, _retainedScale);
         }
 
         /// <summary>按正式战斗场景核对主相机，切场期间大厅或临时相机不会被接管。</summary>

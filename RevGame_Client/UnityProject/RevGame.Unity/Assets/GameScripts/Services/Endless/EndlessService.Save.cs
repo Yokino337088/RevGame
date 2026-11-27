@@ -15,6 +15,7 @@ using RevGame.Core;
 using RevGame.Data;
 using RevGame.Pieces;
 using UnityEngine;
+using Stopwatch = System.Diagnostics.Stopwatch;
 namespace RevGame.Endless
 {
     /// <summary>无尽局持有棋盘与存档状态，通过框架存档门面提交可继续的快照。</summary>
@@ -38,6 +39,16 @@ namespace RevGame.Endless
         private CheckpointWrite _checkpointWrite;
         /// <summary>已有写入时合并的新检查点请求。旧任务完成后才采集当前最新状态。</summary>
         private bool _checkpointRequested;
+        /// <summary>隔离压力局是否复用原生后台编码。仅诊断入口显式开启，每局结束后清除。</summary>
+        private bool _backgroundIsolatedCheckpoints;
+#endif
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+        /// <summary>本局隔离模式发出的自动检查点请求数，包含合并请求。</summary>
+        private int _isolatedCheckpointRequests;
+        /// <summary>本局在主线程消费的后台内存检查点数量，拒绝或合并的请求不计入。</summary>
+        private int _isolatedCheckpointCommits;
+        /// <summary>本局隔离检查点请求的主线程最长耗时，单位毫秒。合并请求稍后补采的开销不计在此处。</summary>
+        private double _isolatedCheckpointRequestMaxMs;
 #endif
         /// <summary>本局最近一次快照写入失败。写入成功或切换棋局后清除，HUD 据此保留重试入口。</summary>
         public bool RunSavePending { get; private set; }
@@ -199,11 +210,28 @@ namespace RevGame.Endless
             return Reject("存档未写入，本局已停止新增计分");
         }
 
-        /// <summary>接受一次战斗检查点请求。原生磁盘档延后完成，隔离档和网页走原同步流程。</summary>
+        /// <summary>接受一次战斗检查点请求。隔离测试记录主线程占用，正式对局直接沿现有提交入口。</summary>
         private void RequestRunCheckpoint()
         {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+            if (Isolated)
+            {
+                long began = Stopwatch.GetTimestamp();
+                SubmitRunCheckpoint();
+                _isolatedCheckpointRequests++;
+                double milliseconds = (Stopwatch.GetTimestamp() - began) * 1000d / Stopwatch.Frequency;
+                _isolatedCheckpointRequestMaxMs = Math.Max(_isolatedCheckpointRequestMaxMs, milliseconds);
+                return;
+            }
+#endif
+            SubmitRunCheckpoint();
+        }
+
+        /// <summary>原生磁盘档和显式后台试验的内存档延后完成，其余入口保持同步提交。</summary>
+        private void SubmitRunCheckpoint()
+        {
 #if REV_ENDLESS_SAVE_WORKER
-            if (!Isolated)
+            if (!Isolated || _backgroundIsolatedCheckpoints)
             {
                 if (!_awaitingFirstSave && Run != null)
                 {
@@ -216,7 +244,7 @@ namespace RevGame.Endless
             Save();
         }
 
-        /// <summary>接收已完成的后台结果，并在写槽空闲时采集一份最新棋局。战斗更新期间不等待磁盘任务。</summary>
+        /// <summary>接收已完成的后台结果，并在写槽空闲时采集一份最新棋局。战斗更新期间不等待编码或写盘。</summary>
         private void AdvanceRunCheckpoint()
         {
 #if REV_ENDLESS_SAVE_WORKER
@@ -228,9 +256,9 @@ namespace RevGame.Endless
             _checkpointRequested = false;
             try
             {
-                // 先从上一笔的结果确定备份策略，随后把独立数据交给工作线程。
+                // 快照只拥有脱离本局的值。隔离试验用空路径指定内存目的地，编码后由主线程发布。
                 EndlessRun snapshot = CaptureSaveSnapshot();
-                string path = SavePath;
+                string path = Isolated ? null : SavePath;
                 bool preserveBackup = _preserveRunBackup;
                 var write = new CheckpointWrite();
                 if (!ThreadPool.QueueUserWorkItem(_ => write.Run(path, snapshot, preserveBackup)))
@@ -255,12 +283,64 @@ namespace RevGame.Endless
 #endif
         }
 
+        /// <summary>新局、续档和退出先收完旧工单，再清除本次试验模式和采样计数。</summary>
+        private void ResetRunCheckpointState()
+        {
+            FinishRunCheckpoint();
 #if REV_ENDLESS_SAVE_WORKER
-        /// <summary>消费一次写入结果。固定步只读取已完成任务，显式边界可以等待任务结束。</summary>
+            _backgroundIsolatedCheckpoints = false;
+#endif
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+            _isolatedCheckpointRequests = 0;
+            _isolatedCheckpointCommits = 0;
+            _isolatedCheckpointRequestMaxMs = 0;
+#endif
+        }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+        /// <summary>由已确认隔离的压力入口切换模式。旧工单先交付，无法后台编码的平台拒绝开启。</summary>
+        private bool SetIsolatedCheckpointBackground(bool enabled)
+        {
+#if REV_ENDLESS_SAVE_WORKER
+            if (_backgroundIsolatedCheckpoints != enabled)
+            {
+                FinishRunCheckpoint();
+                _backgroundIsolatedCheckpoints = enabled;
+            }
+            return true;
+#else
+            return !enabled;
+#endif
+        }
+
+        /// <summary>读取隔离压力局的检查点模式、工单状态和请求用时，供同负载安卓对照。</summary>
+        public object DebugCheckpointState()
+        {
+            var state = new Dictionary<string, object>
+            {
+                ["requests"] = _isolatedCheckpointRequests,
+                ["backgroundCommits"] = _isolatedCheckpointCommits,
+                ["requestMaxMs"] = _isolatedCheckpointRequestMaxMs
+            };
+#if REV_ENDLESS_SAVE_WORKER
+            state["backgroundMemory"] = _backgroundIsolatedCheckpoints;
+            state["inFlight"] = _checkpointWrite != null;
+            state["queued"] = _checkpointRequested;
+#else
+            state["backgroundMemory"] = false;
+            state["inFlight"] = false;
+            state["queued"] = false;
+#endif
+            return state;
+        }
+#endif
+
+#if REV_ENDLESS_SAVE_WORKER
+        /// <summary>消费一次后台结果。内存档在这里才提交，磁盘档则在收到回执后更新备份状态。</summary>
         private void CompleteRunCheckpoint(bool wait)
         {
             CheckpointWrite write = _checkpointWrite;
-            if (write == null || !write.TryGetResult(wait, out Exception error))
+            if (write == null || !write.TryGetResult(wait, out Exception error, out string isolatedJson))
             {
                 return;
             }
@@ -270,27 +350,47 @@ namespace RevGame.Endless
                 FailRunSave(error);
                 return;
             }
-            _preserveRunBackup = false;
+            if (isolatedJson != null)
+            {
+                _isolatedSave = isolatedJson;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+                _isolatedCheckpointCommits++;
+#endif
+            }
+            else
+            {
+                _preserveRunBackup = false;
+            }
             RunSavePending = false;
         }
 
-        /// <summary>一个原生文件工单的回执。工作线程完成后发布，主线程负责查询或在明确边界等待。</summary>
+        /// <summary>一个原生检查点的回执。工作线程只读独立快照，主线程消费结果。</summary>
         private sealed class CheckpointWrite
         {
             /// <summary>只保护回执字段，编码和磁盘操作都在锁外。</summary>
             private readonly object _receipt = new object();
-            /// <summary>工作线程已完成文件操作，且结果可读取。</summary>
+            /// <summary>后台编码或文件操作已完成，回执可以读取。</summary>
             private bool _finished;
             /// <summary>成功时为空，失败时保留原异常供主线程更新提示。</summary>
             private Exception _error;
+            /// <summary>隔离档编码结果。磁盘任务和失败时为空，不允许后台直接修改续玩槽。</summary>
+            private string _isolatedJson;
 
-            /// <summary>在线程池编码并提交快照，文件关闭后才发布回执和唤醒等待者。</summary>
+            /// <summary>在线程池处理快照。空路径只编码到内存，非空路径走现有原子落盘，完成才发布回执。</summary>
             internal void Run(string path, EndlessRun snapshot, bool preserveBackup)
             {
                 Exception failure = null;
+                string isolatedJson = null;
                 try
                 {
-                    WriteRunCheckpoint(path, snapshot, preserveBackup);
+                    if (path == null)
+                    {
+                        isolatedJson = EncodeSave(snapshot);
+                    }
+                    else
+                    {
+                        WriteRunCheckpoint(path, snapshot, preserveBackup);
+                    }
                 }
                 catch (Exception error)
                 {
@@ -299,13 +399,14 @@ namespace RevGame.Endless
                 lock (_receipt)
                 {
                     _error = failure;
+                    _isolatedJson = isolatedJson;
                     _finished = true;
                     Monitor.PulseAll(_receipt);
                 }
             }
 
-            /// <summary>取已完成结果。固定步使用非等待模式，显式保存和换局才等待发布。</summary>
-            internal bool TryGetResult(bool wait, out Exception error)
+            /// <summary>取后台错误和内存档。固定步只查已完成工单，显式保存和换局才等待。</summary>
+            internal bool TryGetResult(bool wait, out Exception error, out string isolatedJson)
             {
                 lock (_receipt)
                 {
@@ -314,6 +415,7 @@ namespace RevGame.Endless
                         Monitor.Wait(_receipt);
                     }
                     error = _error;
+                    isolatedJson = _isolatedJson;
                     return _finished;
                 }
             }

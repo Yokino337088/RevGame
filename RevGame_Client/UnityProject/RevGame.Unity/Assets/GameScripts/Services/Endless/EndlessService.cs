@@ -469,10 +469,10 @@ namespace RevGame.Endless
         {
             Clear();
         }
-        /// <summary>新局、读档和离场先结清此前检查点，再统一重置棋盘、回执与缓存，避免旧任务覆盖新档。</summary>
+        /// <summary>新局、读档和离场先结清此前检查点及隔离试验，再重置棋盘、回执与缓存。</summary>
         private void Clear()
         {
-            FinishRunCheckpoint();
+            ResetRunCheckpointState();
             LastError = string.Empty;
             Units.Clear();
             World?.Horde.Clear();
