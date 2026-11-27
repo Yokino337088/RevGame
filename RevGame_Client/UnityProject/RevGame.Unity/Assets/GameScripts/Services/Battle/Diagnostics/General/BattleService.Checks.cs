@@ -556,17 +556,6 @@ namespace RevGame.Services
             }
             finally { RevEvent.RemoveAllByOwner(owner); }
         }
-        private Piece AddCheckPiece(GameSide side, PieceKind kind, BoardPos pos, StarTier star = StarTier.One, int size = 0)
-        {
-            var piece = new Piece(_nextPieceId++, PieceCatalog.Get(kind, star), side, size);
-
-            if (!_board.Place(piece, pos))
-            {
-                throw new InvalidOperationException("测试夹具占格冲突：" + pos);
-            }
-            (side == GameSide.Player ? _playerPieces : _enemyPieces).Add(piece);
-            return piece;
-        }
     }
 }
 #endif

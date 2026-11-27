@@ -135,6 +135,18 @@ namespace RevGame.Services
             return true;
         }
 
+        /// <summary>供 Editor 与自动化 Player 的固定夹具使用，成功占格后将棋子登记到对应阵营。</summary>
+        private Piece AddCheckPiece(GameSide side, PieceKind kind, BoardPos pos, StarTier star = StarTier.One, int size = 0)
+        {
+            var piece = new Piece(_nextPieceId++, PieceCatalog.Get(kind, star), side, size);
+            if (!_board.Place(piece, pos))
+            {
+                throw new System.InvalidOperationException("测试夹具占格冲突：" + pos);
+            }
+            (side == GameSide.Player ? _playerPieces : _enemyPieces).Add(piece);
+            return piece;
+        }
+
         /// <summary>在隔离第一章铺满隔行，再由真实结算事件触发 Boss 阵容预检与恢复界面。</summary>
         private bool SettleCrowdedBoardForCheck()
         {

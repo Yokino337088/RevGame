@@ -2,6 +2,8 @@
 
 出包按用户当次要求从 GitHub Actions 手动运行。普通提交继续触发 RevGame 规范检查。成功后从对应运行的 **Artifacts** 领取完整的 Windows x64 游戏目录或 Android ARM64 APK。项目在出包前提交与所选代码版本配套的 AB（游戏资源包）。 [RevGame 规范检查](https://github.com/Yokino337088/RevGame/actions/workflows/revgame-policy.yml)
 
+拥有仓库写权限的成员可在 **Actions → 对应的出包工作流 → Run workflow** 选择 `main` 手动运行。执行时沿用仓库已配置的 Unity 授权和目标平台签名。 [GitHub 手动运行权限](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/manually-run-a-workflow)
+
 中国版 Unity 授权使用 **RevGame IL2CPP 正式出包**。点 **Run workflow**，选 `main` 和单一目标 `windows` 或 `android`。每个目标使用自己的托管 Windows runner、独立检出和按平台区分的并发组。 [中国版工作流](https://github.com/Yokino337088/RevGame/actions/workflows/revgame-il2cpp-release.yml)
 
 ## 构建授权与正式签名
