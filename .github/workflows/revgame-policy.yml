@@ -18,7 +18,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
@@ -45,7 +45,16 @@ jobs:
           if [ -z "$BASE_SHA" ] || [ "$BASE_SHA" = "0000000000000000000000000000000000000000" ]; then
             BASE_SHA="$(git rev-parse HEAD^)"
           fi
-          python tools/RevPolicy/check.py --base "$BASE_SHA" --format github
+          if [ "$GITHUB_EVENT_NAME" = pull_request ]; then
+            checker="$(mktemp -d)"
+            trap 'rm -r -- "$checker"' EXIT
+            git archive "$BASE_SHA" tools/RevPolicy | tar -xC "$checker"
+            python -B -m unittest discover -s "$checker/tools/RevPolicy" -p test_layout.py
+            python "$checker/tools/RevPolicy/check.py" --repo "$GITHUB_WORKSPACE" --base "$BASE_SHA" --policy-from-base --format github
+          else
+            python -B -m unittest discover -s tools/RevPolicy -p test_layout.py
+            python tools/RevPolicy/check.py --base "$BASE_SHA" --format github
+          fi
   offline-rules:
     runs-on: ubuntu-latest
     steps:

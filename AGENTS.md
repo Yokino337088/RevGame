@@ -12,6 +12,7 @@ RevGame 用真实业务验证 Revolution 框架。Unity 工程为 `RevGame_Clien
 - 导入前先在 AssetDatabase 核对已有资产、逻辑路径和包归属，只补项目缺少的资源。相同内容复用一份正式资产，打包时同一目标平台只归一个 AB，在用 Sprite 只归一个 Sprite Atlas V2。跨包通过依赖复用，发布前核对实际依赖、清单和包体。见 [Unity 与资源迭代](.codex/skills/revgame-development/references/unity-and-assets.md)。
 - 最后一次影响 Unity 编译的改动后，在目标在线编辑器确认编辑态，依次刷新导入、`editor.recompile`、`editor wait`、`editor.compilation`。确认 `requestId` 对应、`finished=true`、无 Error 后再进 Play 或交付。用户对局先交接，验收后改脚本须重跑。
 - 改代码或资产运行 `python tools/RevPolicy/check.py`，提交前用 `--staged`。业务验收按需求走正常入口，核对实际状态、错误和清理。资产变更走项目资源验证及真实 AB 冷启动。
+- PR 使用目标分支的 RevPolicy 规则。业务编辑器代码、运行时代码、Shader 分别放入 `Assets/Editor`、`Assets/GameScripts`、`Assets/GameShader`。原生决斗库按已登记平台路径导入，`StreamingAssets` 按各自平台的构建清单发布。未经主分支纳入基线的外部插件、Unity 包及包来源不得随 PR 引入。
 - 开发验收默认在 Unity Editor Play 完成。仅在用户明确要求交付测试包，或验收项确实需要独立 Player 时打包。新测试包统一输出到仓库根目录 `打包测试(不入库)/` 下的任务子目录。
 - 云端 Unity 构建按用户当次要求手动触发，Windows 和 Android 分别使用自己的出包入口及构建任务。普通 push 和 PR 照常跑 RevGame 规范检查。 目标为 `main` 的 PR 还要通过云端 `Unity 脚本编译`。出包直接使用所选提交里已生成的目标平台 `StreamingAssets` AB，构建前核对清单与 SHA-256，上传前核对同一批包内字节。资源更新后先在项目中生成并提交配套 AB，再发起出包。
 - 游戏测试优先常驻项目 RevMCP。首次连接和域重载后执行 `rev_discover`，用真实 `rev_call` 或带断言和清理的 `rev_run`，报告实际动作及结果。Editor 已在线时用 live。详见 [验收与证据细则](.codex/skills/revgame-development/references/project-acceptance.md)。

@@ -6,7 +6,7 @@
 - 直接执行 `editor console --severity error --limit 50` 查 Unity Console，用 `--query` 按原文或源文件筛选。若 `editor wait` 返回非零，读取随附的同一编辑器会话诊断，再到 `editor compilation` 核对本次结果。根据文件、行列与错误信息修复任务范围内的问题，再重编并复测。
 
 - 改代码或 Unity 资产后，在仓库根运行 `python tools/RevPolicy/check.py`，修正本次新增的违规。准备提交时用 `--staged` 检查实际暂存内容。Git hook 和 CI 使用同一个检查器。
-- 材质、Shader、资产与 `.meta`、GUID、框架快照更新和部分 C# 规则可以自动检查。面板职责、中文注释质量、资源寿命与实际画面仍按本文件及当前专题验收。安装和诊断见 [Codex 插件与规范检查](../../../README.md)。
+- 材质、Shader、资产与 `.meta`、GUID、框架快照更新和部分 C# 规则可以自动检查。 PR 还会以 main 为基线检查脚本位置、原生库路径、各平台 AB 清单与文件摘要、新的外部插件和包来源。GitHub 日志中的 REV120 到 REV124 分别指向脚本、Shader、原生库、StreamingAssets 和第三方依赖。面板职责、中文注释质量、资源寿命与实际画面仍按本文件及当前专题验收。安装和诊断见 [Codex 插件与规范检查](../../../README.md)。
 - 交付代码前，按 [新手注释守则](code-and-comments.md) 核对实际改动中的声明和方法内关键实现。补齐遗漏、过期和不准确的注释。自动检查器通过后仍需完成这一步。
 
 ## 编辑器自动化调用方式（2026-10-23 实测）

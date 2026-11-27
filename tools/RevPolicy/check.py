@@ -11,6 +11,9 @@ from difflib import SequenceMatcher
 from pathlib import Path, PurePosixPath
 
 
+from layout import inspect_layout
+
+
 POLICY = ".codex/rev-policy.json"
 GUID = re.compile(rb"(?m)^guid:[ \t]*([0-9a-fA-F]{32})[ \t]*\r?$")
 GUID_FIELD = re.compile(rb"(?m)^guid:")
@@ -273,7 +276,9 @@ def check_code(snapshot, policy, assets, changes):
         relative = after[len(assets) + 1:]
         if "Generated" in PurePosixPath(relative).parts or relative.endswith(".Generated.cs"):
             continue
-        old = snapshot.read(before, old=True).decode("utf-8-sig") if before else ""
+        # 从 Editor 移到运行时是新的编译边界，不能把原先合法的 UnityEditor 引用当成历史违规。
+        entered_runtime = before and before.startswith(assets + "/Editor/") and relative.startswith("GameScripts/")
+        old = snapshot.read(before, old=True).decode("utf-8-sig") if before and not entered_runtime else ""
         new = snapshot.read(after).decode("utf-8-sig")
         if old == new and before == after:
             continue
@@ -342,7 +347,10 @@ def main():
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument("--staged", action="store_true", help="只验证准备提交的索引。")
     mode.add_argument("--base", help="比较指定引用与 HEAD 的共同祖先至 HEAD。")
+    parser.add_argument("--policy-from-base", action="store_true", help="在 PR 中读取目标分支的规则。")
     args = parser.parse_args()
+    if args.policy_from_base and not args.base:
+        parser.error("--policy-from-base 需要 --base。")
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")
         sys.stderr.reconfigure(encoding="utf-8")
@@ -350,7 +358,7 @@ def main():
         snapshot = Snapshot(args.repo, args.staged, args.base)
         if POLICY not in snapshot.files:
             raise ValueError(f"此 Git 视图缺少 {POLICY}。")
-        policy = json.loads(snapshot.read(POLICY).decode("utf-8-sig"))
+        policy = json.loads(snapshot.read(POLICY, old=args.policy_from_base).decode("utf-8-sig"))
         if policy["version"] != 1:
             raise ValueError("规范配置版本不受支持。")
         project = PurePosixPath(policy["unityProject"])
@@ -359,6 +367,7 @@ def main():
         assets = (project / "Assets").as_posix()
         changes = list(snapshot.changes())
         errors = check_assets(snapshot, policy, assets, changes) | check_vendor(snapshot, policy, assets, changes)
+        errors.update(Diagnostic(*finding) for finding in inspect_layout(snapshot, project.as_posix(), changes))
         errors.update(check_code(snapshot, policy, assets, changes))
     except (OSError, KeyError, TypeError, ValueError, subprocess.SubprocessError) as exc:
         print(f"无法完成规范检查：{exc}", file=sys.stderr)

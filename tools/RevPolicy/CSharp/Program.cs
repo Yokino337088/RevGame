@@ -97,8 +97,20 @@ internal static class Program
             var tree = CSharpSyntaxTree.ParseText(source, new CSharpParseOptions(LanguageVersion.Latest, preprocessorSymbols: symbols));
             SourceText text = tree.GetText();
             SyntaxNode[] nodes = tree.GetRoot().DescendantNodes().ToArray();
+            // 只有 Player 配置中的 UnityEditor 真正越过运行时边界，保留受 UNITY_EDITOR 保护的诊断代码。
+            bool player = runtime && !symbols.Contains("UNITY_EDITOR") && !symbols.Contains("REVGAME_OFFLINE_TESTS");
             foreach (SyntaxNode node in nodes)
             {
+                if (player && node is IdentifierNameSyntax editorNamespace && editorNamespace.Identifier.ValueText == "UnityEditor" &&
+                    editorNamespace.Parent is UsingDirectiveSyntax or QualifiedNameSyntax or AliasQualifiedNameSyntax or MemberAccessExpressionSyntax)
+                {
+                    Finding finding = At("REV120", editorNamespace.Identifier, "unity-editor-in-player",
+                        "编辑器 API 应移至 Assets/Editor。运行时的编辑器诊断须受 UNITY_EDITOR 保护。", text);
+                    if (seen.Add(finding))
+                    {
+                        yield return finding;
+                    }
+                }
                 foreach (Finding finding in InspectNode(node, text, runtime, panel, boot, internalTypes))
                 {
                     if (seen.Add(finding))
