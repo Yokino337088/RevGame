@@ -114,16 +114,23 @@ namespace RevGame.Endless
                 }
                 return UnityEngine.Object.FindObjectOfType<EndlessArena>()?.BenchmarkGuardSelection(Service);
             }, owner: Owner);
+#endif
+#if UNITY_EDITOR || UNITY_ANDROID
             const string hordeModeSchema = "{\"type\":\"object\",\"properties\":{\"mode\":{\"type\":\"string\",\"enum\":[\"auto\",\"cpu\",\"gpu\"]}},\"required\":[\"mode\"],\"additionalProperties\":false}";
-            RevRuntimeAutomation.Register("endless.horde-vertex-mode", "Editor 隔离局 A/B。auto 恢复策略，cpu 与 gpu 比较同一份显示样本", hordeModeSchema, SetHordeVertexMode, owner: Owner);
+            RevRuntimeAutomation.Register("endless.horde-vertex-mode", "隔离局比较 CPU 或 GPU 顶点插值，auto 恢复策略", hordeModeSchema, SetHordeVertexMode, owner: Owner);
+            RevRuntimeAutomation.Register("endless.horde-vertex-state", "只读实际插值路径、可画方块数和累计提交字节", Empty,
+                _ => UnityEngine.Object.FindObjectOfType<EndlessArena>()?.HordePresentationMetrics() ?? new Dictionary<string, object>(),
+                readOnly: true, owner: Owner);
 #endif
             RevRuntimeAutomation.Register("endless.save-recovery-check", "使用临时目录验证无尽棋局和战绩的备份恢复", Empty, _ => EndlessService.CheckSaveRecovery(), owner: Owner);
-#if UNITY_EDITOR
+#if UNITY_EDITOR || UNITY_ANDROID
             // 固定满池的同步/后台对照使用独立文件槽，不访问玩家档案。
             RevRuntimeAutomation.Register("endless.checkpoint-bench", "同输入对比满池同步保存、后台提交与可观察的落盘耗时",
                 Empty, _ => EndlessService.BenchmarkFullPoolCheckpoints(), owner: Owner);
 #endif
             RevRuntimeAutomation.Register("endless.ecs-benchmark", "固定240/1024实体全扫描与空间桶查询CPU对照", Empty, _ => EndlessService.BenchmarkEcs(), owner: Owner);
+            RevRuntimeAutomation.Register("endless.march-blockers-check", "同一棋盘对照敌潮逐格查询和行缓存，验证占格变化并计时",
+                Empty, _ => EndlessService.CheckMarchBlockers(), owner: Owner);
             RevRuntimeAutomation.Register("endless.rules", "隔离实例验证占格、暂停、存档随机源、上限和重复结算", Empty, _ => EndlessChecks.Run(), owner: Owner);
             RevRuntimeAutomation.Register("endless.boss-rules", "隔离实例跑完六章领主：招式归属、专属技周期、献祭潮掉血与预警一致性", Empty, _ => EndlessService.CheckBossSkills(), owner: Owner);
             const string chapterSchema = "{\"type\":\"object\",\"properties\":{\"chapter\":{\"type\":\"integer\",\"minimum\":1,\"maximum\":6}},\"required\":[\"chapter\"],\"additionalProperties\":false}";
@@ -148,7 +155,7 @@ namespace RevGame.Endless
             RevRuntimeAutomation.Register("endless.snowball-rules", "隔离实例验证波次血攻成长、一步连刷与上限、10波领主来袭横幅、领主奖励随机累加与彩色横幅、增益接入伤害攻速范围生命", Empty, _ => EndlessService.CheckSnowballRules(), owner: Owner);
             RevRuntimeAutomation.Register("endless.feedback", "只读：六章同款战斗反馈的在播/累计次数、绿色落子提示格数、外围敌人出生口分布", Empty, _ => Feedback(), readOnly: true, owner: Owner);
         }
-#if UNITY_EDITOR
+#if UNITY_EDITOR || UNITY_ANDROID
         /// <summary>只允许在隔离局切换显示路径。着色器或设备不支持时明确拒绝，保持当前画面。</summary>
         private static object SetHordeVertexMode(string json)
         {
@@ -171,7 +178,7 @@ namespace RevGame.Endless
             };
         }
 
-        /// <summary>Editor 隔离 A/B 请求的白名单参数，不接受任意材质或资源目标。</summary>
+        /// <summary>编辑器和安卓隔离对照的白名单参数。模式以外的输入由动作校验。</summary>
         [Serializable]
         private sealed class HordeVertexModeArgs
         {
@@ -260,6 +267,7 @@ namespace RevGame.Endless
                 ["selectedCard"] = r?.selectedCard ?? -1, ["selectedUnit"] = r?.selectedUnit ?? -1,
                 ["isolated"] = s.Isolated, ["settled"] = r?.settled ?? false, ["random"] = r?.random ?? 0,
                 ["tickCount"] = s.TickCount, ["tickTotalMs"] = s.TickMilliseconds, ["tickMaxMs"] = s.MaxTickMilliseconds,
+                ["simulationTiming"] = s.World.SimulationTiming(),
                 ["units"] = s.Units.Count, ["logicCount"] = RevLogic.Count, ["pool"] = RevPool.DumpStats(),
                 ["hasEnemies"] = r != null && (s.HordeCount() > 0 || s.Occupied(GameSide.Enemy) > 0),
                 ["hasKills"] = r != null && r.kills + r.invaderKills > 0,

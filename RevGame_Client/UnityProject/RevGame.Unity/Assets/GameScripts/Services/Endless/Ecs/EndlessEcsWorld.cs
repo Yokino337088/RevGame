@@ -23,6 +23,14 @@ namespace RevGame.Endless
         /// <summary>索引是否反映本步全部移动/出生；HP变化无需重建，命中时仍实时校验IsAlive。</summary>
         private bool _spatialReady;
         private int _spatialVersion = -1;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+        /// <summary>移动、战斗、死亡提交三段的累计 Stopwatch 刻度。只在开发包保存。</summary>
+        private readonly long[] _stageTicks = new long[3];
+        /// <summary>三段各自观察到的单步最长刻度，峰值可能来自不同模拟步。</summary>
+        private readonly long[] _stagePeakTicks = new long[3];
+        /// <summary>完整经过三个阶段的逻辑步数。不含暂停、布阵和计时前的业务。</summary>
+        private int _timedSteps;
+#endif
         public long CandidateChecks
         {
             get;
@@ -44,13 +52,54 @@ namespace RevGame.Endless
         {
             _spatialReady = false;
         }
-        /// <summary>由EndlessLogic固定模拟步驱动；只有无尽服务创建和调用此World。</summary>
+        /// <summary>由无尽固定步驱动。保持既有提交顺序，开发包额外记录三个阶段的时间。</summary>
         public void Simulate(EndlessService service, float step)
         {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+            long began = System.Diagnostics.Stopwatch.GetTimestamp();
+#endif
             EndlessEcsSystems.Movement(service, step);
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+            began = RecordStage(0, began);
+#endif
             EndlessEcsSystems.Combat(service, step);
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+            began = RecordStage(1, began);
+#endif
             EndlessEcsSystems.Death(service);
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+            RecordStage(2, began);
+            _timedSteps++;
+#endif
         }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+        /// <summary>结束一个阶段并交出同一个时间戳，阶段的耗时不会重叠。</summary>
+        private long RecordStage(int stage, long began)
+        {
+            long end = System.Diagnostics.Stopwatch.GetTimestamp();
+            long elapsed = end - began;
+            _stageTicks[stage] += elapsed;
+            _stagePeakTicks[stage] = Math.Max(_stagePeakTicks[stage], elapsed);
+            return end;
+        }
+
+        /// <summary>把本局累计刻度换算为毫秒。查询在采样窗外执行，单个峰值对应各自的阶段。</summary>
+        public object SimulationTiming()
+        {
+            double millisecondsPerTick = 1000d / System.Diagnostics.Stopwatch.Frequency;
+            return new Dictionary<string, object>
+            {
+                ["steps"] = _timedSteps,
+                ["movementTotalMs"] = _stageTicks[0] * millisecondsPerTick,
+                ["combatTotalMs"] = _stageTicks[1] * millisecondsPerTick,
+                ["deathTotalMs"] = _stageTicks[2] * millisecondsPerTick,
+                ["movementMaxMs"] = _stagePeakTicks[0] * millisecondsPerTick,
+                ["combatMaxMs"] = _stagePeakTicks[1] * millisecondsPerTick,
+                ["deathMaxMs"] = _stagePeakTicks[2] * millisecondsPerTick
+            };
+        }
+#endif
         private void BuildSpatial()
         {
             if (_spatialReady && _spatialVersion == Horde.SpatialVersion)

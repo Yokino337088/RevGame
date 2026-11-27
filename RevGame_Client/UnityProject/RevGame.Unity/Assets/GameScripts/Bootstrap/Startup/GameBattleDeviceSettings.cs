@@ -14,6 +14,8 @@ namespace RevGame.Bootstrap
     {
         /// <summary>每个有效窗口的时长，单位秒。慢帧也计入；只有后台、遮挡与非交火阶段不采样。</summary>
         private const float WindowSeconds = 4f;
+        /// <summary>安卓 30 FPS 的整帧预算，单位秒。固定阈值也用于原生档和缩放档的比较。</summary>
+        private const float AndroidFrameBudget = 1f / 30f;
         /// <summary>Unity 所在平台。Windows Editor 也能检测当前适配器。</summary>
         private readonly GameBattlePlatform _platform;
         /// <summary>Windows 当前渲染适配器的硬件拓扑。</summary>
@@ -30,6 +32,8 @@ namespace RevGame.Bootstrap
         private readonly int _shaderLevel;
         /// <summary>显式采样模式需要固定目标与像素预算，避免在 A/B 中途改变口径。</summary>
         private readonly bool _fixedTest;
+        /// <summary>安卓 Vulkan 独有的世界相机试验。其他图形路径不收集像素试验计数。</summary>
+        private readonly GameAndroidBattlePixelTrial _androidPixels;
         /// <summary>当前在远征或无尽时为真，退出负责恢复宿主原配置。</summary>
         private bool _active;
         /// <summary>本次进入前记录的移动端帧率设置，含 Unity 默认值 -1。</summary>
@@ -40,6 +44,10 @@ namespace RevGame.Bootstrap
         private int _frames;
         /// <summary>超过当前预算 125% 的可见帧数。</summary>
         private int _slowFrames;
+        /// <summary>本窗口超过 30 FPS 帧预算的实际帧数。</summary>
+        private int _androidLateFrames;
+        /// <summary>平均低于 29 FPS 的连续交火窗口数，使用少量余量避免在接近目标时缩画面。</summary>
+        private int _androidUnderTargetWindows;
         /// <summary>连续有超预算迹象的完整窗口数。</summary>
         private int _slowWindows;
         /// <summary>连续稳定的完整窗口数。</summary>
@@ -80,6 +88,10 @@ namespace RevGame.Bootstrap
         {
             _flow = RevServices.GetRequired<GameFlow>();
             _platform = Platform();
+            if (_platform == GameBattlePlatform.Android && SystemInfo.graphicsDeviceType == UnityEngine.Rendering.GraphicsDeviceType.Vulkan)
+            {
+                _androidPixels = new GameAndroidBattlePixelTrial();
+            }
             _gpuKind = IdentifyGpu(_platform);
             _processors = SystemInfo.processorCount;
             _shaderLevel = SystemInfo.graphicsShaderLevel;
@@ -117,6 +129,7 @@ namespace RevGame.Bootstrap
                 ["thermal"] = _thermal,
                 ["androidTarget"] = plan.AndroidFrameRate,
                 ["actualTargetFrameRate"] = Application.targetFrameRate,
+                ["androidWorld"] = _androidPixels?.Snapshot(AndroidBattleScene()),
                 ["webPixels"] = plan.WebPixelBudget,
                 ["webPixelTrial"] = _webTrialPrevious.HasValue,
                 ["ordinaryProjectileLimit"] = plan.LimitOrdinaryProjectiles,
@@ -124,6 +137,32 @@ namespace RevGame.Bootstrap
                 ["gpuInterpolation"] = plan.AllowGpuInterpolation,
                 ["gpuMinimumSprites"] = plan.GpuMinimumSprites
             };
+        }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+        /// <summary>隔离测试固定帧率口径后，独立切换安卓相机像素。请求成功后再回读实际相机尺寸。</summary>
+        internal object SetAndroidPixelsForComparison(bool reduced)
+        {
+            if (_androidPixels == null || !_fixedTest || !RevServices.GetRequired<StoryProgress>().IsIsolated
+                || !_active || _flow.IsGameplayBlocked || FightingStage() == 0)
+            {
+                throw new InvalidOperationException("需要正在交火的安卓隔离测试局");
+            }
+
+            if (!_androidPixels.SetForComparison(AndroidBattleScene(), reduced))
+            {
+                throw new InvalidOperationException("当前相机无法启用安卓 Vulkan 画面缩放");
+            }
+
+            return Snapshot();
+        }
+#endif
+
+        /// <summary>只把当前远征或无尽的正式场景交给相机所有权检查。</summary>
+        private string AndroidBattleScene()
+        {
+            return _flow.Screen == GameScreen.Battle ? GameFlow.BattleSceneName :
+                _flow.Screen == GameScreen.Endless ? GameFlow.EndlessSceneName : null;
         }
 
         /// <summary>识别实际 Player 宿主。编辑器不会冒充 Android 或浏览器来切全局显示设置。</summary>
@@ -182,12 +221,13 @@ namespace RevGame.Bootstrap
             }
         }
 
-        /// <summary>前台战斗单独查热状态，恢复焦点立即核对热预算。只有真实交火的帧间隔才参与表现升降档。</summary>
+        /// <summary>前台战斗查热状态与真实交火帧间隔。安卓先试单一像素变量，再恢复帧率档位决策。</summary>
         private void ObserveFrame()
         {
             if (!_active || !Application.isFocused)
             {
                 _nextThermalAt = 0f;
+                _androidPixels?.CancelTrial();
                 CancelWebTrial("focus-lost");
                 DiscardEvidence();
                 return;
@@ -197,11 +237,20 @@ namespace RevGame.Bootstrap
             if (_platform == GameBattlePlatform.Android && now >= _nextThermalAt)
             {
                 _nextThermalAt = now + WindowSeconds;
+                int previousThermal = _thermal;
                 _thermal = ReadThermal();
                 GameBattleDeviceTier allowed = AllowedTier();
                 if (GameBattleDevicePolicy.Current.Tier > allowed)
                 {
+                    _androidPixels?.CancelTrial();
                     Apply(allowed, "thermal-ceiling");
+                    return;
+                }
+                if (previousThermal != _thermal && _androidPixels?.Measuring == true)
+                {
+                    _androidPixels.CancelTrial();
+                    _lastDecision = "android-pixels-thermal-changed";
+                    DiscardEvidence();
                     return;
                 }
             }
@@ -209,12 +258,14 @@ namespace RevGame.Bootstrap
             int stage = _flow.IsGameplayBlocked ? 0 : FightingStage();
             if (stage == 0)
             {
+                _androidPixels?.CancelTrial();
                 CancelWebTrial("battle-interrupted");
                 DiscardEvidence();
                 return;
             }
             if (stage != _observationStage)
             {
+                _androidPixels?.Reset();
                 CancelWebTrial("stage-changed");
                 _observationStage = stage;
                 DiscardEvidence();
@@ -232,6 +283,7 @@ namespace RevGame.Bootstrap
             if (elapsed >= WindowSeconds)
             {
                 // 浏览器挂起时可能没有失焦帧。单个间隔不能冒充整段连续交火，长停顿由独立诊断记录。
+                _androidPixels?.CancelTrial();
                 CancelWebTrial("observation-gap");
                 DiscardEvidence();
                 return;
@@ -241,6 +293,10 @@ namespace RevGame.Bootstrap
             if (elapsed > 1.25f / target)
             {
                 _slowFrames++;
+            }
+            if (_androidPixels != null && elapsed > AndroidFrameBudget)
+            {
+                _androidLateFrames++;
             }
             if (_elapsed < WindowSeconds)
             {
@@ -254,7 +310,7 @@ namespace RevGame.Bootstrap
                 return;
             }
 
-            int frames = _frames, late = _slowFrames;
+            int frames = _frames, late = _slowFrames, androidLate = _androidLateFrames;
             float seconds = _elapsed;
             bool slow = late * 10 > frames;
             bool stable = late * 50 <= frames && frames >= seconds * target * .96f;
@@ -262,6 +318,11 @@ namespace RevGame.Bootstrap
 
             GameBattleDeviceTier current = plan.Tier;
             GameBattleDeviceTier ceiling = AllowedTier();
+
+            if (_androidPixels != null && ObserveAndroidPixels(stage, plan, seconds, frames, androidLate))
+            {
+                return;
+            }
 
             _slowWindows = slow ? _slowWindows + 1 : 0;
             _stableWindows = stable ? _stableWindows + 1 : 0;
@@ -289,6 +350,40 @@ namespace RevGame.Bootstrap
             {
                 Apply(current, "display-refresh-changed");
             }
+        }
+
+        /// <summary>在同一交火阶段比较原生与缩放档。试验窗口占用决策时，帧率目标维持在原值。</summary>
+        private bool ObserveAndroidPixels(int stage, GameBattleDevicePlan plan, float seconds, int frames, int late)
+        {
+            if (_androidPixels.Measuring)
+            {
+                // 显示刷新率换了，原生档与缩放档已失去同一目标；先还原比例，再应用新刷新率预算。
+                if (Create(plan.Tier).AndroidFrameRate != plan.AndroidFrameRate)
+                {
+                    _androidPixels.CancelTrial();
+                    Apply(plan.Tier, "display-refresh-changed");
+                    return true;
+                }
+
+                string decision = _androidPixels.RecordWindow(seconds, frames, late);
+                if (decision != null)
+                {
+                    _lastDecision = decision;
+                    DiscardEvidence();
+                }
+                return true;
+            }
+
+            _androidUnderTargetWindows = frames < seconds * 29f ? _androidUnderTargetWindows + 1 : 0;
+            // 两窗持续低于目标才尝试，避免一次特效峰值就降低世界清晰度。
+            if (_androidUnderTargetWindows >= 2 && _androidPixels.TryBegin(stage, AndroidBattleScene(),
+                seconds / frames, (float)late / frames))
+            {
+                _lastDecision = "android-pixel-trial";
+                DiscardEvidence();
+                return true;
+            }
+            return false;
         }
 
         /// <summary>热状态中等、未知时最多均衡，严重时只留省电；其余条件继续受设备初始上限约束。</summary>
@@ -429,32 +524,35 @@ namespace RevGame.Bootstrap
             DiscardEvidence();
         }
 
-        /// <summary>清空尚未下结论的采样窗口。</summary>
+        /// <summary>清空当窗的累计时间、帧数和超出两种预算的计数。</summary>
         private void ResetWindow()
         {
             _elapsed = 0f;
             _frames = 0;
             _slowFrames = 0;
+            _androidLateFrames = 0;
         }
 
-        /// <summary>暂停、遮挡或失焦中断对照时，清空窗口和连续升降档证据。</summary>
+        /// <summary>暂停、遮挡或失焦中断对照时，清空窗口、连续升降档与安卓缩放的触发证据。</summary>
         private void DiscardEvidence()
         {
             ResetWindow();
             _slowWindows = 0;
             _stableWindows = 0;
+            _androidUnderTargetWindows = 0;
             _observePrevious = false;
         }
 
-        /// <summary>进入后台时清掉旧的热采样截止时间；恢复后的第一帧读取系统现状。</summary>
+        /// <summary>进入后台时取消在途像素试验并清空热采样期限，恢复后的第一帧读取系统现状。</summary>
         private void OnSuspending()
         {
             _nextThermalAt = 0f;
+            _androidPixels?.CancelTrial();
             CancelWebTrial("application-paused");
             DiscardEvidence();
         }
 
-        /// <summary>关闭当前战斗预算，在自己的宿主范围内还原帧率和网页画布预算。</summary>
+        /// <summary>关闭当前战斗预算，在自己的宿主范围内还原帧率、安卓缓冲比例或网页画布。</summary>
         private void Restore()
         {
             if (!_active)
@@ -464,6 +562,7 @@ namespace RevGame.Bootstrap
 
             _active = false;
             RevMono.RemoveAllOf(this);
+            _androidPixels?.Reset();
             var previous = GameBattleDevicePolicy.Current;
             if (previous.AndroidFrameRate > 0)
             {

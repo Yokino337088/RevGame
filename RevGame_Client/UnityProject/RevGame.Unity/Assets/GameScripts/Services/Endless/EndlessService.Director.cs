@@ -387,6 +387,90 @@ namespace RevGame.Endless
         }
         /// <summary>杂兵停在挡路棋子/棋心前多远（格）：略小于一格，看起来是贴脸肉搏而不是重叠。几何容差，不是数值。</summary>
         private const float ContactGap = .85f;
+        /// <summary>无尽盘的边长，单位格。阻挡缓存按固定九路棋盘排列。</summary>
+        private const int MarchBoardSide = 9;
+        /// <summary>按行收集可能阻挡的棋子和中心断点，只保留当前占格版本的引用。</summary>
+        private readonly Piece[] _marchBlockers = new Piece[MarchBoardSide * MarchBoardSide];
+        /// <summary>与棋子缓存同下标的列号。每行由小到大，右侧队伍逆序读取。</summary>
+        private readonly int[] _marchBlockerColumns = new int[MarchBoardSide * MarchBoardSide];
+        /// <summary>每行已缓存的候选数量；-1 表示该行尚未在当前版本读取。</summary>
+        private readonly int[] _marchBlockerCounts = { -1, -1, -1, -1, -1, -1, -1, -1, -1 };
+        /// <summary>缓存对应的棋盘占格版本。放置、移动或移除后，下次访问会重新读取当行。</summary>
+        private int _marchBlockerTopology = -1;
+
+        /// <summary>归还上一版棋盘的引用；也用于离场，避免竞技场清空后继续引用旧棋。</summary>
+        private void ClearMarchBlockers()
+        {
+            _marchBlockerTopology = -1;
+            Array.Clear(_marchBlockers, 0, _marchBlockers.Length);
+            for (int row = 0; row < _marchBlockerCounts.Length; row++)
+            {
+                _marchBlockerCounts[row] = -1;
+            }
+        }
+
+        /// <summary>只填本次有人访问的行。缓存按占格版本失效，普通掉血不触发全盘重读。</summary>
+        private int ReadMarchBlockers(int row)
+        {
+            int version = Board.TopologyVersion;
+            if (_marchBlockerTopology != version)
+            {
+                ClearMarchBlockers();
+                _marchBlockerTopology = version;
+            }
+
+            int count = _marchBlockerCounts[row];
+            if (count >= 0)
+            {
+                return count;
+            }
+
+            count = 0;
+            int start = row * MarchBoardSide;
+            for (int col = 0; col < MarchBoardSide; col++)
+            {
+                // 旧规则在中心行遇到棋心即停止。即使该格没有棋子，也要把这个位置放在原遍历顺序中。
+                Piece piece = Board.GetPiece(new BoardPos(col, row));
+                if (piece != null || (row == 4 && col == 4))
+                {
+                    _marchBlockers[start + count] = piece;
+                    _marchBlockerColumns[start + count] = col;
+                    count++;
+                }
+            }
+            _marchBlockerCounts[row] = count;
+            return count;
+        }
+
+        /// <summary>按来敌方向读取同一行的候选。棋心断点与半格边界沿用原判定，空路返回中心列。</summary>
+        private Piece FindMarchBlocker(int row, int gate, float x, out int column)
+        {
+            float dir = gate == 0 ? 1 : -1;
+            int count = ReadMarchBlockers(row);
+            int start = row * MarchBoardSide;
+            for (int step = 0; step < count; step++)
+            {
+                int index = start + (gate == 0 ? step : count - 1 - step);
+                int col = _marchBlockerColumns[index];
+                if ((col - x) * dir < -.5f)
+                {
+                    continue;
+                }
+                if (row == 4 && col == 4)
+                {
+                    break;
+                }
+                Piece piece = _marchBlockers[index];
+                if (piece != null && piece.Side == GameSide.Player && piece.IsAlive)
+                {
+                    column = col;
+                    return piece;
+                }
+            }
+            column = 4;
+            return null;
+        }
+
         /// <summary>
         /// 杂兵涌入（吸血鬼幸存者式“敌潮压上来”）：
         ///   1. 沿所在行朝棋盘中心前进，前方第一枚己方棋子就是“墙”，停在墙前 ContactGap 处；
@@ -394,35 +478,15 @@ namespace RevGame.Endless
         ///   3. 排头贴住棋子时，每 EnemyAttackSeconds 秒对它造成一次 HordeAttack 伤害（随巡回成长，同棋心伤害口径）；
         ///   4. 整行没有棋子挡（或挡在前面的就是棋心）时，排头冲到中心列算“突破”，沿用原有的门点预警 + 打棋心规则。
         /// 杂兵不占格、不参与围棋连通块，所以能穿过盘内的敌方入侵者；只有己方棋子能挡住它们——这正是布阵的意义。
-        /// 层距和减速后的倍率由本模拟步传入。挡路棋子的生死仍当场查询，前一槽击杀后下一槽立即看到。
+        /// 层距和减速后的倍率由本模拟步传入。占格候选按拓扑版本复用，阵营和生死仍逐次读取。
+        /// 前一槽击杀、移动或移除挡路棋子后，下一槽立即按当前棋盘判断。
         /// </summary>
         private void MarchHorde(ref EndlessHorde h, float move, int rank, float queueSpacing, float slowedSpeed)
         {
             int row = Mathf.Clamp(Mathf.RoundToInt(h.y), 0, 8);
             float dir = h.gate == 0 ? 1 : -1;
-            Piece blocker = null;
-            // 默认目标：中心列（第 4 列）前方，即突破点。
-            float front = 4 - dir * ContactGap;
-            for (int step = 0; step < 9; step++)
-            {
-                int cx = h.gate == 0 ? step : 8 - step;
-                // 只看还在自己前方的格子：已经被甩在身后的棋子挡不住它。
-                if ((cx - h.x) * dir < -.5f)
-                {
-                    continue;
-                }
-                if (row == 4 && cx == 4)
-                {
-                    break;
-                }
-                Piece piece = Board.GetPiece(new BoardPos(cx, row));
-                if (piece != null && piece.Side == GameSide.Player && piece.IsAlive)
-                {
-                    blocker = piece;
-                    front = cx - dir * ContactGap;
-                    break;
-                }
-            }
+            Piece blocker = FindMarchBlocker(row, h.gate, h.x, out int column);
+            float front = column - dir * ContactGap;
             float stop = front - dir * rank * queueSpacing;
             float remaining = (stop - h.x) * dir;
             if (remaining > .01f)

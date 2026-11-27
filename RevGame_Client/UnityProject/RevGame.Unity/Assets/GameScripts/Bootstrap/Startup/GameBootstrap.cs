@@ -116,6 +116,10 @@ namespace RevGame.Bootstrap
             RevRuntimeAutomation.Register("game.device-optimization.state", "只读当前适配器、战斗画质预算和热状态",
                 "{\"type\":\"object\",\"properties\":{},\"additionalProperties\":false}",
                 _ => RevServices.GetRequired<GameBattleDeviceSettings>().Snapshot(), readOnly: true, owner: this);
+            RevRuntimeAutomation.Register("game.device-optimization.android-pixels", "安卓隔离交火中切换原生尺寸或候选尺寸，等待相机尺寸回读",
+                "{\"type\":\"object\",\"properties\":{\"reduced\":{\"type\":\"boolean\"}},\"required\":[\"reduced\"],\"additionalProperties\":false}",
+                json => RevServices.GetRequired<GameBattleDeviceSettings>().SetAndroidPixelsForComparison(
+                    JsonUtility.FromJson<AndroidPixelComparison>(json).reduced), owner: this);
             // 自动化服务与启动宿主同寿命，才能从大厅跨场景跑到章节奖励；正式包完全不注册。
             // 执行器只模拟输入和观察结果，游戏规则仍由原来的GameFlow/BattleService决定。
             RevServices.Register<RevGame.Automation.GameAutomationRunner, RevGame.Automation.GameAutomationRunner>(owner: this);
@@ -136,6 +140,15 @@ namespace RevGame.Bootstrap
             RevServices.GetRequired<RevGame.Automation.GamePlayerPerformanceSession>();
 #endif
         }
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
+        /// <summary>开发测试动作的单变量输入，由 RevRuntimeAutomation 的参数校验后交给 JSON 反序列化。</summary>
+        [System.Serializable]
+        private sealed class AndroidPixelComparison
+        {
+            /// <summary>真表示试降世界相机像素，假表示恢复原生尺寸。</summary>
+            public bool reduced;
+        }
+#endif
         /// <summary>先用框架资源门面异步读导表数据，再开放主界面；首次真机加载不依赖编辑器直读。</summary>
         private async void Start()
         {
@@ -173,6 +186,7 @@ namespace RevGame.Bootstrap
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
             // 必须先停测试再退出游戏域：测试可能还按着按钮，不能对已销毁的旧面板补发松手/点击。
             RevRuntimeAutomation.Unregister("game.device-optimization.state");
+            RevRuntimeAutomation.Unregister("game.device-optimization.android-pixels");
             RevServices.Unregister<RevGame.Automation.GamePlayerPerformanceSession>();
             RevServices.Unregister<RevGame.Automation.GamePerformanceMonitor>();
             GameGmCommands.UnregisterAll();

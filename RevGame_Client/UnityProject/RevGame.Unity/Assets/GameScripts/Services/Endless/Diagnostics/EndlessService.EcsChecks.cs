@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using RevGame.Core;
+using RevGame.Pieces;
 using UnityEngine;
 
 namespace RevGame.Endless
@@ -204,7 +205,7 @@ namespace RevGame.Endless
             }
         }
 
-#if UNITY_EDITOR
+#if UNITY_EDITOR || UNITY_ANDROID
         /// <summary>对临时磁盘槽检查后台快照隔离、备份保护、异常回执与显式保存顺序。</summary>
         private static void CheckBackgroundCheckpoints(EndlessService service, string path, string backupPath, string backup, List<string> checks)
         {
@@ -549,6 +550,138 @@ namespace RevGame.Endless
             }
             Run.phase = EndlessPhase.Fighting;
             return true;
+        }
+
+        /// <summary>对照真实棋盘上逐格查询和行缓存。覆盖两侧、棋心断点、移位、死亡和移除，并返回稳定占格的 CPU 局部用时。</summary>
+        public static object CheckMarchBlockers()
+        {
+            using var service = new EndlessService();
+            service.Begin(0, 0, 1101, isolated: true, deferFirstSave: true);
+            var queries = new List<(int row, int gate, float x)>();
+            for (int row = 0; row < MarchBoardSide; row++)
+            {
+                for (int gate = 0; gate < 2; gate++)
+                {
+                    // 四分之一格步长覆盖半格临界点和敌人从盘外入场的坐标。
+                    for (int offset = -16; offset <= 48; offset++)
+                    {
+                        queries.Add((row, gate, offset * .25f));
+                    }
+                }
+            }
+
+            // 前一只敌人可能在同一步打死棋子。比较变更前后，确认缓存不滞后一只怪。
+            int checkedQueries = 0;
+            void Compare()
+            {
+                foreach (var q in queries)
+                {
+                    Piece old = service.ScanMarchBlocker(q.row, q.gate, q.x, out int oldCol);
+                    Piece cached = service.FindMarchBlocker(q.row, q.gate, q.x, out int cachedCol);
+                    if (!ReferenceEquals(old, cached) || oldCol != cachedCol)
+                    {
+                        throw new InvalidOperationException("无尽敌潮挡路棋子或列号与逐格查询不同");
+                    }
+                }
+                checkedQueries += queries.Count;
+            }
+
+            Compare();
+            Piece moved = service.Units[0].Piece;
+            bool didMove = false;
+            for (int row = 0; row < MarchBoardSide && !didMove; row++)
+            {
+                for (int col = 0; col < MarchBoardSide && !didMove; col++)
+                {
+                    var destination = new BoardPos(col, row);
+                    if (row != moved.Pos.Y)
+                    {
+                        didMove = service.Board.Move(moved, destination, respectEnemyEyes: false);
+                    }
+                }
+            }
+            if (!didMove)
+            {
+                throw new InvalidOperationException("挡路缓存对照未找到可移动到另一行的位置");
+            }
+            Compare();
+            moved.TakeDamage(moved.Hp);
+            Compare();
+            if (!service.Board.Remove(moved))
+            {
+                throw new InvalidOperationException("挡路缓存对照无法移除棋子");
+            }
+            Compare();
+
+            // 在相同占格上交替先后。校验和保持两条计时路径实际读取相同的棋子和列。
+            const int rounds = 5;
+            const int repeats = 80;
+            var scanMs = new double[rounds];
+            var cacheMs = new double[rounds];
+            for (int round = -1; round < rounds; round++)
+            {
+                int checksum = 0;
+                for (int order = 0; order < 2; order++)
+                {
+                    bool cached = ((round + order) & 1) != 0;
+                    int sum = 0;
+                    long began = Stopwatch.GetTimestamp();
+                    for (int iter = 0; iter < repeats; iter++)
+                    {
+                        foreach (var q in queries)
+                        {
+                            int column;
+                            Piece hit = cached ? service.FindMarchBlocker(q.row, q.gate, q.x, out column) :
+                                service.ScanMarchBlocker(q.row, q.gate, q.x, out column);
+                            sum += column + (hit?.Id ?? 0);
+                        }
+                    }
+                    double ms = (Stopwatch.GetTimestamp() - began) * 1000d / Stopwatch.Frequency;
+                    if (order == 0)
+                    {
+                        checksum = sum;
+                    }
+                    else if (checksum != sum)
+                    {
+                        throw new InvalidOperationException("计时遍历结果不同");
+                    }
+                    if (round >= 0)
+                    {
+                        (cached ? cacheMs : scanMs)[round] = ms;
+                    }
+                }
+            }
+            return new Dictionary<string, object>
+            {
+                ["success"] = true, ["checkedQueries"] = checkedQueries, ["queriesPerRound"] = queries.Count * repeats,
+                ["scanMs"] = scanMs, ["cacheMs"] = cacheMs
+            };
+        }
+
+        /// <summary>保留原来逐格取棋的验证口径。取棋心之前先判断坐标是否已越过，顺序与原生产循环一致。</summary>
+        private Piece ScanMarchBlocker(int row, int gate, float x, out int column)
+        {
+            float dir = gate == 0 ? 1f : -1f;
+            for (int step = 0; step < MarchBoardSide; step++)
+            {
+                int col = gate == 0 ? step : MarchBoardSide - 1 - step;
+                if ((col - x) * dir < -.5f)
+                {
+                    continue;
+                }
+                if (row == 4 && col == 4)
+                {
+                    break;
+                }
+                Piece piece = Board.GetPiece(new BoardPos(col, row));
+                if (piece != null && piece.Side == GameSide.Player && piece.IsAlive)
+                {
+                    column = col;
+                    return piece;
+                }
+            }
+            column = 4;
+            return null;
         }
 
         /// <summary>

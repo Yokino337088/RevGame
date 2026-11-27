@@ -1,3 +1,6 @@
+#if UNITY_EDITOR || (UNITY_ANDROID && (DEVELOPMENT_BUILD || REV_AUTOMATION))
+#define REV_HORDE_RENDER_CHECKS
+#endif
 using System;
 using System.Collections.Generic;
 using RevGame.Core;
@@ -52,8 +55,8 @@ namespace RevGame.Endless
         private MaterialPropertyBlock _barGpuProperties;
         /// <summary>上一批次正在使用哪种顶点约定。开始或回池时均恢复 CPU 材质。</summary>
         private bool _hordeInterpolatesOnGpu;
-#if UNITY_EDITOR
-        /// <summary>Editor 低层回归可以强制选择有能力的 GPU 或 CPU，不修改正式设备策略。回池归零。</summary>
+#if REV_HORDE_RENDER_CHECKS
+        /// <summary>隔离回归可以强制选择有能力的 GPU 或 CPU。回池归零。</summary>
         private bool? _forceHordeGpuInterpolation;
         /// <summary>实测窗口中确实选到 GPU 端点方案的呈现帧数。</summary>
         private int _hordeGpuFrames;
@@ -67,6 +70,8 @@ namespace RevGame.Endless
         private int _hordeInterpolatedFrames;
         /// <summary>采样窗口中读到的敌潮提交数，供验证采样与表现的频率差异。</summary>
         private int _hordeCaptures;
+#endif
+#if UNITY_EDITOR
         /// <summary>剑气、环绕盾牌、护盾泡泡和突刺在采样期间交给 Unity 的动态顶点字节。</summary>
         private long _effectUploadBytes;
         /// <summary>同样帧数按旧四批满容量写入的字节，不含固定纹理坐标或索引。</summary>
@@ -139,13 +144,15 @@ namespace RevGame.Endless
             _hordeDrawBlend = 1f;
             _hordeDrawAtlas = -1;
             _hordeQuadCount = 0;
-#if UNITY_EDITOR
+#if REV_HORDE_RENDER_CHECKS
             _hordePositionBytes = 0;
             _hordeAppearanceBytes = 0;
             _hordeWholeVertexBytes = 0;
             _hordeInterpolatedFrames = 0;
             _hordeCaptures = 0;
             _hordeGpuFrames = 0;
+#endif
+#if UNITY_EDITOR
             _effectUploadBytes = 0;
             _effectWholeBytes = 0;
             _effectDrawnQuads = 0;
@@ -175,7 +182,7 @@ namespace RevGame.Endless
             }
         }
 
-        /// <summary>仅对能力和 Shader 都足够的 Windows/安卓准备端点流。安卓可在后续升档，预留其能力与真正启用分开。</summary>
+        /// <summary>对可达到 GPU 档的设备准备端点流。安卓隔离测试包也允许验证可用变体。</summary>
         private bool TryPrepareHordeGpuMaterials()
         {
 #if UNITY_WEBGL
@@ -186,8 +193,13 @@ namespace RevGame.Endless
                 || Application.platform == RuntimePlatform.WindowsPlayer || android;
             int shaderLevel = SystemInfo.graphicsShaderLevel;
             // 安卓开局档位保守，热状态与稳定帧窗口确认后才可升级。预留不会在开局提前切换渲染路径。
-            bool prepare = Application.isEditor || GameBattleDevicePolicy.Current.AllowGpuInterpolation
-                || (android && shaderLevel >= 45);
+            bool androidCanReachGpuTier = android && shaderLevel >= 45 && SystemInfo.systemMemorySize >= 7000
+                && SystemInfo.processorCount >= 8;
+#if REV_HORDE_RENDER_CHECKS
+            // 仅隔离测试需要在未达到正式档位的样本机量 CPU/GPU 交叉点。
+            androidCanReachGpuTier |= android && shaderLevel >= 45 && RevServices.Get<EndlessService>()?.Isolated == true;
+#endif
+            bool prepare = Application.isEditor || GameBattleDevicePolicy.Current.AllowGpuInterpolation || androidCanReachGpuTier;
             if (!native || !prepare || shaderLevel < 30)
             {
                 return false;
@@ -263,7 +275,7 @@ namespace RevGame.Endless
             {
                 return false;
             }
-#if UNITY_EDITOR
+#if REV_HORDE_RENDER_CHECKS
             if (_forceHordeGpuInterpolation.HasValue)
             {
                 return _forceHordeGpuInterpolation.Value;
@@ -275,8 +287,8 @@ namespace RevGame.Endless
             return policy.AllowGpuInterpolation && _hordeQuadCount >= threshold;
         }
 
-#if UNITY_EDITOR
-        /// <summary>隔离 A/B 用的 Editor 覆盖。true 仍要求现用 Shader 和设备能力，null 恢复正式设备策略。</summary>
+#if REV_HORDE_RENDER_CHECKS
+        /// <summary>隔离 A/B 覆盖。true 仍要求现用 Shader 和设备能力，null 恢复正式设备策略。</summary>
         internal bool OverrideHordeGpuForChecks(bool? enabled)
         {
             if (!_active || (enabled == true && (_hordeGpuMaterial == null || _barGpuMaterial == null)))
@@ -551,7 +563,7 @@ namespace RevGame.Endless
                 }
                 _hordeDrawBlend = blend;
             }
-#if UNITY_EDITOR
+#if REV_HORDE_RENDER_CHECKS
             if (sampling)
             {
                 int quads = (atlasReady ? _hordeBatch.SubmittedCount : 0) + HordeBarCount;
@@ -640,7 +652,7 @@ namespace RevGame.Endless
             _hordeBatch?.Submit(0);
             _barBatch?.Submit(0);
             SetHordeGpuMaterial(false);
-#if UNITY_EDITOR
+#if REV_HORDE_RENDER_CHECKS
             _forceHordeGpuInterpolation = null;
 #endif
             _hordeProperties?.Clear();
@@ -701,7 +713,23 @@ namespace RevGame.Endless
         }
 #endif
 
-        /// <summary>查询时才排序帧样本。Editor 的字节只表示提交到网格接口的范围，整帧与显存带宽需分开解释。</summary>
+#if REV_HORDE_RENDER_CHECKS
+        /// <summary>回读实际插值路线和提交计数。累积字节仅代表传给 Unity 网格接口的数据。</summary>
+        internal object HordePresentationMetrics()
+        {
+            return new Dictionary<string, object>
+            {
+                ["positionBytes"] = _hordePositionBytes, ["appearanceBytes"] = _hordeAppearanceBytes,
+                ["wholeVertexBytesAtSameQuadCounts"] = _hordeWholeVertexBytes,
+                ["captures"] = _hordeCaptures, ["interpolatedFrames"] = _hordeInterpolatedFrames,
+                ["gpuFrames"] = _hordeGpuFrames, ["gpuInterpolation"] = _hordeInterpolatesOnGpu,
+                ["gpuAvailable"] = _hordeGpuMaterial != null && _barGpuMaterial != null,
+                ["bodyQuads"] = _hordeQuadCount, ["barQuads"] = HordeBarCount
+            };
+        }
+#endif
+
+        /// <summary>查询时才排序帧样本。整帧计时与提交到网格接口的数据分别记录。</summary>
         public object Metrics()
         {
             float[] sorted = new float[_frameCount];
@@ -725,15 +753,11 @@ namespace RevGame.Endless
                 ["maxMs"] = sorted.Length == 0 ? 0 : sorted[sorted.Length - 1],
                 ["over33Ms"] = over33Ms,
                 ["gcCounterObservedPositive"] = _gcObserved, ["gcBytesPerSecond"] = seconds > 0 ? _gcBytes / seconds : 0,
-                ["scope"] = "Unity Editor整帧，含UI与工具；非目标手机验收",
+                ["scope"] = Application.isEditor ? "Unity Editor同期整帧，包含编辑器开销" : "Android Player同期整帧",
+#if REV_HORDE_RENDER_CHECKS
+                ["hordePresentation"] = HordePresentationMetrics(),
+#endif
 #if UNITY_EDITOR
-                ["hordePresentation"] = new Dictionary<string, object>
-                {
-                    ["positionBytes"] = _hordePositionBytes, ["appearanceBytes"] = _hordeAppearanceBytes,
-                    ["wholeVertexBytesAtSameQuadCounts"] = _hordeWholeVertexBytes,
-                    ["captures"] = _hordeCaptures, ["interpolatedFrames"] = _hordeInterpolatedFrames,
-                    ["gpuFrames"] = _hordeGpuFrames, ["gpuInterpolation"] = _hordeInterpolatesOnGpu
-                },
                 ["guardSelection"] = GuardSelectionMetrics(),
                 ["localEffects"] = new Dictionary<string, object>
                 {

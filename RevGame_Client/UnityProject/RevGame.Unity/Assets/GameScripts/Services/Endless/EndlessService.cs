@@ -477,6 +477,7 @@ namespace RevGame.Endless
             Units.Clear();
             World?.Horde.Clear();
             Board.Reset();
+            ClearMarchBlockers();
             _ruleVersion = -1;
             _impactSerial = 0;
             Array.Clear(Impacts, 0, Impacts.Length);

@@ -1,3 +1,6 @@
+#if UNITY_EDITOR || (UNITY_ANDROID && (DEVELOPMENT_BUILD || REV_AUTOMATION))
+#define REV_HORDE_RENDER_CHECKS
+#endif
 using System;
 using System.Runtime.InteropServices;
 using UnityEngine;
@@ -71,12 +74,12 @@ namespace RevGame.Endless
 
         /// <summary>已设置到子网格的方块数。初始化为 -1，保证第一次写入得到空索引范围。</summary>
         private int _submitted = -1;
-#if UNITY_EDITOR
-        /// <summary>同一布局下每个方块每次提交的位置字节数，供 Editor 测量上传量。</summary>
+#if REV_HORDE_RENDER_CHECKS
+        /// <summary>同一布局下每个方块每次提交的位置字节数，供隔离测量读取。</summary>
         internal const int PositionBytesPerQuad = 4 * 3 * sizeof(float);
-        /// <summary>同一布局下每个方块每次提交的颜色与 UV 字节数。</summary>
+        /// <summary>同一布局下每个方块每次提交的颜色与 UV 字节数，涵盖四顶点。</summary>
         internal const int AppearanceBytesPerQuad = 4 * 6 * sizeof(float);
-        /// <summary>GPU 路径每个四边形新增的端点流字节数，供 Editor 量化实际提交。</summary>
+        /// <summary>GPU 路径每个四边形新增的端点流字节数，用于量化实际提交。</summary>
         private const int EndpointsBytesPerQuad = 4 * 4 * sizeof(float);
         /// <summary>本次提交的几何字节数，包含按需写入的 GPU 端点。仅更新插值参数时为零。</summary>
         internal int LastPositionBytes
@@ -90,7 +93,7 @@ namespace RevGame.Endless
             get;
             private set;
         }
-        /// <summary>上次提交的活动方块数，仅用于 Editor 验证实际上传范围。</summary>
+        /// <summary>上次提交的活动方块数，仅用于开发测试验证实际上传范围。</summary>
         internal int SubmittedCount => _submitted;
 #endif
 
@@ -178,7 +181,7 @@ namespace RevGame.Endless
         {
             onGpu = onGpu && CanInterpolateOnGpu;
             bool rangeChanged = _submitted != count;
-#if UNITY_EDITOR
+#if REV_HORDE_RENDER_CHECKS
             LastPositionBytes = 0;
             LastAppearanceBytes = 0;
 #endif
@@ -199,14 +202,14 @@ namespace RevGame.Endless
                     }
                 }
                 Mesh.SetVertexBufferData(_positions, 0, 0, count * 4, stream: 0, flags: MeshUpdateFlags.DontRecalculateBounds);
-#if UNITY_EDITOR
+#if REV_HORDE_RENDER_CHECKS
                 LastPositionBytes = count * (PositionBytesPerQuad + (onGpu ? EndpointsBytesPerQuad : 0));
 #endif
             }
             if (count > 0 && (appearanceChanged || rangeChanged))
             {
                 Mesh.SetVertexBufferData(_appearance, 0, 0, count * 4, stream: 1, flags: MeshUpdateFlags.DontRecalculateBounds);
-#if UNITY_EDITOR
+#if REV_HORDE_RENDER_CHECKS
                 LastAppearanceBytes = count * AppearanceBytesPerQuad;
 #endif
             }
