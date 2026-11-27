@@ -33,7 +33,7 @@ Windows 只读 Unity 授权。正式签名放在 Android 专属步骤，签名�
 
 在仓库的 Actions Secrets 中添加 `UNITY_LICENSE`、`UNITY_EMAIL` 和 `UNITY_PASSWORD`。`UNITY_LICENSE` 保存 Unity Hub 激活个人版后生成的 `.ulf` 文件全文，另外两项来自同一 Unity 账号。 [GameCI 个人版授权说明](https://game.ci/docs/github/activation/#personal-license)
 
-在 Actions 中手动运行 **RevGame GameCI 个人版导入验证**，选择 `main`。该任务用 GitHub 标准 Ubuntu 托管 runner 和国际版 `2022.3.15f1` 导入工程。通过条件是 Unity 完成脚本编译并实际加载启动场景，随后生成本轮回执。通过后才进入 Windows IL2CPP 和 Android 正式签名适配。 [验证工作流](https://github.com/Yokino337088/RevGame/actions/workflows/revgame-gameci-personal-smoke.yml)
+在 Actions 中手动运行 **RevGame Unity 编译检查**，选择 `main`。该任务用 GitHub 标准 Ubuntu 托管 runner 和国际版 `2022.3.15f1` 导入工程。通过条件是 Unity 完成脚本编译并实际加载启动场景，随后生成本轮回执。通过后才进入 Windows IL2CPP 和 Android 正式签名适配。 [验证工作流](https://github.com/Yokino337088/RevGame/actions/workflows/revgame-gameci-personal-smoke.yml)
 
 导入验证通过后，按需求单独打开 **RevGame GameCI Windows 手动出包** 或 **RevGame GameCI Android 手动出包**，从 `main` 运行。Windows 在标准托管 Windows runner 构建，ARM64 Android 在标准托管 Ubuntu runner 构建。Android 沿用上文的四项签名 Secrets，验包读取成品中的应用 ID `com.Tangmen.RevGame`、桌面名称「围棋大作战」和公开证书指纹。 [Windows 出包](https://github.com/Yokino337088/RevGame/actions/workflows/revgame-gameci-personal-windows.yml) · [Android 出包](https://github.com/Yokino337088/RevGame/actions/workflows/revgame-gameci-personal-android.yml)
 
@@ -41,7 +41,7 @@ Windows 只读 Unity 授权。正式签名放在 Android 专属步骤，签名�
 
 GameCI 按构建目标、runner 系统及架构、编辑器镜像和项目配置缓存 `Library` 的资源导入产物及索引。每批资源有独立缓存键，找不到完全相同的版本时，Unity 从兼容缓存检查并重导改动项。Player、Gradle 工作区与签名文件属于当次任务的临时数据。 [GitHub Actions 缓存说明](https://github.com/actions/cache#cache-action)
 
-通过 **RevGame GameCI 个人版导入验证 → android-cache** 可以提前生成 Android 出包所用的导入缓存。该任务使用与正式 Android 出包相同的 Unity 镜像、资源预检和缓存键，按本轮回执核对实际编辑器版本、平台和启动场景。首次导入成功时写入缓存，后续运行可在「核对本轮导入回执和资产缓存」中查看精确命中状态。它只需要 Unity 许可。 [导入工作流](https://github.com/Yokino337088/RevGame/actions/workflows/revgame-gameci-personal-smoke.yml)
+通过 **RevGame Unity 编译检查 → android-cache** 可以提前生成 Android 出包所用的导入缓存。该任务使用与正式 Android 出包相同的 Unity 镜像、资源预检和缓存键，按本轮回执核对实际编辑器版本、平台和启动场景。首次导入成功时写入缓存，后续运行可在「核对本轮导入回执和资产缓存」中查看精确命中状态。它只需要 Unity 许可。 [导入工作流](https://github.com/Yokino337088/RevGame/actions/workflows/revgame-gameci-personal-smoke.yml)
 
 ## Revolution 自动化测试包
 
