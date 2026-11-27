@@ -38,3 +38,4 @@ namespace RevGame.Editor
         }
     }
 }
+#error REVGAME_CI_NEGATIVE_PROBE
