@@ -77,6 +77,7 @@ Shader "RevGame/Background/Chapter04_Swamp"
 
             // 排气口使用连续画面坐标而非取整格子，雾扩散时不会在格边被切出方形接缝。
             // 固定种子错峰循环：鼓起→破裂→毒气上升→消散；返回泡膜/凹坑/毒气/余波。
+            // 移动 Vulkan 上，同一个口在整帧共用生命周期权重，只计算当前有颜色贡献的阶段。
             float4 SwampVent(float2 p, float2 center, float time, float seed, float curl)
             {
                 // 排气为局部效果：远离覆盖区时尾部贡献低于8位颜色一阶，不应执行全部exp/归一化。
@@ -87,29 +88,49 @@ Shader "RevGame/Background/Chapter04_Swamp"
                 float2 delta = p - center;
                 [branch] if (seed > _Particles || abs(delta.x) > 0.31 || delta.y < -0.27 || delta.y > _GasHeight + 0.29)
                 { return 0; }
-                float enabled = 1;
                 float age = frac(time * 0.14 + seed);
                 float grow = smoothstep(0.0, 0.62, age);
                 float alive = smoothstep(0.0, 0.10, age) * (1.0 - smoothstep(0.60, 0.70, age));
-                float2 d = (p - center) * float2(1.0, 1.45);
+                float burstLife = smoothstep(0.62, 0.70, age) * (1.0 - smoothstep(0.74, 1.0, age));
+                float gasLife = smoothstep(0.48, 0.65, age) * (1.0 - smoothstep(0.82, 1.0, age));
+                float2 d = delta * float2(1.0, 1.45);
                 float radius = max(length(d), 0.001);
                 float size = 0.009 + grow * _BubbleSize * 0.20;
-                float edge = exp(-abs(radius - size) * 290.0);
-                float lighting = saturate(dot(d / radius, float2(-0.6, 0.8)) * 0.5 + 0.5);
-                float cap = exp(-dot(d - float2(-size * 0.32, size * 0.36), d - float2(-size * 0.32, size * 0.36)) / max(size * size * 0.12, 0.00001));
-                float rim = (edge * (0.08 + lighting * 0.65) + cap * 0.32) * alive;
-                float crater = (1.0 - smoothstep(size * 0.4, size, radius)) * alive;
-                float burstAge = saturate((age - 0.63) / 0.37);
-                float burst = exp(-abs(radius - size - burstAge * 0.085) * 230.0);
-                burst *= smoothstep(0.62, 0.70, age) * (1.0 - smoothstep(0.74, 1.0, age));
-                // 气柱向上走并逐渐变宽，噪声卷出边缘；不使用整齐的椭圆贴片。
-                float gasAge = saturate((age - 0.48) / 0.52);
-                float gasLife = smoothstep(0.48, 0.65, age) * (1.0 - smoothstep(0.82, 1.0, age));
-                float2 plume = p - center - float2(sin(time * 0.6 + seed * 20.0) * gasAge * 0.04, gasAge * _GasHeight);
-                plume.x += (curl - 0.5) * 0.06;
-                float2 spread = plume / float2(0.025 + gasAge * 0.08, 0.045 + gasAge * 0.12);
-                float gas = exp(-dot(spread, spread) * 2.0) * gasLife * (0.55 + curl * 0.65);
-                return float4(rim, crater, gas, burst) * enabled;
+                float4 vent = 0;
+
+                // 以原公式的精确零权重决定是否跳过。淡入淡出和阶段重叠仍完整参与混合。
+                #if defined(SHADER_API_MOBILE) && defined(SHADER_API_VULKAN)
+                [branch] if (alive > 0.0)
+                #endif
+                {
+                    float edge = exp(-abs(radius - size) * 290.0);
+                    float lighting = saturate(dot(d / radius, float2(-0.6, 0.8)) * 0.5 + 0.5);
+                    float2 capDelta = d - float2(-size * 0.32, size * 0.36);
+                    float cap = exp(-dot(capDelta, capDelta) / max(size * size * 0.12, 0.00001));
+                    vent.x = (edge * (0.08 + lighting * 0.65) + cap * 0.32) * alive;
+                    vent.y = (1.0 - smoothstep(size * 0.4, size, radius)) * alive;
+                }
+
+                #if defined(SHADER_API_MOBILE) && defined(SHADER_API_VULKAN)
+                [branch] if (burstLife > 0.0)
+                #endif
+                {
+                    float burstAge = saturate((age - 0.63) / 0.37);
+                    vent.w = exp(-abs(radius - size - burstAge * 0.085) * 230.0) * burstLife;
+                }
+
+                // 气柱向上走并逐渐变宽，噪声卷出边缘。权重为零时可省去三角函数和指数。
+                #if defined(SHADER_API_MOBILE) && defined(SHADER_API_VULKAN)
+                [branch] if (gasLife > 0.0)
+                #endif
+                {
+                    float gasAge = saturate((age - 0.48) / 0.52);
+                    float2 plume = delta - float2(sin(time * 0.6 + seed * 20.0) * gasAge * 0.04, gasAge * _GasHeight);
+                    plume.x += (curl - 0.5) * 0.06;
+                    float2 spread = plume / float2(0.025 + gasAge * 0.08, 0.045 + gasAge * 0.12);
+                    vent.z = exp(-dot(spread, spread) * 2.0) * gasLife * (0.55 + curl * 0.65);
+                }
+                return vent;
             }
 
             fixed4 SwampFrag(ChapterFragment input) : SV_Target
