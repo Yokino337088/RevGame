@@ -1,6 +1,8 @@
-name: RevGame GameCI 个人版导入验证
+name: RevGame Unity 编译检查
 
 on:
+  pull_request:
+    branches: [main]
   workflow_dispatch:
     inputs:
       target:
@@ -13,13 +15,13 @@ permissions:
   contents: read
 
 concurrency:
-  group: revgame-gameci-personal-smoke
-  cancel-in-progress: false
+  group: revgame-unity-compile-${{ github.event.pull_request.number || 'manual' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   import:
-    name: 验证授权与工程导入
-    if: github.repository == 'Yokino337088/RevGame' && github.ref == 'refs/heads/main' && inputs.target != 'android-cache'
+    name: Unity 脚本编译
+    if: github.repository == 'Yokino337088/RevGame' && (github.event_name == 'pull_request' || (github.ref == 'refs/heads/main' && inputs.target != 'android-cache'))
     runs-on: ubuntu-22.04
     timeout-minutes: 55
     env:
@@ -27,6 +29,13 @@ jobs:
       REVGAME_SMOKE_VERSION: 2022.3.15f1
       REVGAME_SMOKE_REVISION: b58023a2b463
     steps:
+      # 外部 PR 在读取许可证和检出之前直接返回失败，维护者审查后可用仓库内分支送检。
+      - name: 检查 PR 来源
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository
+        run: |
+          echo '::error title=外部 PR 需由维护者送检::请将审核通过的改动提交到 RevGame 仓库内的分支，再运行 Unity 编译。'
+          exit 1
+
       - name: 检查 GameCI 个人版凭据
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
@@ -45,6 +54,7 @@ jobs:
             exit 1
           fi
 
+      # PR 默认检出 GitHub 生成的合并候选提交，编译合并后的代码。
       - uses: actions/checkout@v5
         with:
           persist-credentials: false
@@ -61,7 +71,7 @@ jobs:
             > "$project/ProjectSettings/ProjectVersion.txt"
           cp tools/UnityCI/RevGameGameCiImportProbe.cs "$probe"
 
-      - name: 激活个人版并导入 RevGame
+      - name: 云端编译运行时与编辑器脚本并导入启动场景
         # 固定支持 Node.js 24 的 GameCI v5.0.1 发布提交和 2022.3.15f1 Linux 编辑器镜像。
         uses: game-ci/unity-builder@adaf7cd8f42fd48fbbf2d4f5f67ca30d87f819f1
         env:

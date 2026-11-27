@@ -48,3 +48,10 @@ GameCI 按构建目标、runner 系统及架构、编辑器镜像和项目配置
 按当次需求手动运行 **RevGame GameCI Windows 测试包** 或 **RevGame GameCI Android 测试包**。两个平台各自构建，测试版产品名为「围棋大作战test」，Unity 应用 ID 设置为 `com.Tangmen.RevGameTest`。测试版沿用 IL2CPP 与目标平台已提交的 AB，开启 `REV_AUTOMATION` 和帧时统计。Android 复用仓库中配置的 Android 签名。 [Windows 测试包](https://github.com/Yokino337088/RevGame/actions/workflows/revgame-gameci-test-windows.yml) · [Android 测试包](https://github.com/Yokino337088/RevGame/actions/workflows/revgame-gameci-test-android.yml)
 
 Windows 通过 `-revAutomation` 显式启动自动化桥，可加 `-revTestSession` 隔离测试会话。Android 用 Revolution.Android 选中 `com.Tangmen.RevGameTest`，由工具通过 ADB 发起带会话身份的受控启动。接入后使用 `rev_discover` 核对运行时接口，再调用自动化或性能采样。 [Revolution Android 工具](https://github.com/Yokino337088/Revolution/tree/main/Revolution.Android)
+
+
+## PR 脚本编译
+
+目标为 `main` 的 PR 触发 [RevGame Unity 编译检查](https://github.com/Yokino337088/RevGame/actions/workflows/revgame-gameci-personal-smoke.yml)。作业编译 GitHub 生成的合并候选提交，使用已经验证的 GameCI 个人版授权与国际版 `2022.3.15f1`。同一 PR 有更新时取消旧运行。导入探针在成功编译后核对 RevGame 业务类型和启动场景。
+
+仓库内分支可直接运行。对于外部 fork，维护者审核改动后将其提交到仓库内分支送检。仓库的分支保护应要求 `Unity 脚本编译` 检查通过后才能合并。编译失败时在对应运行的 GameCI 步骤查阅 Unity 给出的源码位置和错误码。
