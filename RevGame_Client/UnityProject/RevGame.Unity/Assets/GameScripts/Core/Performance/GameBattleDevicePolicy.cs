@@ -119,10 +119,9 @@ namespace RevGame.Core
             return platform == GameBattlePlatform.Android && isolatedOrBenchmark && !explicitBenchmark && !fixedChapterLoad;
         }
 
-        /// <summary>把档位转为明确预算。安卓热保护以及交火回退可选择较低的整屏节奏。</summary>
+        /// <summary>把档位转为明确预算。安卓绘制档与帧率独立，正常对局请求系统当前显示刷新率。</summary>
         public static GameBattleDevicePlan Create(GameBattlePlatform platform, GameBattleGpuKind gpuKind,
-            GameBattleDeviceTier tier, int shaderLevel, int refreshRate, bool fixedTest, bool androidConservative = false,
-            bool androidBelowTarget = false)
+            GameBattleDeviceTier tier, int shaderLevel, double refreshRate, bool fixedTest)
         {
             bool gpu = shaderLevel >= 35 && tier == GameBattleDeviceTier.High &&
                 ((platform == GameBattlePlatform.Windows && gpuKind == GameBattleGpuKind.Discrete) ||
@@ -134,7 +133,7 @@ namespace RevGame.Core
             bool limitProjectiles = !fixedTest && tier == GameBattleDeviceTier.Economy &&
                 (platform == GameBattlePlatform.Windows || platform == GameBattlePlatform.Android);
             return new GameBattleDevicePlan(platform, gpuKind, tier, !fixedTest && gpu, gpuMinimum,
-                !fixedTest && platform == GameBattlePlatform.Android ? AndroidCadence(tier, refreshRate, androidConservative, androidBelowTarget) : 0,
+                !fixedTest && platform == GameBattlePlatform.Android ? AndroidNativeFrameRate(refreshRate) : 0,
                 !fixedTest && platform == GameBattlePlatform.Web ? webPixels : 0, limitProjectiles);
         }
 
@@ -146,26 +145,13 @@ namespace RevGame.Core
                 (afterSeconds <= beforeSeconds * 1.02f && afterSlow <= beforeSlow - .05f);
         }
 
-        /// <summary>以完整刷新间隔选择节奏。普通档先试可达 50 的请求，回退档再取 50 以下可均匀呈现的节奏。</summary>
-        public static int AndroidCadence(GameBattleDeviceTier tier, int refreshRate, bool conservative, bool belowTarget = false)
+        /// <summary>请求系统实际刷新率。分数刷新率向上取整，读不到有效值时用 60 避开 Android 默认 30。</summary>
+        public static int AndroidNativeFrameRate(double refreshRate)
         {
-            int refresh = refreshRate >= 24 && refreshRate <= 360 ? refreshRate : 60;
-            int divisor;
-            if (!conservative && !belowTarget && tier != GameBattleDeviceTier.High)
-            {
-                // 90 Hz 的两刷节奏只有 45 FPS，先开放 90 请求才可能实测达到 50。
-                divisor = Math.Max(1, refresh / 50);
-            }
-            else
-            {
-                int cap = conservative ? 30 : belowTarget ? 49 : 144;
-                divisor = (refresh + cap - 1) / cap;
-            }
-            // 先取整屏间隔，再向上取整请求值，避免 Unity 把 37.5 Hz 节奏进一步降档。
-            return (refresh + divisor - 1) / divisor;
+            return refreshRate >= 1d && refreshRate <= int.MaxValue ? (int)Math.Ceiling(refreshRate) : 60;
         }
 
-        /// <summary>以实际可请求的帧率限制平均目标，留出小量计时与送屏偏差。</summary>
+        /// <summary>画质观察使用的最低均值目标，按刷新能力留小量计时偏差，不参与设置帧率上限。</summary>
         public static float AndroidAverageGoal(GameBattleDeviceTier tier, int targetFrameRate)
         {
             float requested = tier == GameBattleDeviceTier.High ? 100f : 50f;
