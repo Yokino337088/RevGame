@@ -10,7 +10,47 @@ namespace RevGame.View
         private bool _victoryWaveActive;
         private bool _victorySourceWasEnabled;
         private MaterialPropertyBlock _victorySurfaceProperties;
-        /// <summary>按格缓存渲染层，避免每帧GetComponents；关闭/回池必须归位，不能让旧波浪位置继承下一局。</summary>
+        /// <summary>每格准备一套波浪容器。预热只分配组件和缓存，实际波浪才绑定会显示的精灵和材质。</summary>
+        private void EnsureVictoryVisuals()
+        {
+            if (_victorySurface == null)
+            {
+                // 根节点承载 Collider，后续由这个可复用的子层显示移动的格面。
+                _victorySource = GetComponent<SpriteRenderer>();
+                var obj = new GameObject("VictorySurface");
+                obj.transform.SetParent(transform, false);
+                _victorySurface = obj.AddComponent<SpriteRenderer>();
+                _victorySurface.enabled = false;
+            }
+
+            _victorySurfaceProperties ??= new MaterialPropertyBlock();
+            if (_victoryVisuals != null)
+            {
+                return;
+            }
+            SpriteRenderer[] renderers = GetComponentsInChildren<SpriteRenderer>(true);
+            int count = 0;
+            foreach (SpriteRenderer renderer in renderers)
+            {
+                if (renderer.transform != transform)
+                {
+                    count++;
+                }
+            }
+            _victoryVisuals = new Transform[count];
+            _victoryRestPositions = new Vector3[count];
+            _victoryRestScales = new Vector3[count];
+            int index = 0;
+            foreach (SpriteRenderer renderer in renderers)
+            {
+                if (renderer.transform != transform)
+                {
+                    _victoryVisuals[index++] = renderer.transform;
+                }
+            }
+        }
+
+        /// <summary>只在可见波浪开始时同步渲染状态和静止位置。结束和回池时恢复静止格面。</summary>
         public void SetVictoryWave(float progress, float height = .36f)
         {
             bool starting = !_victoryWaveActive;
@@ -44,26 +84,27 @@ namespace RevGame.View
                 }
                 return;
             }
-            if (_victorySurface == null)
+            if (starting)
             {
-                // 根节点承载Collider，不能移动它；借一个池对象自带的可复用视觉层画根Sprite。
-                _victorySource = GetComponent<SpriteRenderer>();
-                var obj = new GameObject("VictorySurface");
-                obj.transform.SetParent(transform, false);
-                _victorySurface = obj.AddComponent<SpriteRenderer>();
-            }
-            if (!_victoryWaveActive)
-            {
+                EnsureVictoryVisuals();
                 _victorySourceWasEnabled = _victorySource.enabled;
                 _victorySurface.sprite = _victorySource.sprite;
                 _victorySurface.sharedMaterial = _victorySource.sharedMaterial;
-                _victorySurface.drawMode = _victorySource.drawMode;
-                _victorySurface.size = _victorySource.size;
+                SpriteDrawMode drawMode = _victorySource.drawMode;
+                // 已同步的模式不用再次提交给 SpriteRenderer。
+                if (_victorySurface.drawMode != drawMode)
+                {
+                    _victorySurface.drawMode = drawMode;
+                }
+                // 普通 Sprite 由 Transform 缩放。只有分片或平铺模式读取填充尺寸。
+                if (drawMode != SpriteDrawMode.Simple)
+                {
+                    _victorySurface.size = _victorySource.size;
+                }
                 _victorySurface.color = _victorySource.color;
                 _victorySurface.flipX = _victorySource.flipX;
                 _victorySurface.flipY = _victorySource.flipY;
                 // 章节棋盘图集UV保存在参数块里；复制一次避免跳跃时采到同页其它图片。
-                _victorySurfaceProperties ??= new MaterialPropertyBlock();
                 _victorySource.GetPropertyBlock(_victorySurfaceProperties);
                 _victorySurface.SetPropertyBlock(_victorySurfaceProperties);
                 _victorySurface.sortingLayerID = _victorySource.sortingLayerID;
@@ -73,7 +114,7 @@ namespace RevGame.View
                 _victoryWaveActive = true;
             }
             // 同一个池实例可能在不同章节调整子图布局；每次开始取当前静止位置，避免沿用上一章。
-            if (_victoryVisuals != null && starting)
+            if (starting)
             {
                 for (int index = 0; index < _victoryVisuals.Length; index++)
                 {
@@ -83,34 +124,6 @@ namespace RevGame.View
                     }
                     _victoryRestPositions[index] = _victoryVisuals[index].localPosition;
                     _victoryRestScales[index] = _victoryVisuals[index].localScale;
-                }
-            }
-
-            if (_victoryVisuals == null)
-            {
-                SpriteRenderer[] renderers = GetComponentsInChildren<SpriteRenderer>(true);
-                int count = 0;
-                foreach (SpriteRenderer renderer in renderers)
-                {
-                    if (renderer.transform != transform)
-                    {
-                        count++;
-                    }
-                }
-                _victoryVisuals = new Transform[count];
-                _victoryRestPositions = new Vector3[count];
-                _victoryRestScales = new Vector3[count];
-                int index = 0;
-                foreach (SpriteRenderer renderer in renderers)
-                {
-                    if (renderer.transform == transform)
-                    {
-                        continue;
-                    }
-                    _victoryVisuals[index] = renderer.transform;
-                    _victoryRestPositions[index] = renderer.transform.localPosition;
-                    _victoryRestScales[index] = renderer.transform.localScale;
-                    index++;
                 }
             }
 

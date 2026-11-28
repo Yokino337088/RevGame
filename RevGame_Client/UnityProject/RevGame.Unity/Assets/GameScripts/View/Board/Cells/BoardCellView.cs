@@ -211,14 +211,13 @@ namespace RevGame.View
                 _hazardRenderer.enabled = false;
             }
         }
-        /// <summary>预热危险区和棋格跳跃层。先创建危险层再缓存子节点，避免后创建的层漏出跳跃工作区。</summary>
+        /// <summary>预分配危险区和波浪层。先创建危险层再缓存子节点，预热时保留可见格面原样。</summary>
         public void PrepareTransientVisuals()
         {
             EnsureHazardRenderer();
             _hazardProperties ??= new MaterialPropertyBlock();
             _bossTileProperties ??= new MaterialPropertyBlock();
-            SetVictoryWave(.5f);
-            SetVictoryWave(1f);
+            EnsureVictoryVisuals();
         }
         private void BeginHazardWave(float delay, float duration, Vector4 edges, float elapsed)
         {
