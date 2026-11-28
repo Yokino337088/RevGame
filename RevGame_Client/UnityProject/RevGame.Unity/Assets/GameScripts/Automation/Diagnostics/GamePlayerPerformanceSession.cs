@@ -31,8 +31,8 @@ namespace RevGame.Automation
 
         private readonly object _loadOwner = new object();
 
-        /// <summary>只有普通开局明确允许安卓沿正式显示预算。密集 48/81 棋继续使用原固定口径。</summary>
-        public bool UseProductionAndroidBudget => !_benchmark && _normalCards > 0 && (_stage == "loading" || _stage == "ready");
+        /// <summary>已接单的 48/81 棋夹具在入场前申请固定显示预算。普通手牌或手动开局不占用它。</summary>
+        internal bool UsesFixedChapterBudget => _normalCards == 0 && (_stage == "loading" || _stage == "ready");
 
         /// <summary>登记隔离测试入口。旧压力参数保持不变，普通开局另外接收章节与手牌数。</summary>
         public GamePlayerPerformanceSession()

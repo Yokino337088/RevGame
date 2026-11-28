@@ -46,6 +46,12 @@ namespace RevGame.Bootstrap
         /// <summary>只有自动试验仍在采证时为真；已保留的档位无需继续收集试验窗口。</summary>
         public bool Measuring => _remainingWindows > 0;
 
+        /// <summary>完整窗口平均低于 30 FPS，且至少一半帧达到 30 ms。样本太少时保留常规两窗判断。</summary>
+        internal static bool IsSevereWindow(float seconds, int frames, int late)
+        {
+            return frames >= 24 && frames < seconds * 30f && late >= (frames + 1) / 2;
+        }
+
         /// <summary>只尝试降低高像素画布。短边受画质档的下限约束，返回 1 表示保持原生尺寸。</summary>
         internal static float CandidateScale(int width, int height, float scale = .75f, int minimumShortSide = 800)
         {
@@ -123,7 +129,24 @@ namespace RevGame.Bootstrap
             }
         }
 
-        /// <summary>新阶段或退出时归还设置并清除上一个阶段的尝试记录。</summary>
+        /// <summary>同一章节下一回合复用已获益的比例。若画面或短边预算改变，则回到原生重新观察。</summary>
+        public bool BeginCampaignRound(string scene, int minimumShortSide)
+        {
+            CancelTrial();
+            // 只继承已验证过的实际尺寸，未结案的候选、旧相机或窗口变化都不能成为新基线。
+            if (_retainedScale < 1f && _camera != null && _camera == FindCamera(scene)
+                && _camera.pixelWidth == _nativeWidth && _camera.pixelHeight == _nativeHeight
+                && Math.Min(_camera.scaledPixelWidth, _camera.scaledPixelHeight) >= minimumShortSide)
+            {
+                _nextCandidate = 0;
+                return true;
+            }
+
+            Reset();
+            return false;
+        }
+
+        /// <summary>更换场景或退场时归还设置，清除所有比例证据。</summary>
         public void Reset()
         {
             Restore();

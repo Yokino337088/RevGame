@@ -30,9 +30,11 @@ namespace RevGame.Bootstrap
         private readonly int _processors;
         /// <summary>Shader 级别，例如 45 表示 Shader Model 4.5。</summary>
         private readonly int _shaderLevel;
-        /// <summary>启动时的固定测试条件。只有隔离普通远征可以单局借用正式安卓策略。</summary>
+        /// <summary>启动请求了隔离存档或固定基准。普通安卓远征入场时再确认本局是否固定。</summary>
         private readonly bool _fixedTest;
-        /// <summary>本次 Android 隔离普通开局使用正式设备策略。退场归还旧帧率并清除此标记。</summary>
+        /// <summary>启动参数是否显式要求固定基准。该选择整进程有效，普通远征也不会覆盖。</summary>
+        private readonly bool _explicitBenchmark;
+        /// <summary>本次 Android 隔离普通远征使用正式设备策略。退场归还旧帧率并清除此标记。</summary>
         private bool _normalAndroidTest;
         /// <summary>本交火阶段已试过目标节奏，现在使用 50 以下的整屏回退档。</summary>
         private bool _androidBelowTargetCadence;
@@ -113,8 +115,8 @@ namespace RevGame.Bootstrap
                 ? GameBattleDeviceTier.Balanced :
                 _platform == GameBattlePlatform.Web && _initial == GameBattleDeviceTier.Economy
                     ? GameBattleDeviceTier.Balanced : GameBattleDeviceTier.High;
-            _fixedTest = Array.IndexOf(Environment.GetCommandLineArgs(), "-revBenchmark") >= 0 ||
-                RevServices.GetRequired<StoryProgress>().IsIsolated;
+            _explicitBenchmark = Array.IndexOf(Environment.GetCommandLineArgs(), "-revBenchmark") >= 0;
+            _fixedTest = _explicitBenchmark || RevServices.GetRequired<StoryProgress>().IsIsolated;
             GameBattleDevicePolicy.Publish(Create(_initial));
             RevEvent.AddEventListener<GameScreen>(Events.ScreenChanged, OnScreen, owner: this);
             if (_platform == GameBattlePlatform.Android || _platform == GameBattlePlatform.Web)
@@ -218,7 +220,7 @@ namespace RevGame.Bootstrap
                 _androidConservativeCadence || _thermal >= 3, _androidBelowTargetCadence);
         }
 
-        /// <summary>进入实战才设置显示预算。普通隔离测试在安卓借用正式策略，回大厅立即归还。</summary>
+        /// <summary>进入实战才设置显示预算。安卓普通远征沿正式策略，隔离夹具可指定固定，回大厅归还设置。</summary>
         private void OnScreen(GameScreen screen)
         {
             bool battle = screen == GameScreen.Battle || screen == GameScreen.Endless;
@@ -235,8 +237,9 @@ namespace RevGame.Bootstrap
             _active = true;
             _originalFrameRate = Application.targetFrameRate;
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
-            _normalAndroidTest = _platform == GameBattlePlatform.Android && screen == GameScreen.Battle
-                && RevServices.Get<RevGame.Automation.GamePlayerPerformanceSession>()?.UseProductionAndroidBudget == true;
+            _normalAndroidTest = screen == GameScreen.Battle && GameBattleDevicePolicy.UseProductionBudgetInIsolatedCampaign(
+                _platform, _fixedTest, _explicitBenchmark,
+                RevServices.Get<RevGame.Automation.GamePlayerPerformanceSession>()?.UsesFixedChapterBudget == true);
 #endif
             Apply(_initial, "battle-enter");
             if (!FixedTest && (_platform == GameBattlePlatform.Android || _platform == GameBattlePlatform.Web))
@@ -245,7 +248,7 @@ namespace RevGame.Bootstrap
             }
         }
 
-        /// <summary>前台交火统计平均速度和 30 ms 尾部。先验证像素档收益，再调整呈现节奏。</summary>
+        /// <summary>前台交火统计平均值和慢帧。同章换回合复用已验证比例，观察窗口仍从零开始。</summary>
         private void ObserveFrame()
         {
             if (!_active || !Application.isFocused)
@@ -291,7 +294,20 @@ namespace RevGame.Bootstrap
             }
             if (stage != _observationStage)
             {
-                _androidPixels?.Reset();
+                if (_androidPixels != null)
+                {
+                    if (stage > 0 && _observationStage > 0 && stage / 100 == _observationStage / 100)
+                    {
+                        if (_androidPixels.BeginCampaignRound(AndroidBattleScene(), AndroidShortSide(GameBattleDevicePolicy.Current)))
+                        {
+                            _lastDecision = "android-pixels-retained-for-round";
+                        }
+                    }
+                    else
+                    {
+                        _androidPixels.Reset();
+                    }
+                }
                 CancelWebTrial("stage-changed");
                 _observationStage = stage;
                 if (_androidConservativeCadence || _androidBelowTargetCadence)
@@ -398,7 +414,7 @@ namespace RevGame.Bootstrap
             }
         }
 
-        /// <summary>在同一交火阶段比较原生与缩放档。试验窗口占用决策时，帧率目标维持在原值。</summary>
+        /// <summary>严重卡顿可早一窗试降。比较期间维持帧率目标，继续用已有效的尺寸作为回退档。</summary>
         private bool ObserveAndroidPixels(GameBattleDevicePlan plan, float seconds, int frames, int late)
         {
             if (_androidPixels.Measuring)
@@ -420,9 +436,9 @@ namespace RevGame.Bootstrap
                 return true;
             }
 
-            // 连续两窗平均速度不足或慢帧过多才试较低档。高档保留原短边下限。
-            int minimumShortSide = plan.Tier == GameBattleDeviceTier.High ? 800 : 720;
-            if (_slowWindows >= 2 && _androidPixels.TryBegin(AndroidBattleScene(), minimumShortSide,
+            // 目标至少 50 时，完整首窗若已经低于 30 且多数帧超线，就先开始可撤销的像素对照。
+            bool severe = plan.AndroidFrameRate >= 50 && _slowWindows == 1 && GameAndroidBattlePixelTrial.IsSevereWindow(seconds, frames, late);
+            if ((_slowWindows >= 2 || severe) && _androidPixels.TryBegin(AndroidBattleScene(), AndroidShortSide(plan),
                 seconds / frames, (float)late / frames))
             {
                 _lastDecision = "android-pixel-trial";
@@ -430,6 +446,12 @@ namespace RevGame.Bootstrap
                 return true;
             }
             return false;
+        }
+
+        /// <summary>高档保留更清晰的世界相机短边。新试档和同章续用使用同一个像素下限。</summary>
+        private static int AndroidShortSide(GameBattleDevicePlan plan)
+        {
+            return plan.Tier == GameBattleDeviceTier.High ? 800 : 720;
         }
 
         /// <summary>像素试档后仍有压力时，依次尝试低于 50 的整屏节奏和约 30 的保守档。</summary>

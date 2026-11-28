@@ -112,6 +112,13 @@ namespace RevGame.Core
             return GameBattleDeviceTier.Balanced;
         }
 
+        /// <summary>隔离存档中的普通安卓远征也走正式显示预算。显式基准与固定棋数夹具仍走固定档。</summary>
+        public static bool UseProductionBudgetInIsolatedCampaign(GameBattlePlatform platform, bool isolatedOrBenchmark,
+            bool explicitBenchmark, bool fixedChapterLoad)
+        {
+            return platform == GameBattlePlatform.Android && isolatedOrBenchmark && !explicitBenchmark && !fixedChapterLoad;
+        }
+
         /// <summary>把档位转为明确预算。安卓热保护以及交火回退可选择较低的整屏节奏。</summary>
         public static GameBattleDevicePlan Create(GameBattlePlatform platform, GameBattleGpuKind gpuKind,
             GameBattleDeviceTier tier, int shaderLevel, int refreshRate, bool fixedTest, bool androidConservative = false,
