@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>围棋大作战</title>
+  <title>{{{ PRODUCT_NAME }}}</title>
   <style>
     [hidden] { display: none !important; }
     html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background: #172620; color: #fcf4de; }
@@ -253,6 +253,10 @@
         productVersion: {{{ JSON.stringify(PRODUCT_VERSION) }}},
         showBanner,
       };
+      // 测试包可由测试链接显式启用框架桥，普通打开网页仍按玩家入口启动。
+      if (config.productName === "围棋大作战test" && new URLSearchParams(location.search).get("revAutomation") === "1") {
+        canvas.setAttribute("data-rev-automation", "enabled");
+      }
       status.hidden = false;
       const loader = document.createElement("script");
       loader.src = buildUrl + "{{{ LOADER_FILENAME }}}";

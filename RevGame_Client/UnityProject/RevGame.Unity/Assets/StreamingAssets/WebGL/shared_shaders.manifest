@@ -1,0 +1,52 @@
+ManifestFileVersion: 0
+CRC: 3127875513
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 3b44165de106d0bf87c7047f985ba853
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 0df1dec30b5d061d422d3e6493d27647
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 3b44165de106d0bf87c7047f985ba853
+HashAppended: 0
+ClassTypes:
+- Class: 48
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/GameShader/Endless/EndlessGrid.shader
+- Assets/GameShader/Endless/EndlessThrust.shader
+- Assets/GameShader/Endless/EndlessShieldBubble.shader
+- Assets/GameShader/Pvp/PvpGoBoard.shader
+- Assets/GameShader/Pvp/PvpDuelArenaEnergy.shader
+- Assets/GameShader/UI/ArcanePanel.shader
+- Assets/GameShader/Background/LobbyMagicCottage.shader
+- Assets/GameShader/Cards/CardGleam.shader
+- Assets/GameShader/UI/DuelPreparationSigil.shader
+- Assets/GameShader/Pvp/PvpArenaBackdrop.shader
+- Assets/GameShader/YayaMemories/YayaBookPaper.shader
+- Assets/GameShader/Endless/EndlessSwordAura.shader
+- Assets/GameShader/Combat/MeleeImpact.shader
+- Assets/GameShader/Endless/EndlessField.shader
+- Assets/GameShader/Pieces/ArcanePiece.shader
+- Assets/GameShader/Combat/RegionRift.shader
+- Assets/GameShader/UI/DuelPreparationRift.shader
+- Assets/GameShader/Endless/EndlessShieldZone.shader
+- Assets/GameShader/Board/PlacementMagic.shader
+- Assets/GameShader/UI/YayaDuelFeather.shader
+- Assets/GameShader/Board/BackgroundDepthMask.shader
+- Assets/GameShader/Combat/BossSkill.shader
+- Assets/GameShader/Endless/EndlessCardUpgrade.shader
+- Assets/GameShader/Background/ArcaneBackdrop.shader
+- Assets/GameShader/YayaMemories/YayaMemoryScene.shader
+- Assets/GameShader/UI/SlimeTutorialHighlight.shader
+- Assets/GameShader/Pvp/PvpDuelStrike.shader
+- Assets/GameShader/Endless/EndlessBatch.shader
+- Assets/GameShader/Combat/RangedProjectile.shader
+- Assets/GameShader/Combat/ElementalImpact.shader
+- Assets/GameShader/Endless/EndlessHpBar.shader
+- Assets/GameShader/Endless/EndlessShieldOrbit.shader
+- Assets/GameShader/Combat/ScoreSpark.shader
+Dependencies: []

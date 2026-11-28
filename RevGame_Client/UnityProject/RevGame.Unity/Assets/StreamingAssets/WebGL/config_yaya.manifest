@@ -1,0 +1,26 @@
+ManifestFileVersion: 0
+CRC: 2201239252
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: cf6f1fee60e1ce033db5c2def7ed7cc2
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: dce68ab276d3e5450cd0c6cd36716302
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: cf6f1fee60e1ce033db5c2def7ed7cc2
+HashAppended: 0
+ClassTypes:
+- Class: 114
+  Script: {fileID: 11500000, guid: ea4a85cf03af4224fb6e6a1d6ca5d34e, type: 3}
+- Class: 115
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers:
+- AssemblyName: RevGame.Content
+  ClassName: RevGame.Data.GamePortraitReference
+- AssemblyName: RevGame.Content
+  ClassName: RevGame.Data.YayaExpressionCatalog/Entry
+Assets:
+- Assets/GameRes/Config/Yaya/YayaExpressionCatalog.asset
+Dependencies: []

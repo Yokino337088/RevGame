@@ -10,7 +10,7 @@ namespace RevGame.Editor
     /// <summary>GameCI 专用的正式出包入口。使用检出中已验证的目标平台 AB，调用原有 Player 构建。</summary>
     public static class RevGameGameCiRelease
     {
-        /// <summary>测试版桌面名称，同时区分 Windows Player 的本地数据目录。</summary>
+        /// <summary>测试版产品名称，用于桌面、本地数据目录和 WebGL 启动配置。</summary>
         private const string TestProductName = "围棋大作战test";
 
         /// <summary>测试版应用标识，用于 Unity Player 设置及 Android 安装身份。</summary>
@@ -26,7 +26,7 @@ namespace RevGame.Editor
             }
 
             BuildTarget target = EditorUserBuildSettings.activeBuildTarget;
-            if (target != BuildTarget.StandaloneWindows64 && target != BuildTarget.Android)
+            if (target != BuildTarget.StandaloneWindows64 && target != BuildTarget.Android && target != BuildTarget.WebGL)
             {
                 throw new InvalidOperationException($"GameCI 没有选中 RevGame 的出包平台 {target}。");
             }
@@ -59,8 +59,9 @@ namespace RevGame.Editor
             Environment.SetEnvironmentVariable("UNITY_SERIAL", null);
             bool testPackage = Environment.GetCommandLineArgs().Contains("-revGameCiTestPackage");
             bool android = target == BuildTarget.Android;
-            string other = android ? "PC" : "Android";
-            if (Directory.Exists(Path.Combine(Application.streamingAssetsPath, other)))
+            string selectedPlatform = target == BuildTarget.StandaloneWindows64 ? "PC" : target.ToString();
+            if (new[] { "PC", "Android", "WebGL" }.Any(platform => platform != selectedPlatform &&
+                Directory.Exists(Path.Combine(Application.streamingAssetsPath, platform))))
             {
                 throw new InvalidOperationException("检测到未隔离的其它平台 StreamingAssets。");
             }
@@ -119,10 +120,10 @@ namespace RevGame.Editor
             }
         }
 
-        /// <summary>用 Revolution 的 IL2CPP 入口构建 Player。Android 和测试版临时应用各自的产品身份。</summary>
+        /// <summary>用 Revolution 的 IL2CPP 入口构建 Player，临时应用 Android 和测试版各自的产品身份。</summary>
         private static void BuildPlayer(BuildTarget target, string output, bool testPackage)
         {
-            if (target != BuildTarget.Android && !testPackage)
+            if (target == BuildTarget.StandaloneWindows64 && !testPackage)
             {
                 RunPlayerBuild(target, output, testPackage);
                 return;
@@ -130,23 +131,30 @@ namespace RevGame.Editor
 
             BuildTargetGroup group = BuildPipeline.GetBuildTargetGroup(target);
             string previousProductName = PlayerSettings.productName;
-            string previousApplicationId = PlayerSettings.GetApplicationIdentifier(group);
+            bool hasApplicationId = target != BuildTarget.WebGL;
+            string previousApplicationId = hasApplicationId ? PlayerSettings.GetApplicationIdentifier(group) : null;
             string applicationId = testPackage ? TestApplicationId : "com.Tangmen.RevGame";
             try
             {
-                // 测试版在手机上单独安装，在 Windows 下使用独立的本地数据目录。
+                // 网页通过启动配置的产品名称识别测试包，应用安装标识只用于原生 Player。
                 PlayerSettings.productName = testPackage ? TestProductName : "围棋大作战";
-                PlayerSettings.SetApplicationIdentifier(group, applicationId);
-                if (PlayerSettings.GetApplicationIdentifier(group) != applicationId)
+                if (hasApplicationId)
                 {
-                    throw new InvalidOperationException($"Unity 未接受本轮应用 ID {applicationId}。");
+                    PlayerSettings.SetApplicationIdentifier(group, applicationId);
+                    if (PlayerSettings.GetApplicationIdentifier(group) != applicationId)
+                    {
+                        throw new InvalidOperationException($"Unity 未接受本轮应用 ID {applicationId}。");
+                    }
                 }
                 RunPlayerBuild(target, output, testPackage);
             }
             finally
             {
                 PlayerSettings.productName = previousProductName;
-                PlayerSettings.SetApplicationIdentifier(group, previousApplicationId);
+                if (hasApplicationId)
+                {
+                    PlayerSettings.SetApplicationIdentifier(group, previousApplicationId);
+                }
                 AssetDatabase.SaveAssets();
             }
         }

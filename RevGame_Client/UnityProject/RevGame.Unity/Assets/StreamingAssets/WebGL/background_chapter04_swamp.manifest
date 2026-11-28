@@ -1,0 +1,31 @@
+ManifestFileVersion: 0
+CRC: 2607811964
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 9b6c3a854b350eb20964a760bcba187c
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: b30fce1a9ad74efb72be6c308c56e365
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 9b6c3a854b350eb20964a760bcba187c
+HashAppended: 0
+ClassTypes:
+- Class: 21
+  Script: {instanceID: 0}
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 48
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/GameRes/Material/Helper/HelperChapter04.mat
+- Assets/GameShader/Helper/HelperChapter04_Shader.shader
+- Assets/GameRes/Material/Board/Chapter04_Swamp_Surface.mat
+- Assets/GameRes/ChapterBackground/Chapter04_SwampNoise.png
+- Assets/GameShader/Background/Chapter04_Swamp_Shader.shader
+- Assets/GameRes/Material/Background/Chapter04_Swamp_Material.mat
+- Assets/GameRes/ChapterBackground/Chapter04_Swamp.png
+- Assets/GameShader/Board/Chapter04_Swamp_SurfaceShader.shader
+Dependencies: []

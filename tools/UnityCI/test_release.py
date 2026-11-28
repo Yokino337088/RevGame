@@ -30,7 +30,7 @@ class ReleaseTests(unittest.TestCase):
 
     def test_releases_only_selected_platform_and_restores_on_failure(self):
         """目标 AB 和公共文件仍在，异常退出后原目录和 .meta 原样回位。"""
-        for selected in ("PC", "Android"):
+        for selected in ("PC", "Android", "WebGL"):
             with self.subTest(selected=selected):
                 before = sorted(path.name for path in self.streaming.iterdir())
                 with self.assertRaisesRegex(RuntimeError, "构建失败"):
@@ -134,6 +134,44 @@ class ReleaseTests(unittest.TestCase):
         licensing = {key: "fixture" for key in release.UNITY_SECRETS}
         self.assertEqual(release.missing_secrets("windows", licensing), [])
         self.assertEqual(release.missing_secrets("android", licensing), list(release.ANDROID_SECRETS))
+
+    def test_webgl_checks_actual_page_identity_wasm_and_target_bundles(self):
+        """验包走入口引用的实际文件，并拒绝串包、错误产品名和其它平台的资源。"""
+        output = self.project / "web"
+        build = output / "Build"
+        build.mkdir(parents=True)
+        for name in ("RevGame.loader.js", "RevGame.framework.js", "RevGame.data"):
+            (build / name).write_bytes(b"content")
+        wasm = build / "RevGame.wasm"
+        wasm.write_bytes(b"\0asm\x01\0\0\0")
+        (output / "index.html").write_text('''
+            const buildUrl = "Build/";
+            const streamingAssetsUrl = "StreamingAssets";
+            loader.src = buildUrl + "RevGame.loader.js";
+            const config = {
+                productName: "围棋大作战test",
+                dataUrl: buildUrl + "RevGame.data",
+                frameworkUrl: buildUrl + "RevGame.framework.js",
+                codeUrl: buildUrl + "RevGame.wasm",
+            };
+        ''', encoding="utf-8")
+        streaming = output / "StreamingAssets"
+        ab = streaming / "WebGL/WebGL"
+        ab.parent.mkdir(parents=True)
+        ab.write_bytes(b"web-asset")
+        expected = {"WebGL": release.file_hash(ab)}
+        release.check_webgl(output, expected, "围棋大作战test")
+        with self.assertRaisesRegex(ValueError, "实际产品名"):
+            release.check_webgl(output, expected, "围棋大作战")
+        other = streaming / "Android/Android"
+        other.parent.mkdir()
+        other.write_bytes(b"foreign")
+        with self.assertRaisesRegex(ValueError, "混入非目标平台资源"):
+            release.check_webgl(output, expected, "围棋大作战test")
+        other.unlink()
+        wasm.write_bytes(b"not-wasm")
+        with self.assertRaisesRegex(ValueError, "Wasm 文件头"):
+            release.check_webgl(output, expected, "围棋大作战test")
 
     def test_gameci_separates_test_capabilities_and_checks_windows_product_name(self):
         """带自动化与帧时统计的 Windows 包须用测试名称，并且无法冒充正式包。"""

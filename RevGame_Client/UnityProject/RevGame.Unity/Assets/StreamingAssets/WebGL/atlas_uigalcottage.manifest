@@ -1,0 +1,25 @@
+ManifestFileVersion: 0
+CRC: 604108172
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 4b1b81773a55fd50c799d266d12cc0d2
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 033fafe2c9f6c610c3a734393882fd4c
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 4b1b81773a55fd50c799d266d12cc0d2
+HashAppended: 0
+ClassTypes:
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 213
+  Script: {instanceID: 0}
+- Class: 687078895
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/GameRes/Atlases/UIGalCottage.spriteatlasv2
+- Assets/GameRes/Art/UI/Gal/GalControlsSheet.png
+Dependencies: []

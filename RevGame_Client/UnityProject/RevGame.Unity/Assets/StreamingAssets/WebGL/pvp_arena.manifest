@@ -1,0 +1,45 @@
+ManifestFileVersion: 0
+CRC: 2369643103
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 6592d19fe298f509348a9319f0577120
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: e22bb644f6d17c755039684c9be8c752
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 6592d19fe298f509348a9319f0577120
+HashAppended: 0
+ClassTypes:
+- Class: 1
+  Script: {instanceID: 0}
+- Class: 4
+  Script: {instanceID: 0}
+- Class: 21
+  Script: {instanceID: 0}
+- Class: 23
+  Script: {instanceID: 0}
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 33
+  Script: {instanceID: 0}
+- Class: 43
+  Script: {instanceID: 0}
+- Class: 48
+  Script: {instanceID: 0}
+- Class: 114
+  Script: {fileID: 11500000, guid: 302eeeefa74255840bc9dd4821767555, type: 3}
+- Class: 115
+  Script: {instanceID: 0}
+- Class: 213
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/GameRes/Material/Pvp/Board/PvpTemple.mat
+- Assets/GameRes/Material/Pvp/Board/PvpIvoryBoard.mat
+- Assets/GameRes/Pvp/PvpBoardView.prefab
+Dependencies:
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/WebGL/atlas_boardstatus"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/WebGL/background_temple_shared"
+- "D:/AAAAAAA\u738B\u8005\u8363\u8000\u9879\u76EE\u7EC4\u5DE5\u4F5C\u65E5\u5FD7/RevGame/RevGame_Client/UnityProject/RevGame.Unity/AssetBundles/WebGL/shared_shaders"

@@ -1,12 +1,19 @@
 # RevGame 网页版交付
 
-## 出包与恢复编辑器
+## GitHub Actions 出包
+
+- WebGL 测试包和正式包都从已推送的 `main` 手动触发，分别进入 [WebGL 测试包入口](../../../../.github/workflows/revgame-gameci-test-webgl.yml) 和 [WebGL 正式包入口](../../../../.github/workflows/revgame-gameci-personal-webgl.yml)。“围棋大作战test”测试包启用自动化宏和帧时采样，“围棋大作战”正式包使用正式配置。两者都使用 IL2CPP 及当前提交的 `Assets/StreamingAssets/WebGL`。
+- 测试包按普通网址打开可走玩家入口。需要用页内框架测试桥时，在隔离测试网址加 `?revAutomation=1`，等画布发布自动化接口后再发现实际能力。 [框架 WebGL 测试桥](../../revolution-framework/references/webgl-delivery.md)
+- Actions 上传包内的 `rev-build.json` 与 `RevGame/` 网页目录。通过静态 HTTP 服务打开 `RevGame/index.html`，Brotli 文件按实际文件类型及 `Content-Encoding` 配置。两种包并行试跑时使用不同来源地址，按地址隔离浏览器存档。
+- Actions 的成品可用于内测或交给网页发布流程。验收先核对 Build ID、目标资源摘要和浏览器实际画面，再走本页 GitHub Pages 部署。构建流程见 [GameCI 出包](gameci-build-delivery.md)。
+
+## 本地资源生成和工具链排查
 
 1. 用工程相邻的 `Revolution.RevCLI/rev.py`，显式指定 `RevGame_Client/UnityProject/RevGame.Unity` 的绝对路径。查 `editor status`、`build targets` 与 `build settings`，记下开始的目标。切到 WebGL 后等编辑器稳定。
    切平台的内存工单在域重载后若回读 `JobNotFound`，先查实际活动目标和编译状态。目标已正确时继续原流程。
 2. 同一目标执行 `ab build-incremental --target WebGL`、`ab check-map --target WebGL`、`ab publish-incremental --target WebGL`。核对 `Assets/StreamingAssets/WebGL/WebGL`、`BuildManifest.json` 及目标 AB。项目早期的 `game.background.build` 主要用于 PC 和 Android，网页采用框架注册的 WebGL AB 入口。
-3. 用 `build player --target WebGL --backend il2cpp --path <暂存目录>/Web --detach` 构建正式包，记录工单 ID 后跟踪 `job <id> --wait`。客户端超时后查询原工单与 `build-result.json`。中文 Windows 上若 Emscripten 日志先报 GBK 解码错误，核对框架的 `PYTHONUTF8` 补丁和运行 Editor 的实际进程环境。内存工单若报 `target-started` 路径缺失，查已安装框架版本。见 [Revolution WebGL 参考](../../revolution-framework/references/webgl-delivery.md)。
-4. 将完整的 `Build`、模板和 WebGL 资源发布到 `RevGame_Client/Publish/Web`。先在暂存区核对产物与项目依赖，再切换交付目录。2026-11-21 的原包同时复制了 PC 和 Android 资源，最终交付只取 WebGL 资源。发布文件与源包按清单和摘要核验。构建结束后按本次约定恢复 `StandaloneWindows64`，以 `build settings` 回读为准。
+3. 确需排查本机 Player 工具链时，用 `build player --target WebGL --backend il2cpp --path <暂存目录>/Web --detach` 生成内部验证包。记录工单 ID 后跟踪 `job <id> --wait`。客户端超时后查询原工单与产物旁的 `rev-build.json`。中文 Windows 上若 Emscripten 日志先报 GBK 解码错误，核对框架的 `PYTHONUTF8` 补丁和运行 Editor 的实际进程环境。内存工单若报 `target-started` 路径缺失，查已安装框架版本。见 [Revolution WebGL 参考](../../revolution-framework/references/webgl-delivery.md)。
+4. 在暂存区核对产物与项目依赖，再按任务需要交接。2026-11-21 的原包同时复制了 PC 和 Android 资源，最终交付只取 WebGL 资源。发布文件与源包按清单和摘要核验。构建结束后恢复动手前记录的活动目标，以 `build settings` 回读为准。
 
 ## 网页入口、全屏和声音
 

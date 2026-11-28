@@ -1,3 +1,5 @@
-# 资源包清单的 SHA-256 按原始字节校验，检出时保留 Unity 生成的 LF。
+# 资源包清单按字节校验，保留各平台 .manifest 的 LF 和 WebGL 构建清单的生成字节。
 RevGame_Client/UnityProject/RevGame.Unity/Assets/StreamingAssets/PC/*.manifest text eol=lf
 RevGame_Client/UnityProject/RevGame.Unity/Assets/StreamingAssets/Android/*.manifest text eol=lf
+RevGame_Client/UnityProject/RevGame.Unity/Assets/StreamingAssets/WebGL/*.manifest text eol=lf
+RevGame_Client/UnityProject/RevGame.Unity/Assets/StreamingAssets/WebGL/BuildManifest.json -text

@@ -41,13 +41,13 @@ concurrency:
 jobs:
   release:
     name: ${{ inputs.import_only && 'GameCI 导入预热' || inputs.test_package && 'GameCI 测试包' || 'GameCI 正式包' }} ${{ inputs.platform }}
-    if: github.repository == 'Yokino337088/RevGame' && github.ref == 'refs/heads/main' && (inputs.platform == 'windows' || inputs.platform == 'android')
+    if: github.repository == 'Yokino337088/RevGame' && github.ref == 'refs/heads/main' && (inputs.platform == 'windows' || inputs.platform == 'android' || inputs.platform == 'webgl')
     runs-on: ${{ inputs.platform == 'windows' && 'windows-2022' || 'ubuntu-22.04' }}
     timeout-minutes: 320
     env:
       REVGAME_TARGET: ${{ inputs.platform }}
-      REVGAME_BUILD_TARGET: ${{ inputs.platform == 'windows' && 'StandaloneWindows64' || 'Android' }}
-      REVGAME_EDITOR_IMAGE: ${{ inputs.platform == 'windows' && 'unityci/editor@sha256:b3be4bb2ac15241bf932efa0f5d00d2f93f41afadc74a4b07656985fb7113ea2' || 'unityci/editor@sha256:509ad2bbc977d029a9c8d642f1b6cc10f42e2d66e307befa73ebe359a3db58a9' }}
+      REVGAME_BUILD_TARGET: ${{ fromJSON('{"windows":"StandaloneWindows64","android":"Android","webgl":"WebGL"}')[inputs.platform] }}
+      REVGAME_EDITOR_IMAGE: ${{ fromJSON('{"windows":"unityci/editor@sha256:b3be4bb2ac15241bf932efa0f5d00d2f93f41afadc74a4b07656985fb7113ea2","android":"unityci/editor@sha256:509ad2bbc977d029a9c8d642f1b6cc10f42e2d66e307befa73ebe359a3db58a9","webgl":"unityci/editor@sha256:ddbda695dbb05dbc7fd7bc8f88a4da19846bb0c0f8d9921f459a95df76d1d600"}')[inputs.platform] }}
       PYTHONIOENCODING: utf-8
     steps:
       - name: 检查授权和目标签名
@@ -97,6 +97,10 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: '3.11'
+      - uses: actions/setup-node@v6
+        if: inputs.platform == 'webgl'
+        with:
+          node-version: '22'
 
       - name: 核对已提交 AB 并隔离其它平台资源
         id: prepare
@@ -134,7 +138,7 @@ jobs:
           restore-keys: ${{ steps.import-cache-key.outputs.prefix }}
 
       - name: ${{ inputs.import_only && '验证 Unity 导入并预热缓存' || '激活个人版并使用现有 AB 构建 Player' }}
-        # 固定支持 Node.js 24 的 GameCI v5.0.1 发布提交，两个平台各自使用实际编辑器模块。
+        # 固定支持 Node.js 24 的 GameCI v5.0.1 发布提交，各平台各自使用实际编辑器模块。
         uses: game-ci/unity-builder@adaf7cd8f42fd48fbbf2d4f5f67ca30d87f819f1
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
@@ -175,7 +179,7 @@ jobs:
           }
           Write-Output "Unity 导入验证通过，精确缓存命中=$env:REVGAME_IMPORT_CACHE_HIT"
 
-      - name: 核验 IL2CPP、原生库及 AB
+      - name: 核验 IL2CPP、目标平台 Player 及 AB
         if: '!inputs.import_only'
         run: python -B tools/UnityCI/gameci_release.py verify --target ${{ inputs.platform }} ${{ inputs.test_package && '--test-package' || '' }}
 

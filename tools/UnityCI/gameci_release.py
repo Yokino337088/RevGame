@@ -20,6 +20,8 @@ ENTRY = release.PROJECT / "Assets/Editor/RevGame/ResourceBuild/RevGameGameCiRele
 KEYSTORE = release.PROJECT / "revgame-gameci-release.keystore"
 # 临时脚本在正式出包和预热检出中使用同一个导入身份。
 ENTRY_GUID = "232dc2162f4b4fcfa502fa5ea0ec9c9b"
+# 网页复用云端 Runner 的 WebGL 工具链，原本的本地正式出包入口仍有自己的目标表。
+GAMECI_TARGETS = {**release.TARGETS, "webgl": ("WebGL", "WebGL", "WebGL")}
 
 
 def require_checkout():
@@ -111,6 +113,8 @@ def verify(target, build_target, platform, test_package=False):
             identity = (output / "RevGame_Data/app.info").read_text(encoding="utf-8-sig").splitlines()
             if identity[1:2] != [product_name]:
                 raise ValueError("Windows Player 的实际产品名与测试包配置不符。")
+    elif target == "webgl":
+        release.check_webgl(output / "RevGame", expected, product_name)
     else:
         apk = output / "RevGame.apk"
         release.check_android(apk, expected)
@@ -140,11 +144,11 @@ def main():
     """从 Actions 运行 prepare、verify 或 restore，错误消息不含凭据。"""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("operation", choices=("prepare", "verify", "restore"))
-    parser.add_argument("--target", choices=release.TARGETS, required=True)
+    parser.add_argument("--target", choices=GAMECI_TARGETS, required=True)
     parser.add_argument("--test-package", action="store_true", help="按带自动化和帧时采样的测试包验收")
     args = parser.parse_args()
     require_checkout()
-    _, build_target, platform = release.TARGETS[args.target]
+    _, build_target, platform = GAMECI_TARGETS[args.target]
     if args.operation == "prepare":
         prepare(build_target, platform)
     elif args.operation == "verify":

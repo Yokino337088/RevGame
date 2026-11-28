@@ -4,6 +4,7 @@ import argparse
 import base64
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
+import gzip
 import hashlib
 import json
 import os
@@ -171,6 +172,49 @@ def check_windows(output, expected):
     for key, name in check_packaged_paths(names, "", "PC", expected).items():
         if file_hash(streaming / name) != expected[key]:
             raise ValueError(f"Windows Player 内资源摘要不一致 {key}")
+
+
+def check_webgl(output, expected, product_name):
+    """检查网页入口实际引用的文件、Wasm 二进制、包类型和本轮 WebGL AB。"""
+    index = (output / "index.html").read_text(encoding="utf-8-sig")
+    actual_product = re.search(r'\bproductName:\s*("(?:[^"\\]|\\.)*")', index)
+    if not actual_product or json.loads(actual_product.group(1)) != product_name:
+        raise ValueError("WebGL 入口的实际产品名与测试包或正式包配置不符")
+    if 'const buildUrl = "Build/";' not in index or 'const streamingAssetsUrl = "StreamingAssets";' not in index:
+        raise ValueError("WebGL 入口必须指向包内的 Build 与 StreamingAssets")
+
+    # Unity 生成的加载器固定为 JS，运行库、场景数据和 Wasm 可用原始字节、Brotli 或 Gzip。
+    references = {"loader.src": r"\.loader\.js", "dataUrl": r"\.data(?:\.(?:br|gz))?",
+                  "frameworkUrl": r"\.framework\.js(?:\.(?:br|gz))?", "codeUrl": r"\.wasm(?:\.(?:br|gz))?"}
+    paths = {}
+    for field, suffix in references.items():
+        reference = re.search(rf'\b{re.escape(field)}\s*[:=]\s*buildUrl\s*\+\s*"([\w-]+{suffix})"', index)
+        if not reference:
+            raise ValueError(f"WebGL 入口缺少有效的构建文件引用 {field}")
+        path = output / "Build" / reference.group(1)
+        if not path.is_file() or is_link(path) or path.stat().st_size == 0:
+            raise ValueError(f"WebGL Player 缺少有效的构建文件 {path.name}")
+        paths[field] = path
+
+    wasm = paths["codeUrl"]
+    if wasm.suffix == ".br":
+        # 使用 Runner 已安装的 Node 原生 Brotli 解码。先验可解码，再认实际 Wasm 格式。
+        script = ("const fs = require('node:fs'); const zlib = require('node:zlib'); "
+                  "const wasm = zlib.brotliDecompressSync(fs.readFileSync(process.argv[1])); "
+                  "if (wasm.subarray(0, 8).toString('hex') !== '0061736d01000000') process.exitCode = 1;")
+        run_tool(["node", "-e", script, str(wasm.resolve())], "WebGL Brotli Wasm 校验", output, 120)
+    else:
+        read_wasm = gzip.open if wasm.suffix == ".gz" else Path.open
+        with read_wasm(wasm, "rb") as stream:
+            if stream.read(8) != b"\0asm\x01\0\0\0":
+                raise ValueError("WebGL Player 的代码文件缺少有效的 Wasm 文件头")
+
+    streaming = output / "StreamingAssets"
+    names = [path.relative_to(streaming).as_posix() for path in streaming.rglob("*") if path.is_file()]
+    for key, name in check_packaged_paths(names, "", "WebGL", expected).items():
+        path = streaming / name
+        if is_link(path) or file_hash(path) != expected[key]:
+            raise ValueError(f"WebGL Player 内资源摘要不一致 {key}")
 
 
 def check_android(apk, expected):

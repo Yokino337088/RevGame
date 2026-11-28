@@ -14,7 +14,7 @@ RevGame 用真实业务验证 Revolution 框架。Unity 工程为 `RevGame_Clien
 - 改代码或资产运行 `python tools/RevPolicy/check.py`，提交前用 `--staged`。业务验收按需求走正常入口，核对实际状态、错误和清理。资产变更走项目资源验证及真实 AB 冷启动。
 - PR 使用目标分支的 RevPolicy 规则。业务编辑器代码、运行时代码、Shader 分别放入 `Assets/Editor`、`Assets/GameScripts`、`Assets/GameShader`。原生决斗库按已登记平台路径导入，`StreamingAssets` 按各自平台的构建清单发布。未经主分支纳入基线的外部插件、Unity 包及包来源不得随 PR 引入。
 - 开发验收默认在 Unity Editor Play 完成。需要交付独立测试包或正式包时，优先使用 [GitHub GameCI 出包流程](.codex/skills/revgame-development/references/gameci-build-delivery.md)。本机手动打包主要用于排查特定工具链问题。确需在本机验证独立 Player 时走 RevCLI，新测试包统一输出到仓库根目录 `打包测试(不入库)/` 下的任务子目录。
-- 云端 Unity 构建按用户当次要求手动触发，Windows 和 Android 使用各自的测试包或正式包入口。普通 push 和 PR 照常跑 RevGame 规范检查。目标为 `main` 的 PR 还要通过云端 `Unity 脚本编译`。出包使用所选提交里已生成的目标平台 `StreamingAssets` AB，构建前核对清单与 SHA-256，上传前核对同一批包内字节。资源更新后先生成并提交目标 AB。交付时核对远端提交、Build ID、包内资源和可下载产物。
+- 云端 Unity 构建按用户当次要求手动触发。Windows、Android 和 WebGL 分别使用对应的测试包或正式包入口。WebGL 构建先交付 Actions 产物，网页发布走现有发布流程。普通 push 和 PR 照常跑 RevGame 规范检查。目标为 `main` 的 PR 还要通过云端 `Unity 脚本编译`。出包使用所选提交里已生成的目标平台 `StreamingAssets` AB，构建前核对清单与 SHA-256，上传前核对同一批包内字节。资源更新后先生成并提交目标 AB。交付时核对远端提交、Build ID、包内资源和可下载产物。
 - 安卓普通远征以真实选关、手牌、战斗回合和 Boss 为主验收。低端机平均至少 45 FPS，整帧 P95 严格低于 40 ms，优先争取低于 35 ms。81 棋和其他固定压力用于容量、峰值和回归。
 - 游戏测试优先常驻项目 RevMCP。首次连接和域重载后执行 `rev_discover`，用真实 `rev_call` 或带断言和清理的 `rev_run`，报告实际动作及结果。Editor 已在线时用 live。详见 [验收与证据细则](.codex/skills/revgame-development/references/project-acceptance.md)。
 - `.codex/skills` 和项目协作说明入库。确需另存的机器证据留 `.codex/work`，禁止 ZIP 与 Profiler 原始录制。Unity 缓存、生成工程文件、外部 AB 和安装包按 `.gitignore` 排除。
