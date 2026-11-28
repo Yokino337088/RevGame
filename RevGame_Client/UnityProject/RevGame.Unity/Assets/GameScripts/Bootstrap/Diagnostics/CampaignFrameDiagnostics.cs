@@ -14,7 +14,9 @@ namespace RevGame.Bootstrap
         private const int TailLength = 10;
         /// <summary>Stopwatch 到毫秒的统一单位。</summary>
         private static readonly double MsPerTick = 1000d / Stopwatch.Frequency;
-        /// <summary>真实第三章棋盘。只在本次窗口开启它的 Editor 反馈探针。</summary>
+        /// <summary>普通安卓的帧间隔目标。达到 30 ms 的间隔也计为超线。</summary>
+        private const double TailBudgetMs = 30;
+        /// <summary>当前章节的真实棋盘。只在本次窗口开启它的 Editor 反馈探针。</summary>
         private readonly BoardView _board;
         /// <summary>结束时恢复原棋盘探针开关。</summary>
         private readonly bool _previousFeedback;
@@ -38,10 +40,18 @@ namespace RevGame.Bootstrap
         private int _gcBefore;
         /// <summary>阶段时间戳可以首尾相接并准确分解的帧间隔数。</summary>
         private int _aligned;
+        /// <summary>达到慢帧阈值的全部间隔数，含少量无法分段的间隔。</summary>
+        private int _overBudget;
+        /// <summary>慢帧中两轮游戏循环的首尾可按帧号接上的间隔数。</summary>
+        private int _overBudgetAligned;
+        /// <summary>已分段慢帧中，两轮游戏循环之间是耗时最大段的次数。</summary>
+        private int _outsideLoopDominant;
         /// <summary>采样窗口覆盖的总规则步数。</summary>
         private int _battleTicks;
         /// <summary>窗口内所有规则步的总墙钟耗时，包含同步响应。</summary>
         private double _battleMs;
+        /// <summary>同一渲染帧内所有战斗固定步的最高累计毫秒。</summary>
+        private double _maxBattleFrameMs;
         /// <summary>窗口内所有反馈 LateUpdate 的总毫秒。</summary>
         private double _feedbackMs;
         /// <summary>其中给伤害文字选位置的总毫秒。异步到达的选位亦算入。</summary>
@@ -127,8 +137,23 @@ namespace RevGame.Bootstrap
                 {
                     _aligned++;
                 }
+                if ((now - _previousAt) * MsPerTick >= TailBudgetMs)
+                {
+                    _overBudget++;
+                    if (aligned)
+                    {
+                        _overBudgetAligned++;
+                        // 三段组成完整 LateUpdate 间隔。跨循环时间只描述发生位置，不推断哪一个系统在等待。
+                        long outside = current.LoopBegin - previous.LoopEnd;
+                        if (outside > previous.LoopEnd - _previousAt && outside > now - current.LoopBegin)
+                        {
+                            _outsideLoopDominant++;
+                        }
+                    }
+                }
                 _battleTicks += battle.Count;
                 _battleMs += battle.Milliseconds;
+                _maxBattleFrameMs = Math.Max(_maxBattleFrameMs, battle.Milliseconds);
                 _feedbackMs += feedback.FrameMs;
                 _arrangeMs += feedback.ArrangeMs + feedback.OutsideArrangeMs;
                 _enqueued += feedback.Enqueued;
@@ -200,7 +225,9 @@ namespace RevGame.Bootstrap
             }
             return new Dictionary<string, object>
             {
-                ["alignedIntervals"] = _aligned, ["battleTicks"] = _battleTicks, ["battleMs"] = _battleMs,
+                ["alignedIntervals"] = _aligned, ["over30Ms"] = _overBudget, ["over30Aligned"] = _overBudgetAligned,
+                ["outsideLoopDominant"] = _outsideLoopDominant,
+                ["battleTicks"] = _battleTicks, ["battleMs"] = _battleMs, ["maxBattleFrameMs"] = _maxBattleFrameMs,
                 ["feedbackMs"] = _feedbackMs, ["arrangeMs"] = _arrangeMs, ["enqueued"] = _enqueued,
                 ["shown"] = _shown, ["peakDepth"] = _peakDepth,
                 ["native"] = _native.DescribeAvailability(), ["slow"] = slow

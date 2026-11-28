@@ -18,6 +18,87 @@ namespace RevGame.Editor
 {
     public static class GameBattlePerformanceChecks
     {
+        /// <summary>用四枚玩家棋、六枚敌棋重复一次真实近战走位查询。结果留在回执，勿与整帧 FPS 混用。</summary>
+        public static object EnemyMove()
+        {
+            GameConfigTestSupport.Ensure();
+            VerifyUnevaluatedEye();
+
+            // 采用稀疏开局阵容，保留能追击的远程靶和多个安全候选，不提交移动或改冷却。
+            var board = new BoardModel(9);
+            var hunter = new Piece(1, PieceCatalog.Get(PieceKind.Shield, StarTier.One), GameSide.Enemy);
+            var roster = new[] { new BoardPos(0, 7), new BoardPos(2, 7), new BoardPos(6, 7), new BoardPos(8, 7), new BoardPos(7, 6) };
+            var players = new[] { new BoardPos(0, 1), new BoardPos(2, 1), new BoardPos(4, 2), new BoardPos(8, 2) };
+            board.Place(hunter, new BoardPos(4, 6));
+            int id = 2;
+            foreach (BoardPos pos in roster)
+            {
+                board.Place(new Piece(id++, PieceCatalog.Get(PieceKind.Crossbow, StarTier.One), GameSide.Enemy), pos);
+            }
+            foreach (BoardPos pos in players)
+            {
+                board.Place(new Piece(id++, PieceCatalog.Get(PieceKind.Archer, StarTier.One), GameSide.Player), pos);
+            }
+            GoRules.Evaluate(board);
+            string original = board.Dump();
+            var moves = new List<BoardPos>(81);
+            BoardPos expected = EnemyTactics.ChooseSafeMove(board, hunter, moves, 4);
+            if (expected == hunter.Pos)
+            {
+                throw new InvalidOperationException("固定走位基准未形成有效追击");
+            }
+
+            // 第一组预热运行时和棋盘缓存。后五组用相同的计时范围，保留各组便于核对波动。
+            const int queries = 32;
+            var samples = new double[5];
+            int candidates = moves.Count;
+            for (int sample = -1; sample < samples.Length; sample++)
+            {
+                var watch = Stopwatch.StartNew();
+                for (int i = 0; i < queries; i++)
+                {
+                    if (EnemyTactics.ChooseSafeMove(board, hunter, moves, 4) != expected)
+                    {
+                        throw new InvalidOperationException("同一棋局的走位选择发生变化");
+                    }
+                }
+                watch.Stop();
+                if (sample >= 0)
+                {
+                    samples[sample] = watch.Elapsed.TotalMilliseconds / queries;
+                }
+            }
+            if (board.Dump() != original)
+            {
+                throw new InvalidOperationException("敌方走位试算改了实盘");
+            }
+
+            var sorted = (double[])samples.Clone();
+            Array.Sort(sorted);
+            return new Dictionary<string, object>
+            {
+                ["pickX"] = expected.X, ["pickY"] = expected.Y, ["candidates"] = candidates,
+                ["queriesPerSample"] = queries, ["medianMs"] = sorted[sorted.Length / 2], ["samplesMs"] = samples,
+                ["unevaluatedEyeProtected"] = true, ["sourceUnchanged"] = true
+            };
+        }
+
+        /// <summary>源棋盘尚未刷眼时也不许敌棋填眼。预检必须以已刷新的原位试盘为准。</summary>
+        private static void VerifyUnevaluatedEye()
+        {
+            var board = new BoardModel(9);
+            var shooter = new Piece(1, PieceCatalog.Get(PieceKind.Crossbow, StarTier.One), GameSide.Enemy);
+            var eye = new BoardPos(0, 0);
+            board.Place(shooter, new BoardPos(4, 6));
+            board.Place(new Piece(2, PieceCatalog.Get(PieceKind.Shield, StarTier.One), GameSide.Player), new BoardPos(1, 0));
+            board.Place(new Piece(3, PieceCatalog.Get(PieceKind.Shield, StarTier.One), GameSide.Player), new BoardPos(0, 1));
+            if (board.GetCell(eye).IsEyeMarked || !GoRules.IsEye(board, eye, GameSide.Player) ||
+                EnemyTactics.ChooseSafeMove(board, shooter, new List<BoardPos> { eye }, 1) != shooter.Pos)
+            {
+                throw new InvalidOperationException("尚未发布眼标记的原盘不可绕过试盘安全校验");
+            }
+        }
+
         /// <summary>本次前后对照固定为同一名单/棋盘/AI档位；不以必胜作为性能断言，也不让Excel人数变化改变工作量。</summary>
         public static string RunFixed(string label)
         {

@@ -91,6 +91,22 @@ namespace RevGame.Editor
             Type type = Type.GetType("RevGame.Editor.GameBattlePerformanceChecks, Assembly-CSharp-Editor", true);
             return new Result { text = (string)type.GetMethod("RunFixed").Invoke(null, new object[] { label }) };
         }
+
+        /// <summary>通过固定编辑器入口测普通阵容的近战走位，回传查询计时和安全断言。</summary>
+        [RevAutomationAction("game.perf.enemy-move", Environment = "edit", Keys = new string[0], Description = "固定普通阵容，测敌方近战实际走位查询并核对棋盘不变")]
+        public static object EnemyMove(RevAutomationRequest request)
+        {
+            Type type = Type.GetType("RevGame.Editor.GameBattlePerformanceChecks, Assembly-CSharp-Editor", true);
+            try
+            {
+                return type.GetMethod("EnemyMove").Invoke(null, null);
+            }
+            catch (TargetInvocationException error)
+            {
+                throw error.InnerException ?? error;
+            }
+        }
+
         /// <summary>只读返回逐资源的使用者、源文件大小和当前包名，允许配置前后对照。</summary>
         [RevAutomationAction("game.resources.audit", Environment = "edit", Keys = new string[0], Description = "只读审计Art/Atlases的真实业务引用与AB标记")]
         public static object Audit(RevAutomationRequest request)

@@ -221,6 +221,8 @@ namespace RevGame.Board
         {
             // 试算攻击候选坐标缓冲，容量预留81格；每次算法主动清空，不跨候选累加。
             internal readonly List<BoardPos> Hits = new List<BoardPos>(81);
+            /// <summary>敌棋试走前按已刷新原位试盘通过预检的坐标。保留原顺序，每次走位查询重填。</summary>
+            internal readonly List<BoardPos> LegalAdvanceMoves = new List<BoardPos>(81);
             // Allies存敌方友军，Players存玩家，BossVictims存一次Boss评分目标。
             // 拆成三个列表是防止辅助查询把外层仍在遍历的名单清掉，而不是三份全局缓存。
             internal readonly List<Piece> Allies = new List<Piece>(81), Players = new List<Piece>(81), BossVictims = new List<Piece>(81);
@@ -260,6 +262,7 @@ namespace RevGame.Board
                 _obsolete.Clear();
                 _added = null;
                 Hits.Clear();
+                LegalAdvanceMoves.Clear();
                 Allies.Clear();
                 Players.Clear();
                 BossVictims.Clear();

@@ -26,6 +26,8 @@ namespace RevGame.Bootstrap
         private const int CampaignWarmSteps = 8;
         /// <summary>稳态整帧窗口包含连续三十二个规则步，当前配置为十个游戏秒。</summary>
         private const int CampaignMeasureSteps = 32;
+        /// <summary>现成普通交火的观察窗口，单位为墙钟秒。</summary>
+        private const int CampaignCurrentSeconds = 6;
 
         /// <summary>进入真实远征场景，从开战按钮采集引擎反馈，并在固定逻辑终点记录真实战斗结果。</summary>
         internal static IEnumerator Campaign(MathAbRun run)
@@ -225,6 +227,41 @@ namespace RevGame.Bootstrap
                 }
                 RevEvent.RemoveAllByOwner(owner);
             }
+        }
+
+        /// <summary>在真实交火上采集分段。保留正式时钟与阵容，若交火中断则报告该窗口无效。</summary>
+        internal static IEnumerator CampaignCurrent(MathAbRun run)
+        {
+            var flow = RevServices.GetRequired<GameFlow>();
+            var battle = RevServices.GetRequired<IBattleService>();
+            int chapter = battle.Chapter;
+            int round = battle.Round;
+            if (flow.Screen != GameScreen.Battle || flow.IsGameplayBlocked || flow.IsTransitioning || battle.Phase != GamePhase.Battle)
+            {
+                throw new InvalidOperationException("当前远征尚未交火，无法采集分段");
+            }
+
+            // 先让场景交付后的第一批反馈和探针分配与正式窗口错开。
+            yield return new WaitForSecondsRealtime(1f);
+            run.RecordRule($"章={chapter} 回合={round} 开始={battle.PlayerPieces.Count}/{battle.EnemyPieces.Count}");
+            run.BeginFrames();
+            long deadline = Stopwatch.GetTimestamp() + CampaignCurrentSeconds * Stopwatch.Frequency;
+            while (true)
+            {
+                if (flow.Screen != GameScreen.Battle || flow.IsGameplayBlocked || flow.IsTransitioning ||
+                    battle.Phase != GamePhase.Battle || chapter != battle.Chapter || round != battle.Round)
+                {
+                    throw new InvalidOperationException("正式交火在采样结束前已变化");
+                }
+                if (Stopwatch.GetTimestamp() >= deadline)
+                {
+                    break;
+                }
+
+                yield return null;
+            }
+            run.EndFrames();
+            run.RecordRule($"章={chapter} 回合={round} 结束={battle.PlayerPieces.Count}/{battle.EnemyPieces.Count}");
         }
 
         /// <summary>按真实过场等待业务就绪，普通章节故事使用同一个推进入口，超时保留失败原因。</summary>

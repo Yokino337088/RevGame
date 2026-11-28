@@ -136,8 +136,8 @@ namespace RevGame.Battle
         /// 没有射界且移动冷却完成时，从合法走法里选一个安全落点。
         ///
         /// 【怎么做】
-        /// 1) 复制一次真实棋盘；每个候选都“先恢复原位 → 再试走 → 重算气眼”，
-        ///    所以候选之间不会累积上一次的影响；
+        /// 1) 复制一次真实棋盘，趁棋子还在原位检查全部候选的占格和眼位；
+        ///    通过预检的候选依序“恢复原位 → 试走 → 重算气眼”，互不继承评分状态；
         /// 2) 硬门槛：不能让自己零气、不能让任何友军掉眼或从有气变零气（PreservesFormation）；
         /// 3) 软评分：新射界数 ×1000、距离更近、自身气数；3 档起加“压缩玩家气”，
         ///    4 档再减去“走进去会被多少玩家集火”的风险。
@@ -179,29 +179,33 @@ namespace RevGame.Battle
                 oldDistance = NearestPlayerDistance(board, piece.Pos);
             }
             int bestScore = int.MinValue;
-            // 本次移动查询只刷新一张独立深试盘，不为每个候选new一整盘。
-            // 后续候选仍要恢复副本位置并Evaluate，缓存优化不能省略气眼/安全门槛。
+            // Trial 已对原位完整计算气眼。用这一次结果预检整个身体，源棋盘的眼标记也继续生效。
+            // 即使调用者尚未刷新源棋盘，试盘重算出的对方眼仍会禁止进入。
             BoardModel trial = board.Tactics.Trial(board);
             Piece moved = trial.FindPiece(piece.Id);
-            List<BoardPos> hits = board.Tactics.Hits;
-            hits.Clear();
+            List<BoardPos> legalMoves = board.Tactics.LegalAdvanceMoves;
+            legalMoves.Clear();
             foreach (BoardPos pos in moves)
             {
                 Cell cell = board.GetCell(pos);
-
-                if (cell == null || cell.IsEyeMarked)
+                if (cell != null && !cell.IsEyeMarked && trial.CanFit(pos, piece.Size, piece.Side, moved))
                 {
-                    continue;
+                    legalMoves.Add(pos);
                 }
-                // ★ 恢复的是“试算棋盘”，绝不能临时移动真实棋子再移回去，那会让表现/事件读到假状态。
-                // 上一次试走可能改变眼标记，所以还原时不受旧眼限制，重算后才校验新候选。
+            }
+
+            List<BoardPos> hits = board.Tactics.Hits;
+            hits.Clear();
+            foreach (BoardPos pos in legalMoves)
+            {
+                // 先还原占格。候选已经用原位的真实气眼判过，搬动副本时跳过上一候选留下的旧眼标记。
+                // 搬完立即完整重算，再按原规则核对锁死和阵型。这样一次候选只计算一次气眼。
                 if (moved.Pos != piece.Pos)
                 {
                     trial.Move(moved, piece.Pos, respectEnemyEyes: false);
                 }
-                GoRules.Evaluate(trial);
 
-                if (!trial.Move(moved, pos))
+                if (!trial.Move(moved, pos, respectEnemyEyes: false))
                 {
                     continue;
                 }

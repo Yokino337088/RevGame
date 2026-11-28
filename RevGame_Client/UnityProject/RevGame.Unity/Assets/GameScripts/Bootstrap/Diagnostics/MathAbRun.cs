@@ -79,7 +79,7 @@ namespace RevGame.Bootstrap
         [Serializable]
         private sealed class Args
         {
-            /// <summary>pvp、campaign 或 endless，宿主先进入相应玩法。</summary>
+            /// <summary>pvp、campaign、campaign-current 或 endless。campaign-current 只观察已有的隔离交火。</summary>
             public string mode;
             /// <summary>before 或 after，与宿主核实的源码版本相匹配。</summary>
             public string variant;
@@ -95,7 +95,7 @@ namespace RevGame.Bootstrap
         {
             RevRuntimeAutomation.UnregisterAllOf(Owner);
             const string empty = "{\"type\":\"object\",\"properties\":{},\"additionalProperties\":false}";
-            const string options = "{\"type\":\"object\",\"properties\":{\"mode\":{\"type\":\"string\",\"enum\":[\"pvp\",\"campaign\",\"endless\"]},\"variant\":{\"type\":\"string\",\"enum\":[\"before\",\"after\"]},\"controlledClock\":{\"type\":\"boolean\"},\"profileFrames\":{\"type\":\"boolean\"}},\"required\":[\"mode\",\"variant\"],\"additionalProperties\":false}";
+            const string options = "{\"type\":\"object\",\"properties\":{\"mode\":{\"type\":\"string\",\"enum\":[\"pvp\",\"campaign\",\"campaign-current\",\"endless\"]},\"variant\":{\"type\":\"string\",\"enum\":[\"before\",\"after\"]},\"controlledClock\":{\"type\":\"boolean\"},\"profileFrames\":{\"type\":\"boolean\"}},\"required\":[\"mode\",\"variant\"],\"additionalProperties\":false}";
             RevRuntimeAutomation.Register("mathab.start", "启动本地隔离的玩法对照，完成后读 mathab.state", options,
                 json => StartRun(JsonUtility.FromJson<Args>(json)), owner: Owner);
             RevRuntimeAutomation.Register("mathab.state", "只读当前对照是否完成、帧样本和规则、反馈摘要", empty,
@@ -111,12 +111,16 @@ namespace RevGame.Bootstrap
             }, owner: Owner);
         }
 
-        /// <summary>已隔离的同一个 Play 进程一次跑一局，避免同一场面同时有两份采样器。</summary>
+        /// <summary>隔离 Play 一次只跑一份采样。观察真实交火时拒绝调整模型时钟。</summary>
         private static object StartRun(Args args)
         {
             if (RevServices.GetRequired<StoryProgress>().IsIsolated == false || (_current != null && !_current._finished))
             {
                 return new Dictionary<string, object> { ["accepted"] = false, ["reason"] = "请先启动隔离 Play，并等待上一轮完成" };
+            }
+            if (args.mode == "campaign-current" && args.controlledClock)
+            {
+                return new Dictionary<string, object> { ["accepted"] = false, ["reason"] = "普通交火观察需要保留原模型时钟" };
             }
             if (_current != null)
             {
@@ -128,7 +132,7 @@ namespace RevGame.Bootstrap
             MathAbRun run = root.AddComponent<MathAbRun>();
             run._case = args.mode;
             run._variant = args.variant;
-            run._profileFrames = args.profileFrames && args.mode == "campaign";
+            run._profileFrames = args.mode == "campaign-current" || (args.profileFrames && args.mode == "campaign");
             run._previousCaptureStep = Time.captureDeltaTime;
             if (args.controlledClock && args.mode != "pvp")
             {
@@ -138,6 +142,7 @@ namespace RevGame.Bootstrap
             {
                 "pvp" => MathAbScenarios.Pvp(run),
                 "campaign" => MathAbScenarios.Campaign(run),
+                "campaign-current" => MathAbScenarios.CampaignCurrent(run),
                 "endless" => MathAbScenarios.Endless(run),
                 _ => throw new ArgumentOutOfRangeException(nameof(args.mode))
             });
