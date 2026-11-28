@@ -10,12 +10,18 @@ namespace RevGame.Bootstrap
     {
         /// <summary>两个完整窗口用于比较。请求尺寸后的第一帧由外层丢弃。</summary>
         private const int TrialWindows = 2;
-        /// <summary>最省像素的等比世界相机档位，自动试验和隔离对照使用同一比例。</summary>
+        /// <summary>常规低档的最省像素比例，自动试验和隔离对照使用同一比例。</summary>
         private const float EconomyScale = .60f;
-        /// <summary>低档允许的最短世界画面边长，单位像素。</summary>
+        /// <summary>常规低档允许的最短世界画面边长，单位像素。</summary>
         internal const int EconomyShortSide = 640;
-        /// <summary>由清晰到省像素的三个比例。最后一档仅在低档设备已经验证过较小尺寸有收益时可试。</summary>
-        private static readonly float[] Candidates = { .75f, 2f / 3f, EconomyScale };
+        /// <summary>第一、四章已经验证常规低档后，还可试用的更低比例。</summary>
+        private const float DeepEconomyScale = .55f;
+        /// <summary>仅重绘制章节的额外试档可使用的世界画面短边下限，单位像素。</summary>
+        internal const int DeepEconomyShortSide = 590;
+        /// <summary>Unity 2022.3 的 Vulkan 等比缩放每档相差 0.05，原生尺寸是第 20 档。</summary>
+        private const int VulkanScaleSteps = 20;
+        /// <summary>由清晰到省像素的四个比例。常规低档和重绘制章节的额外低档各有验证门槛。</summary>
+        private static readonly float[] Candidates = { .75f, 2f / 3f, EconomyScale, DeepEconomyScale };
         /// <summary>当前借用的世界相机；销毁相机后仍须还原 Unity 全局缩放。</summary>
         private Camera _camera;
         /// <summary>持有全局缩放时为真。调用前要求两轴都为 1，确保不接管其他控制方。</summary>
@@ -50,19 +56,26 @@ namespace RevGame.Bootstrap
         /// <summary>只有自动试验仍在采证时为真；已保留的档位无需继续收集试验窗口。</summary>
         public bool Measuring => _remainingWindows > 0;
 
-        /// <summary>完整窗口平均低于 30 FPS，且至少一半帧达到 30 ms。样本太少时保留常规两窗判断。</summary>
+        /// <summary>完整窗口平均低于普通局 45 FPS 下限，且至少四分之一的帧达到 30 ms。小样本仍等两窗。</summary>
         internal static bool IsSevereWindow(float seconds, int frames, int late)
         {
-            return frames >= 24 && frames < seconds * 30f && late >= (frames + 1) / 2;
+            return frames >= 24 && frames < seconds * 45f && late >= (frames + 3) / 4;
         }
 
-        /// <summary>只尝试降低高像素画布。短边受画质档的下限约束，返回 1 表示保持原生尺寸。</summary>
+        /// <summary>把高像素画布的候选对齐 Vulkan 可用档位。画质短边下限向上取档，返回 1 表示原生。</summary>
         internal static float CandidateScale(int width, int height, float scale = .75f, int minimumShortSide = 800)
         {
             int shortSide = Math.Min(width, height);
-            return shortSide > minimumShortSide && (long)width * height >= 2_000_000L
-                ? Math.Max(scale, (float)minimumShortSide / shortSide)
-                : 1f;
+            if (shortSide <= minimumShortSide || (long)width * height < 2_000_000L)
+            {
+                return 1f;
+            }
+
+            // 1080 短边要求至少 720 时，直接请求 2/3 会被 Vulkan 取到 .65，实际只画 702 像素。
+            // 先对画质下限向上取档，再与候选取较清晰的一档，验证、保留和下一回合复用才能使用同一规则。
+            int minimumStep = (int)Math.Ceiling(minimumShortSide * (double)VulkanScaleSteps / shortSide);
+            int preferredStep = (int)Math.Round(scale * VulkanScaleSteps);
+            return (float)Math.Max(minimumStep, preferredStep) / VulkanScaleSteps;
         }
 
         /// <summary>候选档要改善平均值或尾部，并维持已达到的 30 ms 尾部预算。</summary>
@@ -76,14 +89,23 @@ namespace RevGame.Bootstrap
             return after <= before * .92f || (after <= before * 1.02f && tailImproved);
         }
 
-        /// <summary>同一交火阶段按顺序试档。调用者保持帧率目标一致，低档且已获益才开放最低比例。</summary>
+        /// <summary>同一交火阶段按顺序试档。重绘制章节已保留 0.60 档且仍有尾部压力时，才允许试 0.55。</summary>
         public bool TryBegin(string scene, int minimumShortSide, bool economy, float secondsPerFrame, float lateShare)
         {
-            // 把资格检查放在消耗候选之前。均衡档试完后若转到低档，仍能比较最低比例。
-            int count = economy && _retainedScale < 1f ? Candidates.Length : Candidates.Length - 1;
+            // 未满足资格的候选先保留。以后升温或战况变化仍能在已验证比例上继续试。
+            int count = 2;
+            if (economy && _retainedScale < 1f)
+            {
+                count++;
+                if (minimumShortSide == DeepEconomyShortSide && _retainedScale <= EconomyScale && lateShare > .05f)
+                {
+                    count++;
+                }
+            }
             while (_nextCandidate < count)
             {
-                if (TryScale(scene, Candidates[_nextCandidate++], minimumShortSide))
+                float preferred = Candidates[_nextCandidate++];
+                if (TryScale(scene, preferred, ShortSideFor(preferred, minimumShortSide)))
                 {
                     _beforeSecondsPerFrame = secondsPerFrame;
                     _beforeLateShare = lateShare;
@@ -97,13 +119,22 @@ namespace RevGame.Bootstrap
             return false;
         }
 
-        /// <summary>汇总同条件窗口。尺寸未缩小或收益不足时，立即回到最近一次已验证的档位。</summary>
-        public string RecordWindow(float seconds, int frames, int late)
+        /// <summary>汇总同条件窗口。实际短边低于下限、尺寸无效或收益不足时，回到最近一次已验证的档位。</summary>
+        public string RecordWindow(float seconds, int frames, int late, int minimumShortSide)
         {
             if (_camera == null || _camera.pixelWidth != _nativeWidth || _camera.pixelHeight != _nativeHeight)
             {
                 Reset();
                 return "android-pixels-viewport-changed";
+            }
+
+            int width = _camera.scaledPixelWidth;
+            int height = _camera.scaledPixelHeight;
+            if (Math.Min(width, height) < ShortSideFor(_requestedScale, minimumShortSide))
+            {
+                // 用实际画出的尺寸把关。驱动回读异常的比例不能进入同章下一回合的已验证档位。
+                RestoreRetainedScale();
+                return "android-pixels-below-minimum";
             }
 
             _trialSeconds += seconds;
@@ -114,7 +145,7 @@ namespace RevGame.Bootstrap
                 return null;
             }
 
-            bool effective = _camera.scaledPixelWidth < _beforeWidth && _camera.scaledPixelHeight < _beforeHeight;
+            bool effective = width < _beforeWidth && height < _beforeHeight;
             if (effective && Helps(_beforeSecondsPerFrame, _beforeLateShare, _trialSeconds / _trialFrames,
                 (float)_trialLate / _trialFrames))
             {
@@ -143,7 +174,7 @@ namespace RevGame.Bootstrap
             // 只继承已验证过的实际尺寸，未结案的候选、旧相机或窗口变化都不能成为新基线。
             if (_retainedScale < 1f && _camera != null && _camera == FindCamera(scene)
                 && _camera.pixelWidth == _nativeWidth && _camera.pixelHeight == _nativeHeight
-                && Math.Min(_camera.scaledPixelWidth, _camera.scaledPixelHeight) >= minimumShortSide)
+                && Math.Min(_camera.scaledPixelWidth, _camera.scaledPixelHeight) >= ShortSideFor(_retainedScale, minimumShortSide))
             {
                 _nextCandidate = 0;
                 return true;
@@ -161,12 +192,22 @@ namespace RevGame.Bootstrap
             _retainedScale = 1f;
         }
 
-        /// <summary>隔离测试切换单一像素变量。返回 false 代表此相机不支持请求的档位。</summary>
-        public bool SetForComparison(string scene, bool reduced, bool economy = false)
+        /// <summary>隔离测试切换单一像素变量。显式 deepEconomy 选择 0.55，失败表示相机不支持本次请求。</summary>
+        public bool SetForComparison(string scene, bool reduced, bool economy = false, bool deepEconomy = false)
         {
             Reset();
+            if (reduced && deepEconomy)
+            {
+                return TryScale(scene, DeepEconomyScale, DeepEconomyShortSide);
+            }
             // 既有脚本省略 economy 时继续用 0.75 倍对照，从而保持已发布数据的测试口径。
             return !reduced || TryScale(scene, economy ? EconomyScale : .75f, economy ? EconomyShortSide : 800);
+        }
+
+        /// <summary>只有低于 0.60 的额外试档能使用更小的短边下限。常规档仍按已有画质下限验证。</summary>
+        private static int ShortSideFor(float scale, int minimumShortSide)
+        {
+            return scale < EconomyScale ? minimumShortSide : Math.Max(EconomyShortSide, minimumShortSide);
         }
 
         /// <summary>从 Unity 实际相机读取两套尺寸，供隔离试验核对缩放生效以及退场恢复。</summary>

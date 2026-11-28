@@ -157,8 +157,8 @@ namespace RevGame.Bootstrap
         }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
-        /// <summary>仅供固定预算隔离局比较原生、0.75 或 0.60 档。请求成功后再回读实际相机尺寸。</summary>
-        internal object SetAndroidPixelsForComparison(bool reduced, bool economy)
+        /// <summary>隔离局可比较原生、0.75、0.60 与 0.55 倍。请求成功后回读实际世界相机尺寸。</summary>
+        internal object SetAndroidPixelsForComparison(bool reduced, bool economy, bool deepEconomy)
         {
             if (_androidPixels == null || !FixedTest || !RevServices.GetRequired<StoryProgress>().IsIsolated
                 || !_active || _flow.IsGameplayBlocked || FightingStage() == 0)
@@ -166,7 +166,7 @@ namespace RevGame.Bootstrap
                 throw new InvalidOperationException("需要正在交火的安卓隔离测试局");
             }
 
-            if (!_androidPixels.SetForComparison(AndroidBattleScene(), reduced, economy))
+            if (!_androidPixels.SetForComparison(AndroidBattleScene(), reduced, economy, deepEconomy))
             {
                 throw new InvalidOperationException("当前相机无法启用安卓 Vulkan 画面缩放");
             }
@@ -243,7 +243,7 @@ namespace RevGame.Bootstrap
             }
         }
 
-        /// <summary>前台交火统计平均值和慢帧。同章换回合复用已验证比例，观察窗口仍从零开始。</summary>
+        /// <summary>前台交火统计平均值和慢帧，按当前阶段的世界像素预算试档并续用有效比例。</summary>
         private void ObserveFrame()
         {
             if (!_active || !Application.isFocused)
@@ -299,7 +299,7 @@ namespace RevGame.Bootstrap
                 {
                     if (stage > 0 && _observationStage > 0 && stage / 100 == _observationStage / 100)
                     {
-                        if (_androidPixels.BeginCampaignRound(AndroidBattleScene(), AndroidShortSide(GameBattleDevicePolicy.Current)))
+                        if (_androidPixels.BeginCampaignRound(AndroidBattleScene(), AndroidShortSide(GameBattleDevicePolicy.Current, stage)))
                         {
                             _lastDecision = "android-pixels-retained-for-round";
                         }
@@ -373,7 +373,7 @@ namespace RevGame.Bootstrap
                 _lastAndroidWindowFrames = frames;
                 _lastAndroidAtOrOver30 = androidLate;
             }
-            if (_androidPixels != null && ObserveAndroidPixels(plan, seconds, frames, androidLate))
+            if (_androidPixels != null && ObserveAndroidPixels(plan, stage, seconds, frames, androidLate))
             {
                 return;
             }
@@ -404,9 +404,10 @@ namespace RevGame.Bootstrap
             }
         }
 
-        /// <summary>严重卡顿可早一窗试降。比较期间维持帧率目标，继续用已有效的尺寸作为回退档。</summary>
-        private bool ObserveAndroidPixels(GameBattleDevicePlan plan, float seconds, int frames, int late)
+        /// <summary>明显低于普通局目标时可早一窗试降。比较期间维持帧率请求与画质下限，回退用已验证尺寸。</summary>
+        private bool ObserveAndroidPixels(GameBattleDevicePlan plan, int stage, float seconds, int frames, int late)
         {
+            int minimumShortSide = AndroidShortSide(plan, stage);
             if (_androidPixels.Measuring)
             {
                 // 显示刷新率换了，原生档与缩放档已失去同一目标；先还原比例，再应用新刷新率预算。
@@ -417,7 +418,7 @@ namespace RevGame.Bootstrap
                     return true;
                 }
 
-                string decision = _androidPixels.RecordWindow(seconds, frames, late);
+                string decision = _androidPixels.RecordWindow(seconds, frames, late, minimumShortSide);
                 if (decision != null)
                 {
                     _lastDecision = decision;
@@ -426,9 +427,9 @@ namespace RevGame.Bootstrap
                 return true;
             }
 
-            // 目标至少 50 时，完整首窗若已经低于 30 且多数帧超线，就先开始可撤销的像素对照。
+            // 请求至少 50 FPS 时，普通局首窗已明显低于验收线就试一次像素对照，无收益仍按原规则归还画质。
             bool severe = plan.AndroidFrameRate >= 50 && _slowWindows == 1 && GameAndroidBattlePixelTrial.IsSevereWindow(seconds, frames, late);
-            if ((_slowWindows >= 2 || severe) && _androidPixels.TryBegin(AndroidBattleScene(), AndroidShortSide(plan),
+            if ((_slowWindows >= 2 || severe) && _androidPixels.TryBegin(AndroidBattleScene(), minimumShortSide,
                 plan.Tier == GameBattleDeviceTier.Economy, seconds / frames, (float)late / frames))
             {
                 _lastDecision = "android-pixel-trial";
@@ -438,12 +439,23 @@ namespace RevGame.Bootstrap
             return false;
         }
 
-        /// <summary>各档允许试验的世界相机短边下限，单位像素。新试档和同章续用用同一个下限。</summary>
-        private static int AndroidShortSide(GameBattleDevicePlan plan)
+        /// <summary>当前世界相机短边的最低预算，单位像素。第一、四章低档可额外验证更小的绘制尺寸。</summary>
+        private static int AndroidShortSide(GameBattleDevicePlan plan, int stage)
         {
-            // 低档仍需证明缩放有收益，最低档只影响世界相机。覆盖式 UI 和触摸坐标保持原屏幕尺寸。
-            return plan.Tier == GameBattleDeviceTier.High ? 800 :
-                plan.Tier == GameBattleDeviceTier.Balanced ? 720 : GameAndroidBattlePixelTrial.EconomyShortSide;
+            if (plan.Tier == GameBattleDeviceTier.High)
+            {
+                return 800;
+            }
+            if (plan.Tier == GameBattleDeviceTier.Balanced)
+            {
+                return 720;
+            }
+
+            // 远征阶段以章回编码，无尽波次为负数。只有真机确认过的重绘制章节开放额外试档。
+            int chapter = stage / 100;
+            return chapter == 1 || chapter == 4
+                ? GameAndroidBattlePixelTrial.DeepEconomyShortSide
+                : GameAndroidBattlePixelTrial.EconomyShortSide;
         }
 
         /// <summary>热状态中等、未知时最多均衡，严重时只留省电；其余条件继续受设备初始上限约束。</summary>

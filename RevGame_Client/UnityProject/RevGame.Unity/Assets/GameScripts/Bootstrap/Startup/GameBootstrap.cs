@@ -116,12 +116,12 @@ namespace RevGame.Bootstrap
             RevRuntimeAutomation.Register("game.device-optimization.state", "只读当前适配器、战斗画质预算和热状态",
                 "{\"type\":\"object\",\"properties\":{},\"additionalProperties\":false}",
                 _ => RevServices.GetRequired<GameBattleDeviceSettings>().Snapshot(), readOnly: true, owner: this);
-            RevRuntimeAutomation.Register("game.device-optimization.android-pixels", "安卓隔离交火比较原生、0.75 或 0.60 倍世界相机尺寸",
-                "{\"type\":\"object\",\"properties\":{\"reduced\":{\"type\":\"boolean\"},\"economy\":{\"type\":\"boolean\"}},\"required\":[\"reduced\"],\"additionalProperties\":false}",
+            RevRuntimeAutomation.Register("game.device-optimization.android-pixels", "安卓隔离交火比较原生、0.75、0.60 或 0.55 倍世界相机尺寸",
+                "{\"type\":\"object\",\"properties\":{\"reduced\":{\"type\":\"boolean\"},\"economy\":{\"type\":\"boolean\"},\"deepEconomy\":{\"type\":\"boolean\"}},\"required\":[\"reduced\"],\"additionalProperties\":false}",
                 json =>
                 {
                     var request = JsonUtility.FromJson<AndroidPixelComparison>(json);
-                    return RevServices.GetRequired<GameBattleDeviceSettings>().SetAndroidPixelsForComparison(request.reduced, request.economy);
+                    return RevServices.GetRequired<GameBattleDeviceSettings>().SetAndroidPixelsForComparison(request.reduced, request.economy, request.deepEconomy);
                 }, owner: this);
             // 自动化服务与启动宿主同寿命，才能从大厅跨场景跑到章节奖励；正式包完全不注册。
             // 执行器只模拟输入和观察结果，游戏规则仍由原来的GameFlow/BattleService决定。
@@ -152,6 +152,8 @@ namespace RevGame.Bootstrap
             public bool reduced;
             /// <summary>试降时为真表示选择 0.60 倍档，缺省沿用 0.75 倍档。恢复原生时忽略。</summary>
             public bool economy;
+            /// <summary>试降时优先选择 0.55 倍。恢复原生时忽略，旧脚本省略该字段时沿用原档位。</summary>
+            public bool deepEconomy;
         }
 #endif
         /// <summary>先用框架资源门面异步读导表数据，再开放主界面；首次真机加载不依赖编辑器直读。</summary>
