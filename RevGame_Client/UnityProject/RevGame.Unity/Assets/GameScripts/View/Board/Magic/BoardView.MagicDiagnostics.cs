@@ -9,7 +9,7 @@ namespace RevGame.View
 {
     public sealed partial class BoardView
     {
-        /// <summary>开发态只读快照，比较实际渲染器、模型合法性、眼位动画名单和资源引用。</summary>
+        /// <summary>开发态读取实际格面材质、第四章光斑开关、棋盘提示和资源引用。</summary>
         public object MagicSnapshot()
         {
             var materials = new HashSet<int>();
@@ -73,6 +73,10 @@ namespace RevGame.View
                 ["shader"] = _surfaceMaterial == null ? "" : _surfaceMaterial.shader.name,
                 ["supported"] = supported,
                 ["materialCount"] = materials.Count,
+                // 只读实际使用的第四章参数，供旧包与关闭环境光斑后的同场对照。
+                ["swampAmbientGlow"] = SurfaceChapter == 4 && _surfaceMaterial != null ? (object)_surfaceMaterial.GetFloat(SwampGlowStrength) : null,
+                ["swampEddyDensity"] = SurfaceChapter == 4 && _surfaceMaterial != null ? (object)_surfaceMaterial.GetFloat(SwampEddyDensity) : null,
+                ["swampBubbleDensity"] = SurfaceChapter == 4 && _surfaceMaterial != null ? (object)_surfaceMaterial.GetFloat(SwampBubbleDensity) : null,
                 ["animatedCells"] = animatedCells,
                 ["cellRenderers"] = renderers,
                 ["highlights"] = highlights,

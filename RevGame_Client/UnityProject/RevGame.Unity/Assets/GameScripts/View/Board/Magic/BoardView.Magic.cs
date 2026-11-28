@@ -10,7 +10,16 @@ namespace RevGame.View
     {
         private static readonly string[] SurfaceNames = { "Chapter01_Tutorial", "Chapter02_Village", "Chapter03_Lake", "Chapter04_Swamp", "Chapter05_Ice", "Chapter06_Temple" };
         private const string SurfaceRoot = "Material/Board";
+        /// <summary>第四章无环境光斑时，格面环境发光倍率为零。Boss 技能另用实例参数。</summary>
+        private static readonly int SwampGlowStrength = Shader.PropertyToID("_Strength");
+        /// <summary>第四章环境泥涡出现比例，零让片元着色器跳过泥涡分支。</summary>
+        private static readonly int SwampEddyDensity = Shader.PropertyToID("_EddyDensity");
+        /// <summary>第四章环境气泡出现比例，零让片元着色器跳过气泡分支。</summary>
+        private static readonly int SwampBubbleDensity = Shader.PropertyToID("_BubbleDensity");
+        /// <summary>当前 81 格共用的材质。通常来自资源包，第四章使用本棋盘的实例。</summary>
         private Material _surfaceMaterial;
+        /// <summary>仅第四章持有的一份运行时材质，格子解绑后随棋盘销毁。</summary>
+        private Material _ownedSurfaceMaterial;
         private string _surfaceName;
         private int _surfaceVersion;
         private int _surfaceRequestedChapter;
@@ -27,7 +36,7 @@ namespace RevGame.View
                 return _surfaceMaterial;
             }
         }
-        /// <summary>初始化和每次准备阶段调用；同章幂等。先等新材质可用再替换全盘，不提前卸掉仍在显示的材质。</summary>
+        /// <summary>初始化和准备阶段使用；同章只加载一次。新材质就绪后统一替换，再释放旧材质及租约。</summary>
         private async void RequestBoardSurface()
         {
             int chapter = RevServices.GetRequired<IBattleService>().Chapter;
@@ -42,6 +51,9 @@ namespace RevGame.View
             string name = null;
             bool requested = false;
             bool adopted = false;
+            Material nextOwned = null;
+            Material previousOwned = null;
+            string previousName = null;
             try
             {
                 if (chapter < 1 || chapter > SurfaceNames.Length)
@@ -71,22 +83,28 @@ namespace RevGame.View
                 {
                     throw new InvalidOperationException("章节棋盘材质或Shader不可用：" + name + " / " + handle.ErrorReason);
                 }
-                string oldName = _surfaceName;
+                if (chapter == 4)
+                {
+                    // 只复制一份供整盘共享，资源包里的母材质照旧留给预览和后续对照。
+                    // 关闭绿色环境光及触发圆斑的分支，保留底图、泥流明暗与 Boss 独立脉冲。
+                    nextOwned = new Material(material);
+                    nextOwned.SetFloat(SwampGlowStrength, 0f);
+                    nextOwned.SetFloat(SwampEddyDensity, 0f);
+                    nextOwned.SetFloat(SwampBubbleDensity, 0f);
+                }
+                previousName = _surfaceName;
+                previousOwned = _ownedSurfaceMaterial;
                 _surfaceName = name;
-                _surfaceMaterial = material;
+                _ownedSurfaceMaterial = nextOwned;
+                _surfaceMaterial = nextOwned != null ? nextOwned : material;
                 adopted = true;
                 foreach (BoardCellView cell in _cells)
                 {
-                    cell.ApplySurface(material);
+                    cell.ApplySurface(_surfaceMaterial);
                 }
                 SurfaceChapter = chapter;
                 _surfaceReady = true;
                 TryPrepareBackgroundDepth();
-
-                if (oldName != null)
-                {
-                    RevResManager.Release(SurfaceRoot, oldName, RevResLifetime.Manual);
-                }
             }
             catch (Exception error)
             {
@@ -106,6 +124,18 @@ namespace RevGame.View
             finally
             {
                 // 本请求没有被当前棋盘接管时，自行归还引用；防止离场或快速换章造成泄漏。
+                if (previousOwned != null)
+                {
+                    Destroy(previousOwned);
+                }
+                if (previousName != null)
+                {
+                    RevResManager.Release(SurfaceRoot, previousName, RevResLifetime.Manual);
+                }
+                if (!adopted && nextOwned != null)
+                {
+                    Destroy(nextOwned);
+                }
                 if (requested && !adopted)
                 {
                     RevResManager.Release(SurfaceRoot, name, RevResLifetime.Manual);
@@ -132,11 +162,16 @@ namespace RevGame.View
                 cell.AnimateEye(now);
             }
         }
-        /// <summary>格子已回池并摘掉材质后再释放；递增版本让在途加载在finally中自行归还。</summary>
+        /// <summary>格子摘掉引用后销毁自有材质并归还资源；在途加载用版本检查自行收尾。</summary>
         private void ReleaseBoardSurface()
         {
             ++_surfaceVersion;
 
+            if (_ownedSurfaceMaterial != null)
+            {
+                Destroy(_ownedSurfaceMaterial);
+                _ownedSurfaceMaterial = null;
+            }
             if (_surfaceName != null)
             {
                 RevResManager.Release(SurfaceRoot, _surfaceName, RevResLifetime.Manual);
