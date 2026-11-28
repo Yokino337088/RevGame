@@ -34,13 +34,13 @@ namespace RevGame.Bootstrap
         private int _remainingWindows;
         /// <summary>缩放前一整窗的平均帧间隔，单位秒。</summary>
         private float _beforeSecondsPerFrame;
-        /// <summary>试验前一整窗达到或超过 30 ms 的帧占比。</summary>
+        /// <summary>试验前一整窗达到或超过首选帧尾预算的帧占比。</summary>
         private float _beforeLateShare;
         /// <summary>缩放后两窗累计的有效墙钟秒数。</summary>
         private float _trialSeconds;
         /// <summary>缩放后两窗累计的可见帧数。</summary>
         private int _trialFrames;
-        /// <summary>缩放后达到或超过 30 ms 的可见帧数。</summary>
+        /// <summary>缩放后达到或超过首选帧尾预算的可见帧数。</summary>
         private int _trialLate;
         /// <summary>向 Unity 请求的等比缩放值。实际尺寸以相机回读为准。</summary>
         private float _requestedScale = 1f;
@@ -56,7 +56,7 @@ namespace RevGame.Bootstrap
         /// <summary>只有自动试验仍在采证时为真；已保留的档位无需继续收集试验窗口。</summary>
         public bool Measuring => _remainingWindows > 0;
 
-        /// <summary>完整窗口平均低于普通局 45 FPS 下限，且至少四分之一的帧达到 30 ms。小样本仍等两窗。</summary>
+        /// <summary>完整窗口平均低于普通局 45 FPS 下限，且至少四分之一的帧达到首选帧尾预算。小样本仍等两窗。</summary>
         internal static bool IsSevereWindow(float seconds, int frames, int late)
         {
             return frames >= 24 && frames < seconds * 45f && late >= (frames + 3) / 4;
@@ -78,7 +78,7 @@ namespace RevGame.Bootstrap
             return (float)Math.Max(minimumStep, preferredStep) / VulkanScaleSteps;
         }
 
-        /// <summary>候选档要改善平均值或尾部，并维持已达到的 30 ms 尾部预算。</summary>
+        /// <summary>候选档要改善平均值或尾部，并维持已经达到的首选帧尾预算。</summary>
         internal static bool Helps(float before, float beforeLate, float after, float afterLate)
         {
             if ((beforeLate <= .05f && afterLate > .05f) || afterLate > beforeLate + .05f)

@@ -74,7 +74,9 @@ namespace RevGame.View
                 ["supported"] = supported,
                 ["materialCount"] = materials.Count,
                 // 只读实际使用的第四章参数，供旧包与关闭环境光斑后的同场对照。
-                ["swampAmbientGlow"] = SurfaceChapter == 4 && _surfaceMaterial != null ? (object)_surfaceMaterial.GetFloat(SwampGlowStrength) : null,
+                ["swampAmbientGlow"] = SurfaceChapter == 4 && _surfaceMaterial != null ? (object)_surfaceMaterial.GetFloat(SwampMudHighlightStrength) : null,
+                ["swampVisibleRim"] = SurfaceChapter == 4 && _surfaceMaterial != null
+                    ? (object)(_surfaceMaterial.GetFloat("_RimStrength") * _surfaceMaterial.GetFloat("_Strength")) : null,
                 ["swampEddyDensity"] = SurfaceChapter == 4 && _surfaceMaterial != null ? (object)_surfaceMaterial.GetFloat(SwampEddyDensity) : null,
                 ["swampBubbleDensity"] = SurfaceChapter == 4 && _surfaceMaterial != null ? (object)_surfaceMaterial.GetFloat(SwampBubbleDensity) : null,
                 ["animatedCells"] = animatedCells,

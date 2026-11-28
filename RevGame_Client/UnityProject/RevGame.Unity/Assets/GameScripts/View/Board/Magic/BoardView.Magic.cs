@@ -10,8 +10,8 @@ namespace RevGame.View
     {
         private static readonly string[] SurfaceNames = { "Chapter01_Tutorial", "Chapter02_Village", "Chapter03_Lake", "Chapter04_Swamp", "Chapter05_Ice", "Chapter06_Temple" };
         private const string SurfaceRoot = "Material/Board";
-        /// <summary>第四章无环境光斑时，格面环境发光倍率为零。Boss 技能另用实例参数。</summary>
-        private static readonly int SwampGlowStrength = Shader.PropertyToID("_Strength");
+        /// <summary>第四章常驻泥流亮纹的倍率。设置为零时保留独立的格子边线和 Boss 实例脉冲。</summary>
+        private static readonly int SwampMudHighlightStrength = Shader.PropertyToID("_MudStrength");
         /// <summary>第四章环境泥涡出现比例，零让片元着色器跳过泥涡分支。</summary>
         private static readonly int SwampEddyDensity = Shader.PropertyToID("_EddyDensity");
         /// <summary>第四章环境气泡出现比例，零让片元着色器跳过气泡分支。</summary>
@@ -86,9 +86,9 @@ namespace RevGame.View
                 if (chapter == 4)
                 {
                     // 只复制一份供整盘共享，资源包里的母材质照旧留给预览和后续对照。
-                    // 关闭绿色环境光及触发圆斑的分支，保留底图、泥流明暗与 Boss 独立脉冲。
+                    // 格线也使用材质的整体发光倍率。只关泥流亮纹、泥涡和气泡，保留格线、底色起伏与 Boss 脉冲。
                     nextOwned = new Material(material);
-                    nextOwned.SetFloat(SwampGlowStrength, 0f);
+                    nextOwned.SetFloat(SwampMudHighlightStrength, 0f);
                     nextOwned.SetFloat(SwampEddyDensity, 0f);
                     nextOwned.SetFloat(SwampBubbleDensity, 0f);
                 }

@@ -17,6 +17,7 @@ description: RevGame 玩法、UI、资源和验收的项目入口。按改动范
 | Shader、材质、纹理、特效或渲染排错 | [Revolution-TA](../revolution-ta/SKILL.md)。按场景选 [Shader 索引](../revolution-ta/references/revgame-catalog.md)、现有制作配方及目标画面验收。 |
 | 配置表、场景、Prefab、资源或 AB | [Unity 与资源迭代](references/unity-and-assets.md)。按需查 [编辑器 Skill](../revolution-unity-editor/SKILL.md) 和 [增量 AB 配方](../revolution-unity-editor/references/incremental-ab.md)。 |
 | Android ARM64 出包、SDK 与 Gradle 预检、包名与手机验包 | [Android 出包和真机回归](references/android-build-and-mobile-ui.md) |
+| 交付 Android／Windows 试用包或正式包 | [GitHub GameCI 出包和验包](references/gameci-build-delivery.md)。日常在 Editor 验收，交付包优先使用已选提交的云端流程 |
 | Play 验收、修 Bug、交付测试包 | [验收范围与交付](references/validation-and-delivery.md) 和命中的 [项目验收细则](references/project-acceptance.md)。缺陷闭环走 [自动化 Skill](../revolution-ai-automation/SKILL.md)。 |
 | WebGL 面板首开、画布、首次特效、慢帧、飘字或背景遮挡 | [官方 WebGL 性能专题](../revolution-performance/references/webgl-performance.md) · [RevGame 入口与验收](references/web-and-gpu-performance.md)。按目标设备核对真实 AB、画面、帧间隔和反馈等待。 |
 | Windows Editor、独立包或安卓真机性能 | [Windows](../revolution-performance/references/windows-performance.md) · [安卓](../revolution-performance/references/android-performance.md)。从相应平台的实包、帧间隔和退出快照核对条件。通用做法见 [CPU、GPU 与内存](../revolution-performance/references/common-performance.md)。 |

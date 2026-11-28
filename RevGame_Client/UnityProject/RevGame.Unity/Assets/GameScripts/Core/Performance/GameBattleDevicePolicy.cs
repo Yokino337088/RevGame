@@ -75,8 +75,10 @@ namespace RevGame.Core
     /// <summary>只负责硬件提示和预算选型，数值可在引擎外验证。运行中仅由项目启动宿主在主线程发布档位。</summary>
     public static class GameBattleDevicePolicy
     {
-        /// <summary>安卓交火的慢帧边界，单位秒。等于 30 ms 也计为超线。</summary>
-        public const float AndroidTailBudgetSeconds = .030f;
+        /// <summary>安卓自动试档优先争取的帧尾边界，单位秒。等于 35 ms 计为超线。</summary>
+        public const float AndroidTailBudgetSeconds = .035f;
+        /// <summary>安卓普通局验收的严格帧尾边界，单位秒。等于 40 ms 计为超线。</summary>
+        public const float AndroidAcceptanceTailSeconds = .040f;
         /// <summary>当前战斗计划。宿主未装配时为零值，调用方按 CPU 串行与兼容绘制处理。</summary>
         public static GameBattleDevicePlan Current { get; private set; }
 
@@ -158,10 +160,17 @@ namespace RevGame.Core
             return Math.Min(requested, targetFrameRate * .97f);
         }
 
-        /// <summary>以最近秩 P95 检查 30 ms 门槛。完整窗口中至少 95% 的帧严格低于 30 ms。</summary>
-        public static bool AndroidTailMeetsGoal(int frames, int framesAtOrOver30Ms)
+        /// <summary>按最近秩 P95 判断调用方选定的边界。完整窗口中至多 5% 的帧可达到该边界。</summary>
+        public static bool AndroidTailMeetsGoal(int frames, int framesAtOrOverBudget)
         {
-            return frames > 0 && framesAtOrOver30Ms >= 0 && framesAtOrOver30Ms <= frames / 20;
+            return frames > 0 && framesAtOrOverBudget >= 0 && framesAtOrOverBudget <= frames / 20;
+        }
+
+        /// <summary>已验证的 Web 像素档可沿用到同一远征章的下一回合。无尽按实际波次各自判断。</summary>
+        public static bool WebPixelReductionMatchesStage(int acceptedStage, int currentStage)
+        {
+            return acceptedStage != 0 && (acceptedStage == currentStage ||
+                (acceptedStage > 0 && currentStage > 0 && acceptedStage / 100 == currentStage / 100));
         }
     }
 }

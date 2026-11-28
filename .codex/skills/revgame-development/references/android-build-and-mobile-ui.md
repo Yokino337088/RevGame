@@ -4,6 +4,8 @@
 
 ## 构建与交付
 
+交付安卓测试包和正式包优先使用 [GitHub GameCI](gameci-build-delivery.md)。下列本机步骤用于环境排查及明确需要本机 Player 的验证。
+
 - 在原始 RevGame Git 工作区编写和修改 Unity 源码。Windows 英文目录联接可用于启动编辑器和打包。这两个入口共用工程文件和 `Library`。2026-11-24 的前台出包同时通过英文入口启动 Unity 安装和工程，随后用 RevCLI `--mode live` 核对编辑态与 Android 目标。RevMCP 可通过同一工程联接绑定，绑定后先发现实际能力。
 - 出包预检放在隔离 AB 和提交工单之前。2026-11-24 的再次构建中，SDK 33、Build Tools 34.0.0 和 Platform Tools 32.0.0 均已安装，Unity 仍在联网运行 `sdkmanager --list`。按 [SDK 清单和 Gradle 缓存预检](../../revolution-unity-editor/references/android-build-and-verification.md) 查实际工具和缓存。离线构建先验证本机 SDK 与 Gradle，再从英文安装及工程联接启动同一工程。最新一轮实际拿到 Unity `Succeeded`，0 错误、12 条警告。
 - 变更 Android 品牌时，使用 `productName` 设置显示名，再在 `applicationIdentifier` 中维护 Android 专属值。先用 `settings.get` 读取现有映射，再用 `settings.set` 改动对应字段。只替换包名前缀时保留用户未要求改动的后缀及其他平台标识。唐门测试包实测 `围棋大作战`、`com.Tangmen.RevGame.Unity`。以 APK 的 `application-label` 和 `package` 为最终验收证据。

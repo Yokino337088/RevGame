@@ -56,25 +56,41 @@ namespace RevGame.View
         private MaterialPropertyBlock _backgroundProperties;
         private Vector4 _lastBackgroundUv;
         private static readonly int ArtUvRectId = Shader.PropertyToID("_ArtUvRect");
+        /// <summary>当前场景的剧情状态来源。只在装配时取得，渲染前直接读取是否播放。</summary>
+        private GameFlow _storyFlow;
+        /// <summary>TagManager 中只给剧情背景使用的相机层。负数表示本场景未接入此表现。</summary>
+        private int _storyBackdropLayer = -1;
+        /// <summary>剧情是否已经为当前相机接管世界可见范围。只在开始和结束时写渲染设置。</summary>
+        private bool _storyWorldHidden;
+        /// <summary>进入剧情前的相机遮罩。退出、停用时按原值归还。</summary>
+        private int _storyPreviousCameraMask;
+        /// <summary>进入剧情前的背景图层。退场前恢复，避免背景落在旧相机遮罩外。</summary>
+        private int _storyPreviousBackgroundLayer;
+
         private void OnEnable()
         {
             // 相机真正渲染前再核对一次布局：拖动窗口时不能等 0.25 秒计时器才适配新尺寸。
             // Game 与 Simulator 的目标尺寸也可能不同，使用当前相机的像素大小，不用上次窗口的快照。
             Camera.onPreCull += OnCameraRendering;
         }
+        /// <summary>停止接管本相机，复位剧情遮罩和战斗镜头影响。</summary>
         private void OnDisable()
         {
             Camera.onPreCull -= OnCameraRendering;
+            RestoreStoryWorld();
             ClearBossFocus();
             ClearEnergyShake();
         }
+        /// <summary>在实际相机剔除前更新剧情可见范围，保证状态变化的第一张显示帧即生效。</summary>
         private void OnCameraRendering(Camera camera)
         {
             if (camera == boardCamera)
             {
+                UpdateStoryWorld();
                 FitCamera();
             }
         }
+        /// <summary>装配当前场景的表现订阅和剧情相机层，首帧沿用流程持有的剧情状态。</summary>
         private void Start()
         {
             RevEvent.AddEventListener<GameScreen>(Events.ScreenChanged, OnScreen, owner: this);
@@ -83,8 +99,62 @@ namespace RevGame.View
             RevEvent.AddEventListener<int>(Events.PhaseEnterPrepare, _ => ClearEnergyShake(), owner: this);
             RevEvent.AddEventListener<GameSide>(Events.PhaseEnterSettle, _ => ClearEnergyShake(), owner: this);
             InitializeChapterBackground();
+            if (boardRoot != null && boardCamera != null && backgroundRenderer != null)
+            {
+                _storyFlow = RevServices.Get<GameFlow>();
+                _storyBackdropLayer = LayerMask.NameToLayer("StoryBackdrop");
+            }
             // GameBootstrap 在配置表就绪后发出首次 ScreenChanged，此前不提前开放操作。
             FitCamera();
+        }
+
+        /// <summary>剧情时只绘制场景背景以及原相机承担的 UI。棋盘组件保持活动，继续完成初始化和资源交接。</summary>
+        private void UpdateStoryWorld()
+        {
+            bool hide = _storyBackdropLayer >= 0 && _storyFlow != null && _storyFlow.IsStoryPlaying
+                && backgroundRenderer != null;
+            if (hide == _storyWorldHidden)
+            {
+                return;
+            }
+            if (!hide)
+            {
+                RestoreStoryWorld();
+                return;
+            }
+
+            // 先保存原遮罩和背景层，再只把背景暂迁到独立层。棋盘、棋子与战斗特效保持原层，剔除阶段直接排除。
+            _storyPreviousCameraMask = boardCamera.cullingMask;
+            _storyPreviousBackgroundLayer = backgroundRenderer.gameObject.layer;
+            backgroundRenderer.gameObject.layer = _storyBackdropLayer;
+            boardCamera.cullingMask = (1 << _storyBackdropLayer) | (_storyPreviousCameraMask & LayerMask.GetMask("UI"));
+            _storyWorldHidden = true;
+            if (_backgroundBoard != null)
+            {
+                _backgroundBoard.StoryPresentationHidden = true;
+            }
+        }
+
+        /// <summary>剧情完成、跳过或场景停用时归还原相机与背景设置，并恢复棋盘的逐帧表现。</summary>
+        private void RestoreStoryWorld()
+        {
+            if (!_storyWorldHidden)
+            {
+                return;
+            }
+            _storyWorldHidden = false;
+            if (boardCamera != null)
+            {
+                boardCamera.cullingMask = _storyPreviousCameraMask;
+            }
+            if (backgroundRenderer != null)
+            {
+                backgroundRenderer.gameObject.layer = _storyPreviousBackgroundLayer;
+            }
+            if (_backgroundBoard != null)
+            {
+                _backgroundBoard.StoryPresentationHidden = false;
+            }
         }
         /// <summary>在渲染前对齐棋盘与背景。基础布局按屏幕变化计算，震动和特写只合成一次，再提交实际变化的姿态。</summary>
         private void FitCamera()

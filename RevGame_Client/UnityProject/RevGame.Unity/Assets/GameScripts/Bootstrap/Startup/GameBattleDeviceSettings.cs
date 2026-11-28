@@ -50,14 +50,22 @@ namespace RevGame.Bootstrap
         private int _frames;
         /// <summary>超过当前预算 125% 的可见帧数。</summary>
         private int _slowFrames;
-        /// <summary>本窗口帧间隔达到或超过 30 ms 的帧数。</summary>
+        /// <summary>本窗口达到或超过 35 ms 的帧数，供自动试档比较。</summary>
         private int _androidLateFrames;
+        /// <summary>本窗口达到或超过 30 ms 的帧数，保留历史诊断口径。</summary>
+        private int _androidFramesAtOrOver30;
+        /// <summary>本窗口达到或超过 40 ms 的帧数，供普通局硬验收。</summary>
+        private int _androidFramesAtOrOver40;
         /// <summary>最近完整安卓交火窗口的实际平均帧率。诊断可用，退场归零。</summary>
         private float _lastAndroidWindowFps;
         /// <summary>最近完整安卓交火窗口的总帧数，进入新对局时重新记录。</summary>
         private int _lastAndroidWindowFrames;
         /// <summary>最近完整安卓交火窗口的 30 ms 超线帧数，供判断 P95 是否过线。</summary>
         private int _lastAndroidAtOrOver30;
+        /// <summary>最近完整安卓交火窗口的 35 ms 超线帧数，供判断首选目标。</summary>
+        private int _lastAndroidAtOrOver35;
+        /// <summary>最近完整安卓交火窗口的 40 ms 超线帧数，供判断硬通过线。</summary>
+        private int _lastAndroidAtOrOver40;
         /// <summary>连续有超预算迹象的完整窗口数。</summary>
         private int _slowWindows;
         /// <summary>连续稳定的完整窗口数。</summary>
@@ -70,8 +78,10 @@ namespace RevGame.Bootstrap
         private int _observationStage;
         /// <summary>网页试降未获益的阶段，本阶段不重复尝试减少像素。</summary>
         private int _webRejectedStage;
-        /// <summary>确认较低像素有实际收益的阶段，避免仅因降档后稳定就在同一战况反复升回去。</summary>
+        /// <summary>确认较低像素有实际收益的阶段，同一远征章且画幅相同可继续使用。</summary>
         private int _webAcceptedStage;
+        /// <summary>接受较低档时 Unity 回读的有效画幅。画幅改变后不继承旧档的收益证据。</summary>
+        private Vector2Int _webAcceptedSize;
         /// <summary>试降前的档位。存在时需要完成两个同阶段窗口才接受结果。</summary>
         private GameBattleDeviceTier? _webTrialPrevious;
         /// <summary>试降前可比较的平均帧间隔和慢帧占比。</summary>
@@ -145,6 +155,10 @@ namespace RevGame.Bootstrap
                 ["androidWindowFrames"] = _lastAndroidWindowFrames,
                 ["androidWindowAtOrOver30"] = _lastAndroidAtOrOver30,
                 ["androidWindowP95Below30"] = GameBattleDevicePolicy.AndroidTailMeetsGoal(_lastAndroidWindowFrames, _lastAndroidAtOrOver30),
+                ["androidWindowAtOrOver35"] = _lastAndroidAtOrOver35,
+                ["androidWindowP95Below35"] = GameBattleDevicePolicy.AndroidTailMeetsGoal(_lastAndroidWindowFrames, _lastAndroidAtOrOver35),
+                ["androidWindowAtOrOver40"] = _lastAndroidAtOrOver40,
+                ["androidWindowP95Below40"] = GameBattleDevicePolicy.AndroidTailMeetsGoal(_lastAndroidWindowFrames, _lastAndroidAtOrOver40),
                 ["actualTargetFrameRate"] = Application.targetFrameRate,
                 ["androidWorld"] = _androidPixels?.Snapshot(AndroidBattleScene()),
                 ["webPixels"] = plan.WebPixelBudget,
@@ -338,9 +352,18 @@ namespace RevGame.Bootstrap
             {
                 _slowFrames++;
             }
-            if (androidGoal > 0f && elapsed >= GameBattleDevicePolicy.AndroidTailBudgetSeconds)
+            if (androidGoal > 0f && elapsed >= .030f)
             {
-                _androidLateFrames++;
+                // 用同一完整窗口同时读取历史、首选和硬验收口径，常见快帧只做一次比较。
+                _androidFramesAtOrOver30++;
+                if (elapsed >= GameBattleDevicePolicy.AndroidTailBudgetSeconds)
+                {
+                    _androidLateFrames++;
+                    if (elapsed >= GameBattleDevicePolicy.AndroidAcceptanceTailSeconds)
+                    {
+                        _androidFramesAtOrOver40++;
+                    }
+                }
             }
             if (_elapsed < (androidGoal > 0f ? AndroidWindowSeconds : WindowSeconds))
             {
@@ -355,9 +378,12 @@ namespace RevGame.Bootstrap
             }
 
             int frames = _frames, late = _slowFrames, androidLate = _androidLateFrames;
+            int androidAtOrOver30 = _androidFramesAtOrOver30;
+            int androidAtOrOver40 = _androidFramesAtOrOver40;
             float seconds = _elapsed;
-            // 系统刷新率低于 34 时仍记录尾部；该显示间隔本身已经超过 30 ms。
-            bool androidTailMiss = plan.AndroidFrameRate >= 34 && !GameBattleDevicePolicy.AndroidTailMeetsGoal(frames, androidLate);
+            // 屏幕单次刷新已经达到首选预算时照常记录数据，避免用物理上限触发无效的画质试降。
+            bool androidTailMiss = plan.AndroidFrameRate * GameBattleDevicePolicy.AndroidTailBudgetSeconds > 1f &&
+                !GameBattleDevicePolicy.AndroidTailMeetsGoal(frames, androidLate);
             bool slow = androidGoal > 0f ? frames < seconds * androidGoal || androidTailMiss : late * 10 > frames;
             bool stable = !androidTailMiss && late * 50 <= frames && frames >= seconds * target * .96f;
             ResetWindow();
@@ -371,7 +397,9 @@ namespace RevGame.Bootstrap
             {
                 _lastAndroidWindowFps = frames / seconds;
                 _lastAndroidWindowFrames = frames;
-                _lastAndroidAtOrOver30 = androidLate;
+                _lastAndroidAtOrOver30 = androidAtOrOver30;
+                _lastAndroidAtOrOver35 = androidLate;
+                _lastAndroidAtOrOver40 = androidAtOrOver40;
             }
             if (_androidPixels != null && ObserveAndroidPixels(plan, stage, seconds, frames, androidLate))
             {
@@ -393,7 +421,7 @@ namespace RevGame.Bootstrap
                 }
             }
             else if (_stableWindows >= 5 && current < ceiling && now - _changedAt >= 20f &&
-                ((_platform == GameBattlePlatform.Web && _webAcceptedStage != stage) ||
+                ((_platform == GameBattlePlatform.Web && !KeepsWebPixelReduction(stage)) ||
                  (_platform == GameBattlePlatform.Android && _thermal >= 0 && _thermal < 2)))
             {
                 Apply(current + 1, "stable-windows");
@@ -402,6 +430,14 @@ namespace RevGame.Bootstrap
             {
                 Apply(current, "display-refresh-changed");
             }
+        }
+
+        /// <summary>同章且当前实际画幅与验证时相同，就保留生效的低像素档。更换画幅后重新允许评估升档。</summary>
+        private bool KeepsWebPixelReduction(int stage)
+        {
+            return GameBattleDevicePolicy.WebPixelReductionMatchesStage(_webAcceptedStage, stage) &&
+                _webAcceptedSize.x > 0 && _webAcceptedSize.y > 0 &&
+                Screen.width == _webAcceptedSize.x && Screen.height == _webAcceptedSize.y;
         }
 
         /// <summary>明显低于普通局目标时可早一窗试降。比较期间维持帧率请求与画质下限，回退用已验证尺寸。</summary>
@@ -513,6 +549,7 @@ namespace RevGame.Bootstrap
             {
                 _webTrialPrevious = null;
                 _webAcceptedStage = _observationStage;
+                _webAcceptedSize = new Vector2Int(Screen.width, Screen.height);
                 _lastDecision = "web-pixel-kept";
                 return;
             }
@@ -603,6 +640,8 @@ namespace RevGame.Bootstrap
             _frames = 0;
             _slowFrames = 0;
             _androidLateFrames = 0;
+            _androidFramesAtOrOver30 = 0;
+            _androidFramesAtOrOver40 = 0;
         }
 
         /// <summary>暂停、遮挡或失焦中断对照时，清空窗口、连续升降档与安卓缩放的触发证据。</summary>
@@ -654,10 +693,13 @@ namespace RevGame.Bootstrap
             _lastAndroidWindowFps = 0;
             _lastAndroidWindowFrames = 0;
             _lastAndroidAtOrOver30 = 0;
+            _lastAndroidAtOrOver35 = 0;
+            _lastAndroidAtOrOver40 = 0;
             _nextThermalAt = 0f;
             _observationStage = 0;
             _webRejectedStage = 0;
             _webAcceptedStage = 0;
+            _webAcceptedSize = default;
             _webTrialPrevious = null;
             _lastDecision = "battle-exit";
             GameBattleDevicePolicy.Publish(Create(_initial));

@@ -214,6 +214,7 @@ namespace RevGame.Bootstrap
             var progress = RevServices.GetRequired<StoryProgress>();
             var battle = RevServices.GetRequired<IBattleService>();
             var boardView = Object.FindObjectOfType<RevGame.View.BoardView>();
+            bool boardHiddenByStory = boardView != null && boardView.StoryPresentationHidden;
             var lesson = RevLogic.Get<TutorialLogic>();
             var panel = RevUI.Get<RevGame.UI.StoryPanel>();
             var view = panel == null ? null : panel.GetComponentInChildren<RevGame.UI.StoryView>();
@@ -244,8 +245,11 @@ namespace RevGame.Bootstrap
                 ["phase"] = battle.Phase.ToString(),
                 ["playerCount"] = battle.PlayerPieces.Count,
                 ["enemyCount"] = battle.EnemyPieces.Count,
-                ["renderedCells"] = boardView == null ? 0 : boardView.CellCount,
-                ["renderedPieces"] = boardView == null ? 0 : boardView.PieceCount,
+                ["boardHiddenByStory"] = boardHiddenByStory,
+                ["loadedCells"] = boardView == null ? 0 : boardView.CellCount,
+                ["loadedPieces"] = boardView == null ? 0 : boardView.PieceCount,
+                ["renderedCells"] = boardView == null || boardHiddenByStory ? 0 : boardView.CellCount,
+                ["renderedPieces"] = boardView == null || boardHiddenByStory ? 0 : boardView.PieceCount,
                 ["prepareOpen"] = RevUI.IsOpen<RevGame.UI.PreparePanel>(),
                 ["hudOpen"] = RevUI.IsOpen<RevGame.UI.BattleHudPanel>(),
                 ["battleHud"] = RevUI.Get<RevGame.UI.BattleHudPanel>()?.InfoSnapshot(),

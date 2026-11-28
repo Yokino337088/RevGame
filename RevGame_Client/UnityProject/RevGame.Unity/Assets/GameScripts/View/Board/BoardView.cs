@@ -74,6 +74,12 @@ namespace RevGame.View
             get; private set;
         }
         private bool _cellsReady;
+        /// <summary>表现相机当前因剧情剔除棋盘。就绪、模型与资源生命周期仍沿正常流程，省略不可见的逐帧反馈。</summary>
+        internal bool StoryPresentationHidden
+        {
+            get; set;
+        }
+
         public bool IsReady
         {
             get
@@ -277,9 +283,14 @@ namespace RevGame.View
             }
             ShowAttackRange(piece.Id);
         }
-        /// <summary>点击棋盘之外的任意位置（背景/HUD）也收起范围，和点击棋盘格保持同一手感。</summary>
+        /// <summary>只在棋盘可见时推进眼位动画和范围点击反馈。剧情相机已剔除棋盘时省掉这两项逐帧工作。</summary>
         private void Update()
         {
+            if (StoryPresentationHidden)
+            {
+                return;
+            }
+
             AnimateBoardEyes();
 
             if (!_attackRangeVisible || !Input.GetMouseButtonDown(0))
