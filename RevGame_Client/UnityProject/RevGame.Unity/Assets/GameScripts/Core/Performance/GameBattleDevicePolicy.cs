@@ -75,6 +75,8 @@ namespace RevGame.Core
     /// <summary>只负责硬件提示和预算选型，数值可在引擎外验证。运行中仅由项目启动宿主在主线程发布档位。</summary>
     public static class GameBattleDevicePolicy
     {
+        /// <summary>安卓交火的慢帧边界，单位秒。等于 30 ms 也计为超线。</summary>
+        public const float AndroidTailBudgetSeconds = .030f;
         /// <summary>当前战斗计划。宿主未装配时为零值，调用方按 CPU 串行与兼容绘制处理。</summary>
         public static GameBattleDevicePlan Current { get; private set; }
 
@@ -110,9 +112,10 @@ namespace RevGame.Core
             return GameBattleDeviceTier.Balanced;
         }
 
-        /// <summary>把档位转为明确预算。安卓在过热或本阶段无法维持目标时可显式选择保守节奏。</summary>
+        /// <summary>把档位转为明确预算。安卓热保护以及交火回退可选择较低的整屏节奏。</summary>
         public static GameBattleDevicePlan Create(GameBattlePlatform platform, GameBattleGpuKind gpuKind,
-            GameBattleDeviceTier tier, int shaderLevel, int refreshRate, bool fixedTest, bool androidConservative = false)
+            GameBattleDeviceTier tier, int shaderLevel, int refreshRate, bool fixedTest, bool androidConservative = false,
+            bool androidBelowTarget = false)
         {
             bool gpu = shaderLevel >= 35 && tier == GameBattleDeviceTier.High &&
                 ((platform == GameBattlePlatform.Windows && gpuKind == GameBattleGpuKind.Discrete) ||
@@ -124,7 +127,7 @@ namespace RevGame.Core
             bool limitProjectiles = !fixedTest && tier == GameBattleDeviceTier.Economy &&
                 (platform == GameBattlePlatform.Windows || platform == GameBattlePlatform.Android);
             return new GameBattleDevicePlan(platform, gpuKind, tier, !fixedTest && gpu, gpuMinimum,
-                !fixedTest && platform == GameBattlePlatform.Android ? AndroidCadence(tier, refreshRate, androidConservative) : 0,
+                !fixedTest && platform == GameBattlePlatform.Android ? AndroidCadence(tier, refreshRate, androidConservative, androidBelowTarget) : 0,
                 !fixedTest && platform == GameBattlePlatform.Web ? webPixels : 0, limitProjectiles);
         }
 
@@ -136,19 +139,19 @@ namespace RevGame.Core
                 (afterSeconds <= beforeSeconds * 1.02f && afterSlow <= beforeSlow - .05f);
         }
 
-        /// <summary>目标按整屏刷新间隔请求。省电档先试接近 40 的节奏，保守模式才退到约 30。</summary>
-        public static int AndroidCadence(GameBattleDeviceTier tier, int refreshRate, bool conservative)
+        /// <summary>以完整刷新间隔选择节奏。普通档先试可达 50 的请求，回退档再取 50 以下可均匀呈现的节奏。</summary>
+        public static int AndroidCadence(GameBattleDeviceTier tier, int refreshRate, bool conservative, bool belowTarget = false)
         {
             int refresh = refreshRate >= 24 && refreshRate <= 360 ? refreshRate : 60;
             int divisor;
-            if (!conservative && tier == GameBattleDeviceTier.Economy)
+            if (!conservative && !belowTarget && tier != GameBattleDeviceTier.High)
             {
-                // 60 Hz 按 60 尝试，失败再到 30。90 Hz 两刷一帧，120 Hz 三刷一帧。
-                divisor = refresh > 60 && refresh < 80 ? 2 : Math.Max(1, refresh / 40);
+                // 90 Hz 的两刷节奏只有 45 FPS，先开放 90 请求才可能实测达到 50。
+                divisor = Math.Max(1, refresh / 50);
             }
             else
             {
-                int cap = conservative ? 30 : tier == GameBattleDeviceTier.High ? 144 : 60;
+                int cap = conservative ? 30 : belowTarget ? 49 : 144;
                 divisor = (refresh + cap - 1) / cap;
             }
             // 先取整屏间隔，再向上取整请求值，避免 Unity 把 37.5 Hz 节奏进一步降档。
@@ -158,8 +161,14 @@ namespace RevGame.Core
         /// <summary>以实际可请求的帧率限制平均目标，留出小量计时与送屏偏差。</summary>
         public static float AndroidAverageGoal(GameBattleDeviceTier tier, int targetFrameRate)
         {
-            float requested = tier == GameBattleDeviceTier.High ? 100f : 40f;
+            float requested = tier == GameBattleDeviceTier.High ? 100f : 50f;
             return Math.Min(requested, targetFrameRate * .97f);
+        }
+
+        /// <summary>以最近秩 P95 检查 30 ms 门槛。完整窗口中至少 95% 的帧严格低于 30 ms。</summary>
+        public static bool AndroidTailMeetsGoal(int frames, int framesAtOrOver30Ms)
+        {
+            return frames > 0 && framesAtOrOver30Ms >= 0 && framesAtOrOver30Ms <= frames / 20;
         }
     }
 }

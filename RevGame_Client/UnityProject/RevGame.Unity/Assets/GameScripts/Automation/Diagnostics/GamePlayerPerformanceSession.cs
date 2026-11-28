@@ -1,6 +1,7 @@
 // 运行时压力夹具复用原BattleService与GameFlow，不使用Editor反射；隔离会话才允许造局。
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
 using System;
+using System.Collections.Generic;
 using RevGame.Core;
 using RevGame.Flow;
 using RevGame.Services;
@@ -25,6 +26,8 @@ namespace RevGame.Automation
         private int _initialPlayers;
         /// <summary>开战前按本章自然布阵生成的敌人数。压力局也保留实际数。</summary>
         private int _initialEnemies;
+        /// <summary>仅由隔离停绘对照借用的背景节点。退出、失败或恢复可见时归还。</summary>
+        private SpriteRenderer _diagnosticBackground;
 
         private readonly object _loadOwner = new object();
 
@@ -56,11 +59,24 @@ namespace RevGame.Automation
                 return StartPreparation(p.chapter, 0, p.cards);
             }, owner: this);
             RevRuntimeAutomation.Register("game.performance.state", "只读夹具就绪、实际棋数/攻击、首页回收", empty, _ => State(), true, owner: this);
+            RevRuntimeAutomation.Register("game.performance.background", "只读当前章节背景的实际纹理、图集和显示状态", empty,
+                _ => BackgroundState(FindBackground()), true, owner: this);
+            const string visibility = "{\"type\":\"object\",\"properties\":{\"visible\":{\"type\":\"boolean\"}},\"required\":[\"visible\"],\"additionalProperties\":false}";
+            RevRuntimeAutomation.Register("game.performance.background-visibility", "仅隔离交火对照停绘背景；退场还原",
+                visibility, json => SetBackgroundVisibility(JsonUtility.FromJson<BackgroundVisibility>(json).visible), owner: this);
             RevRuntimeAutomation.Register("game.performance.cleanup", "取消维持负载并经GameFlow返回首页；等待state.cleaned", empty, _ =>
             {
                 Cleanup(++_version).Forget();
                 return State();
             }, owner: this);
+        }
+
+        /// <summary>隔离归因请求。只改变背景 Renderer 是否提交绘制。</summary>
+        [Serializable]
+        private sealed class BackgroundVisibility
+        {
+            /// <summary>真表示恢复背景，假表示暂时停绘。</summary>
+            public bool visible;
         }
 
         /// <summary>普通复测请求。牌数受真实手牌和本轮额度约束，不直接生成棋子。</summary>
@@ -227,13 +243,94 @@ namespace RevGame.Automation
             }
         }
 
+        /// <summary>仅供诊断查询当前场景的章节背景，避免在帧循环做对象查找。</summary>
+        private static SpriteRenderer FindBackground()
+        {
+            return UnityEngine.Object.FindObjectOfType<GamePresentation>()?.BackgroundRenderer;
+        }
+
+        /// <summary>报告已加载的实际纹理。图集纹理和 Sprite 子区域分别记录，内存是 Unity 对象口径。</summary>
+        private static object BackgroundState(SpriteRenderer renderer)
+        {
+            Sprite sprite = renderer == null ? null : renderer.sprite;
+            Texture2D texture = sprite == null ? null : sprite.texture;
+            if (texture == null)
+            {
+                return new Dictionary<string, object> { ["available"] = false };
+            }
+
+            Rect artwork = sprite.rect;
+            return new Dictionary<string, object>
+            {
+                ["available"] = true,
+                ["visible"] = renderer.enabled,
+                ["shader"] = renderer.sharedMaterial?.shader.name,
+                ["spriteWidth"] = artwork.width,
+                ["spriteHeight"] = artwork.height,
+                ["textureWidth"] = texture.width,
+                ["textureHeight"] = texture.height,
+                ["packed"] = sprite.packed,
+                ["format"] = texture.format.ToString(),
+                ["mipmapCount"] = texture.mipmapCount,
+                ["unityTextureBytes"] = UnityEngine.Profiling.Profiler.GetRuntimeMemorySizeLong(texture)
+            };
+        }
+
+        /// <summary>同一隔离战斗中临时停绘背景。工作量和材质继续由原场景服务持有。</summary>
+        private object SetBackgroundVisibility(bool visible)
+        {
+            GameFlow flow = RevServices.GetRequired<GameFlow>();
+            if (_stage != "ready" || !RevServices.GetRequired<StoryProgress>().IsIsolated
+                || flow.Screen != GameScreen.Battle || flow.IsTransitioning
+                || RevServices.GetRequired<IBattleService>().Phase != GamePhase.Battle)
+            {
+                throw new InvalidOperationException("背景对照需要已就绪的隔离远征交火");
+            }
+
+            SpriteRenderer renderer = FindBackground();
+            if (renderer == null || renderer.sprite == null)
+            {
+                throw new InvalidOperationException("当前章节的实际背景未就绪");
+            }
+
+            if (visible)
+            {
+                RestoreDiagnosticBackground();
+            }
+            else if (_diagnosticBackground != renderer)
+            {
+                RestoreDiagnosticBackground();
+                if (!renderer.enabled)
+                {
+                    throw new InvalidOperationException("背景原本不可见，无法开始停绘对照");
+                }
+
+                _diagnosticBackground = renderer;
+                renderer.enabled = false;
+            }
+
+            return BackgroundState(renderer);
+        }
+
+        /// <summary>只恢复由本次诊断停绘的节点。场景已销毁时直接归还引用。</summary>
+        private void RestoreDiagnosticBackground()
+        {
+            if (_diagnosticBackground != null)
+            {
+                _diagnosticBackground.enabled = true;
+            }
+            _diagnosticBackground = null;
+        }
+
         private void Sustain()
         {
             ((BattleService)RevServices.GetRequired<IBattleService>()).SustainPerformanceScenario();
         }
 
+        /// <summary>停止隔离负载与事件监听，并在交割场景前恢复诊断停绘状态。</summary>
         private void ReleaseLoad()
         {
+            RestoreDiagnosticBackground();
             RevTimer.CancelAllOf(_loadOwner);
             RevEvent.RemoveAllByOwner(_loadOwner);
         }

@@ -34,6 +34,8 @@ namespace RevGame.Bootstrap
         private readonly bool _fixedTest;
         /// <summary>本次 Android 隔离普通开局使用正式设备策略。退场归还旧帧率并清除此标记。</summary>
         private bool _normalAndroidTest;
+        /// <summary>本交火阶段已试过目标节奏，现在使用 50 以下的整屏回退档。</summary>
+        private bool _androidBelowTargetCadence;
         /// <summary>设备在本交火阶段还达不到目标时，暂时沿用约 30 FPS 的整齐节奏。</summary>
         private bool _androidConservativeCadence;
         /// <summary>固定压力测试保留原分辨率对照和帧率条件。</summary>
@@ -50,10 +52,14 @@ namespace RevGame.Bootstrap
         private int _frames;
         /// <summary>超过当前预算 125% 的可见帧数。</summary>
         private int _slowFrames;
-        /// <summary>本窗口超过安卓当前平均目标帧预算的实际帧数。</summary>
+        /// <summary>本窗口帧间隔达到或超过 30 ms 的帧数。</summary>
         private int _androidLateFrames;
         /// <summary>最近完整安卓交火窗口的实际平均帧率。诊断可用，退场归零。</summary>
         private float _lastAndroidWindowFps;
+        /// <summary>最近完整安卓交火窗口的总帧数，进入新对局时重新记录。</summary>
+        private int _lastAndroidWindowFrames;
+        /// <summary>最近完整安卓交火窗口的 30 ms 超线帧数，供判断 P95 是否过线。</summary>
+        private int _lastAndroidAtOrOver30;
         /// <summary>连续有超预算迹象的完整窗口数。</summary>
         private int _slowWindows;
         /// <summary>连续稳定的完整窗口数。</summary>
@@ -138,6 +144,9 @@ namespace RevGame.Bootstrap
                 ["refreshHz"] = Screen.currentResolution.refreshRateRatio.value,
                 ["androidAverageGoal"] = GameBattleDevicePolicy.AndroidAverageGoal(plan.Tier, plan.AndroidFrameRate),
                 ["androidWindowFps"] = _lastAndroidWindowFps,
+                ["androidWindowFrames"] = _lastAndroidWindowFrames,
+                ["androidWindowAtOrOver30"] = _lastAndroidAtOrOver30,
+                ["androidWindowP95Below30"] = GameBattleDevicePolicy.AndroidTailMeetsGoal(_lastAndroidWindowFrames, _lastAndroidAtOrOver30),
                 ["actualTargetFrameRate"] = Application.targetFrameRate,
                 ["androidWorld"] = _androidPixels?.Snapshot(AndroidBattleScene()),
                 ["webPixels"] = plan.WebPixelBudget,
@@ -201,12 +210,12 @@ namespace RevGame.Bootstrap
             return GameBattleGpuKind.Unknown;
         }
 
-        /// <summary>使用当前屏幕刷新率和热余量选择分频。过热或本阶段无余量时使用保守节奏。</summary>
+        /// <summary>使用当前屏幕刷新率取整屏节奏。过热优先于本阶段的帧率回退。</summary>
         private GameBattleDevicePlan Create(GameBattleDeviceTier tier)
         {
             int refresh = (int)Math.Round(Screen.currentResolution.refreshRateRatio.value);
             return GameBattleDevicePolicy.Create(_platform, _gpuKind, tier, _shaderLevel, refresh, FixedTest,
-                _androidConservativeCadence || _thermal >= 3);
+                _androidConservativeCadence || _thermal >= 3, _androidBelowTargetCadence);
         }
 
         /// <summary>进入实战才设置显示预算。普通隔离测试在安卓借用正式策略，回大厅立即归还。</summary>
@@ -236,7 +245,7 @@ namespace RevGame.Bootstrap
             }
         }
 
-        /// <summary>前台战斗查热状态与真实交火帧间隔。安卓先试单一像素变量，再恢复帧率档位决策。</summary>
+        /// <summary>前台交火统计平均速度和 30 ms 尾部。先验证像素档收益，再调整呈现节奏。</summary>
         private void ObserveFrame()
         {
             if (!_active || !Application.isFocused)
@@ -285,9 +294,10 @@ namespace RevGame.Bootstrap
                 _androidPixels?.Reset();
                 CancelWebTrial("stage-changed");
                 _observationStage = stage;
-                if (_androidConservativeCadence)
+                if (_androidConservativeCadence || _androidBelowTargetCadence)
                 {
                     _androidConservativeCadence = false;
+                    _androidBelowTargetCadence = false;
                     Apply(GameBattleDevicePolicy.Current.Tier, "android-stage-retry");
                 }
                 DiscardEvidence();
@@ -317,7 +327,7 @@ namespace RevGame.Bootstrap
             {
                 _slowFrames++;
             }
-            if (androidGoal > 0f && elapsed * androidGoal > 1f)
+            if (androidGoal > 0f && elapsed >= GameBattleDevicePolicy.AndroidTailBudgetSeconds)
             {
                 _androidLateFrames++;
             }
@@ -335,8 +345,10 @@ namespace RevGame.Bootstrap
 
             int frames = _frames, late = _slowFrames, androidLate = _androidLateFrames;
             float seconds = _elapsed;
-            bool slow = androidGoal > 0f ? frames < seconds * androidGoal : late * 10 > frames;
-            bool stable = late * 50 <= frames && frames >= seconds * target * .96f;
+            // 约 30 FPS 的回退档无法持续低于 30 ms。它仍记录尾部，但避免因物理节奏反复试降。
+            bool androidTailMiss = plan.AndroidFrameRate >= 34 && !GameBattleDevicePolicy.AndroidTailMeetsGoal(frames, androidLate);
+            bool slow = androidGoal > 0f ? frames < seconds * androidGoal || androidTailMiss : late * 10 > frames;
+            bool stable = !androidTailMiss && late * 50 <= frames && frames >= seconds * target * .96f;
             ResetWindow();
 
             GameBattleDeviceTier current = plan.Tier;
@@ -347,6 +359,8 @@ namespace RevGame.Bootstrap
             if (androidGoal > 0f)
             {
                 _lastAndroidWindowFps = frames / seconds;
+                _lastAndroidWindowFrames = frames;
+                _lastAndroidAtOrOver30 = androidLate;
             }
             if (_androidPixels != null && ObserveAndroidPixels(plan, seconds, frames, androidLate))
             {
@@ -367,15 +381,14 @@ namespace RevGame.Bootstrap
                     Apply(current - 1, "slow-windows");
                 }
             }
-            else if (_platform == GameBattlePlatform.Android && _slowWindows >= 2 && !_androidConservativeCadence && _thermal < 3)
+            else if (_platform == GameBattlePlatform.Android && _slowWindows >= 2 && TryLowerAndroidCadence(plan))
             {
-                // 像素候选都已尝试或设备不支持时，回到本阶段可以平稳呈现的低帧率档。
-                _androidConservativeCadence = true;
-                Apply(current, "android-conservative-cadence");
+                return;
             }
             else if (_stableWindows >= 5 && current < ceiling && now - _changedAt >= 20f &&
                 ((_platform == GameBattlePlatform.Web && _webAcceptedStage != stage) ||
-                 (_platform == GameBattlePlatform.Android && !_androidConservativeCadence && _thermal >= 0 && _thermal < 2)))
+                 (_platform == GameBattlePlatform.Android && !_androidBelowTargetCadence && !_androidConservativeCadence
+                    && _thermal >= 0 && _thermal < 2)))
             {
                 Apply(current + 1, "stable-windows");
             }
@@ -407,7 +420,7 @@ namespace RevGame.Bootstrap
                 return true;
             }
 
-            // 两窗持续低于目标才试较低档。高档维持较清晰的短边下限。
+            // 连续两窗平均速度不足或慢帧过多才试较低档。高档保留原短边下限。
             int minimumShortSide = plan.Tier == GameBattleDeviceTier.High ? 800 : 720;
             if (_slowWindows >= 2 && _androidPixels.TryBegin(AndroidBattleScene(), minimumShortSide,
                 seconds / frames, (float)late / frames))
@@ -417,6 +430,34 @@ namespace RevGame.Bootstrap
                 return true;
             }
             return false;
+        }
+
+        /// <summary>像素试档后仍有压力时，依次尝试低于 50 的整屏节奏和约 30 的保守档。</summary>
+        private bool TryLowerAndroidCadence(GameBattleDevicePlan plan)
+        {
+            if (_androidConservativeCadence || _thermal >= 3)
+            {
+                return false;
+            }
+
+            int refresh = (int)Math.Round(Screen.currentResolution.refreshRateRatio.value);
+            int next = GameBattleDevicePolicy.AndroidCadence(plan.Tier, refresh, false, true);
+            if (!_androidBelowTargetCadence && next < plan.AndroidFrameRate)
+            {
+                _androidBelowTargetCadence = true;
+                Apply(plan.Tier, "android-below-target-cadence");
+                return true;
+            }
+
+            int conservative = GameBattleDevicePolicy.AndroidCadence(plan.Tier, refresh, true);
+            if (conservative >= plan.AndroidFrameRate)
+            {
+                return false;
+            }
+
+            _androidConservativeCadence = true;
+            Apply(plan.Tier, "android-conservative-cadence");
+            return true;
         }
 
         /// <summary>热状态中等、未知时最多均衡，严重时只留省电；其余条件继续受设备初始上限约束。</summary>
@@ -612,8 +653,11 @@ namespace RevGame.Bootstrap
 #endif
             _thermal = -1;
             _normalAndroidTest = false;
+            _androidBelowTargetCadence = false;
             _androidConservativeCadence = false;
             _lastAndroidWindowFps = 0;
+            _lastAndroidWindowFrames = 0;
+            _lastAndroidAtOrOver30 = 0;
             _nextThermalAt = 0f;
             _observationStage = 0;
             _webRejectedStage = 0;

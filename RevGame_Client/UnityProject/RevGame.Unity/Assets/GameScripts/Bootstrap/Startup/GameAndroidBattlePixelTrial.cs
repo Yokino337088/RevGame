@@ -24,13 +24,13 @@ namespace RevGame.Bootstrap
         private int _remainingWindows;
         /// <summary>缩放前一整窗的平均帧间隔，单位秒。</summary>
         private float _beforeSecondsPerFrame;
-        /// <summary>试验前一整窗超出当时帧预算的占比。</summary>
+        /// <summary>试验前一整窗达到或超过 30 ms 的帧占比。</summary>
         private float _beforeLateShare;
         /// <summary>缩放后两窗累计的有效墙钟秒数。</summary>
         private float _trialSeconds;
         /// <summary>缩放后两窗累计的可见帧数。</summary>
         private int _trialFrames;
-        /// <summary>缩放后超过与原生档相同帧预算的可见帧数。</summary>
+        /// <summary>缩放后达到或超过 30 ms 的可见帧数。</summary>
         private int _trialLate;
         /// <summary>向 Unity 请求的等比缩放值。实际尺寸以相机回读为准。</summary>
         private float _requestedScale = 1f;
@@ -55,10 +55,15 @@ namespace RevGame.Bootstrap
                 : 1f;
         }
 
-        /// <summary>要求平均间隔明显下降，或有效减少超线帧且平均间隔基本相当。</summary>
+        /// <summary>候选档要改善平均值或尾部，并维持已达到的 30 ms 尾部预算。</summary>
         internal static bool Helps(float before, float beforeLate, float after, float afterLate)
         {
-            return after <= before * .92f || (after <= before * 1.02f && afterLate <= beforeLate - .10f);
+            if ((beforeLate <= .05f && afterLate > .05f) || afterLate > beforeLate + .05f)
+            {
+                return false;
+            }
+            bool tailImproved = afterLate <= beforeLate - .10f || (beforeLate > .05f && afterLate <= .05f);
+            return after <= before * .92f || (after <= before * 1.02f && tailImproved);
         }
 
         /// <summary>同一交火阶段按顺序试档。调用者在同一个帧率目标下比较，并跳过切换首帧。</summary>
