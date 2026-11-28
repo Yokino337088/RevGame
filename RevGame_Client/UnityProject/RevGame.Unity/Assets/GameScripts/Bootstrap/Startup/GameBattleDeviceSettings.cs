@@ -157,8 +157,8 @@ namespace RevGame.Bootstrap
         }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REV_AUTOMATION
-        /// <summary>隔离测试固定帧率口径后，独立切换安卓相机像素。请求成功后再回读实际相机尺寸。</summary>
-        internal object SetAndroidPixelsForComparison(bool reduced)
+        /// <summary>仅供固定预算隔离局比较原生、0.75 或 0.60 档。请求成功后再回读实际相机尺寸。</summary>
+        internal object SetAndroidPixelsForComparison(bool reduced, bool economy)
         {
             if (_androidPixels == null || !FixedTest || !RevServices.GetRequired<StoryProgress>().IsIsolated
                 || !_active || _flow.IsGameplayBlocked || FightingStage() == 0)
@@ -166,7 +166,7 @@ namespace RevGame.Bootstrap
                 throw new InvalidOperationException("需要正在交火的安卓隔离测试局");
             }
 
-            if (!_androidPixels.SetForComparison(AndroidBattleScene(), reduced))
+            if (!_androidPixels.SetForComparison(AndroidBattleScene(), reduced, economy))
             {
                 throw new InvalidOperationException("当前相机无法启用安卓 Vulkan 画面缩放");
             }
@@ -429,7 +429,7 @@ namespace RevGame.Bootstrap
             // 目标至少 50 时，完整首窗若已经低于 30 且多数帧超线，就先开始可撤销的像素对照。
             bool severe = plan.AndroidFrameRate >= 50 && _slowWindows == 1 && GameAndroidBattlePixelTrial.IsSevereWindow(seconds, frames, late);
             if ((_slowWindows >= 2 || severe) && _androidPixels.TryBegin(AndroidBattleScene(), AndroidShortSide(plan),
-                seconds / frames, (float)late / frames))
+                plan.Tier == GameBattleDeviceTier.Economy, seconds / frames, (float)late / frames))
             {
                 _lastDecision = "android-pixel-trial";
                 DiscardEvidence();
@@ -438,10 +438,12 @@ namespace RevGame.Bootstrap
             return false;
         }
 
-        /// <summary>高档保留更清晰的世界相机短边。新试档和同章续用使用同一个像素下限。</summary>
+        /// <summary>各档允许试验的世界相机短边下限，单位像素。新试档和同章续用用同一个下限。</summary>
         private static int AndroidShortSide(GameBattleDevicePlan plan)
         {
-            return plan.Tier == GameBattleDeviceTier.High ? 800 : 720;
+            // 低档仍需证明缩放有收益，最低档只影响世界相机。覆盖式 UI 和触摸坐标保持原屏幕尺寸。
+            return plan.Tier == GameBattleDeviceTier.High ? 800 :
+                plan.Tier == GameBattleDeviceTier.Balanced ? 720 : GameAndroidBattlePixelTrial.EconomyShortSide;
         }
 
         /// <summary>热状态中等、未知时最多均衡，严重时只留省电；其余条件继续受设备初始上限约束。</summary>

@@ -16,9 +16,10 @@ using RevGame.Services;
 
 namespace RevGame.Editor
 {
+    /// <summary>由编辑器性能动作调用的规则夹具。工作局部创建，离开后不留存档或场景对象。</summary>
     public static class GameBattlePerformanceChecks
     {
-        /// <summary>用四枚玩家棋、六枚敌棋重复一次真实近战走位查询。结果留在回执，勿与整帧 FPS 混用。</summary>
+        /// <summary>用四枚玩家棋、六枚敌棋对照真实走位的串行与并行耗时，核对落点、源盘和分组是否真的进入。</summary>
         public static object EnemyMove()
         {
             GameConfigTestSupport.Ensure();
@@ -42,16 +43,16 @@ namespace RevGame.Editor
             GoRules.Evaluate(board);
             string original = board.Dump();
             var moves = new List<BoardPos>(81);
-            BoardPos expected = EnemyTactics.ChooseSafeMove(board, hunter, moves, 4);
+            BoardPos expected = EnemyTactics.ChooseSafeMove(board, hunter, moves, 4, allowParallel: false);
             if (expected == hunter.Pos)
             {
                 throw new InvalidOperationException("固定走位基准未形成有效追击");
             }
 
-            // 第一组预热运行时和棋盘缓存。后五组用相同的计时范围，保留各组便于核对波动。
+            int candidates = moves.Count;
+            // 保留原入口的五组计时。组内沿当前平台正常走位入口选择执行方式。
             const int queries = 32;
             var samples = new double[5];
-            int candidates = moves.Count;
             for (int sample = -1; sample < samples.Length; sample++)
             {
                 var watch = Stopwatch.StartNew();
@@ -62,12 +63,15 @@ namespace RevGame.Editor
                         throw new InvalidOperationException("同一棋局的走位选择发生变化");
                     }
                 }
-                watch.Stop();
                 if (sample >= 0)
                 {
                     samples[sample] = watch.Elapsed.TotalMilliseconds / queries;
                 }
             }
+            // 同一原盘分别对照开局和后期评分档。每档预热后交替量两种路径，减小温度与时间漂移。
+            object opening = CompareMoveModes(board, hunter, moves, 1);
+            object advanced = CompareMoveModes(board, hunter, moves, 4);
+
             if (board.Dump() != original)
             {
                 throw new InvalidOperationException("敌方走位试算改了实盘");
@@ -79,8 +83,63 @@ namespace RevGame.Editor
             {
                 ["pickX"] = expected.X, ["pickY"] = expected.Y, ["candidates"] = candidates,
                 ["queriesPerSample"] = queries, ["medianMs"] = sorted[sorted.Length / 2], ["samplesMs"] = samples,
+                ["opening"] = opening, ["advanced"] = advanced,
                 ["unevaluatedEyeProtected"] = true, ["sourceUnchanged"] = true
             };
+        }
+
+        /// <summary>量一次相同输入的串行与并行组，验证评分、源盘和深试盘数量。返回单次查询分位数，单位毫秒。</summary>
+        private static object CompareMoveModes(BoardModel board, Piece hunter, List<BoardPos> moves, int intelligence)
+        {
+            const int queries = 160;
+            var serial = new double[queries];
+            var parallel = new double[queries];
+            BoardPos expected = EnemyTactics.ChooseSafeMove(board, hunter, moves, intelligence, allowParallel: false);
+            for (int i = -32; i < queries; i++)
+            {
+                // 两种模式都经过同一入口。交替谁先跑，并保留一次查询全部复制与等待的时间。
+                if ((i & 1) == 0)
+                {
+                    Measure(false, serial, i);
+                    Measure(true, parallel, i);
+                }
+                else
+                {
+                    Measure(true, parallel, i);
+                    Measure(false, serial, i);
+                }
+            }
+            Array.Sort(serial);
+            Array.Sort(parallel);
+            return new Dictionary<string, object>
+            {
+                ["queries"] = queries,
+                ["serialMedianMs"] = serial[queries / 2 - 1],
+                ["serialP95Ms"] = serial[queries * 95 / 100 - 1],
+                ["serialP99Ms"] = serial[(int)Math.Ceiling(queries * .99) - 1],
+                ["serialMaxMs"] = serial[queries - 1],
+                ["parallelMedianMs"] = parallel[queries / 2 - 1],
+                ["parallelP95Ms"] = parallel[queries * 95 / 100 - 1],
+                ["parallelP99Ms"] = parallel[(int)Math.Ceiling(queries * .99) - 1],
+                ["parallelMaxMs"] = parallel[queries - 1]
+            };
+
+            // 备选格数能触发并行。核对源盘的复制计数，避免两次串行误算成对照结果。
+            void Measure(bool allowParallel, double[] samples, int index)
+            {
+                long copies = board.TacticalSnapshotCopies;
+                long started = Stopwatch.GetTimestamp();
+                BoardPos chosen = EnemyTactics.ChooseSafeMove(board, hunter, moves, intelligence, allowParallel);
+                double elapsed = (Stopwatch.GetTimestamp() - started) * 1000d / Stopwatch.Frequency;
+                if (chosen != expected || board.TacticalSnapshotCopies - copies != (allowParallel ? 2 : 1))
+                {
+                    throw new InvalidOperationException("并行走位未按串行落点或预期试盘数量执行");
+                }
+                if (index >= 0)
+                {
+                    samples[index] = elapsed;
+                }
+            }
         }
 
         /// <summary>源棋盘尚未刷眼时也不许敌棋填眼。预检必须以已刷新的原位试盘为准。</summary>

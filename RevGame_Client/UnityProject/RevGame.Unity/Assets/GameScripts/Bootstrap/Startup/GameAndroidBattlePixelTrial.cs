@@ -10,8 +10,12 @@ namespace RevGame.Bootstrap
     {
         /// <summary>两个完整窗口用于比较。请求尺寸后的第一帧由外层丢弃。</summary>
         private const int TrialWindows = 2;
-        /// <summary>由清晰到省像素的两档。先验证已知有效的 0.75，仍低于目标才试更小档。</summary>
-        private static readonly float[] Candidates = { .75f, 2f / 3f };
+        /// <summary>最省像素的等比世界相机档位，自动试验和隔离对照使用同一比例。</summary>
+        private const float EconomyScale = .60f;
+        /// <summary>低档允许的最短世界画面边长，单位像素。</summary>
+        internal const int EconomyShortSide = 640;
+        /// <summary>由清晰到省像素的三个比例。最后一档仅在低档设备已经验证过较小尺寸有收益时可试。</summary>
+        private static readonly float[] Candidates = { .75f, 2f / 3f, EconomyScale };
         /// <summary>当前借用的世界相机；销毁相机后仍须还原 Unity 全局缩放。</summary>
         private Camera _camera;
         /// <summary>持有全局缩放时为真。调用前要求两轴都为 1，确保不接管其他控制方。</summary>
@@ -72,10 +76,12 @@ namespace RevGame.Bootstrap
             return after <= before * .92f || (after <= before * 1.02f && tailImproved);
         }
 
-        /// <summary>同一交火阶段按顺序试档。调用者在同一个帧率目标下比较，并跳过切换首帧。</summary>
-        public bool TryBegin(string scene, int minimumShortSide, float secondsPerFrame, float lateShare)
+        /// <summary>同一交火阶段按顺序试档。调用者保持帧率目标一致，低档且已获益才开放最低比例。</summary>
+        public bool TryBegin(string scene, int minimumShortSide, bool economy, float secondsPerFrame, float lateShare)
         {
-            while (_nextCandidate < Candidates.Length)
+            // 把资格检查放在消耗候选之前。均衡档试完后若转到低档，仍能比较最低比例。
+            int count = economy && _retainedScale < 1f ? Candidates.Length : Candidates.Length - 1;
+            while (_nextCandidate < count)
             {
                 if (TryScale(scene, Candidates[_nextCandidate++], minimumShortSide))
                 {
@@ -120,11 +126,12 @@ namespace RevGame.Bootstrap
             return effective ? "android-pixels-no-gain" : "android-pixels-no-effective-scale";
         }
 
-        /// <summary>中断在途试验并恢复已验证尺寸。保留尝试过的档位，避免反复切换。</summary>
+        /// <summary>中断在途试验并恢复已验证尺寸。未结案的候选可以在完整的新基线后重试。</summary>
         public void CancelTrial()
         {
             if (Measuring)
             {
+                _nextCandidate--;
                 RestoreRetainedScale();
             }
         }
@@ -154,12 +161,12 @@ namespace RevGame.Bootstrap
             _retainedScale = 1f;
         }
 
-        /// <summary>隔离测试可显式切换单一像素变量。返回 false 代表当前配置无法获取世界相机缩放。</summary>
-        public bool SetForComparison(string scene, bool reduced)
+        /// <summary>隔离测试切换单一像素变量。返回 false 代表此相机不支持请求的档位。</summary>
+        public bool SetForComparison(string scene, bool reduced, bool economy = false)
         {
             Reset();
-            // 手动对照保留旧口径，让已发布的 81 棋 0.75 倍数据可以继续复测。
-            return !reduced || TryScale(scene, .75f, 800);
+            // 既有脚本省略 economy 时继续用 0.75 倍对照，从而保持已发布数据的测试口径。
+            return !reduced || TryScale(scene, economy ? EconomyScale : .75f, economy ? EconomyShortSide : 800);
         }
 
         /// <summary>从 Unity 实际相机读取两套尺寸，供隔离试验核对缩放生效以及退场恢复。</summary>

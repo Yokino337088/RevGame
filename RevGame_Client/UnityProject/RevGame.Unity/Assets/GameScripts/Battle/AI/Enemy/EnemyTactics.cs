@@ -19,6 +19,11 @@
 // 评分权重是算法内部相对偏好，不是策划可调数值，因此不放进 Excel。
 // ============================================================
 using System.Collections.Generic;
+#if UNITY_ANDROID || UNITY_EDITOR
+using System;
+using System.Runtime.ExceptionServices;
+using System.Threading;
+#endif
 using RevGame.Board;
 using RevGame.Core;
 using RevGame.Data;
@@ -51,6 +56,14 @@ namespace RevGame.Battle
     // 今天复用board.Tactics工具箱，持有者是一张棋盘，禁止改为全局static可变名单。
     public static class EnemyTactics
     {
+#if UNITY_ANDROID || UNITY_EDITOR
+        /// <summary>试走名单至少有这么多个通过预检的格子，才让两个线程分担气眼和射界重算。</summary>
+        private const int ParallelMoveMinimum = 48;
+#endif
+#if UNITY_ANDROID
+        /// <summary>安卓启动后读取一次进程可用逻辑核数。低于四核时使用串行试走。</summary>
+        private static readonly bool HasMoveWorkers = System.Environment.ProcessorCount >= 4;
+#endif
         /// <summary>
         /// 从合法射程列表选择目标。远程单位先集火玩家远程；其余情况才按距离、残血和气眼评分。
         /// 返回null表示候选已经死亡/消失；调用方不可假设查到的每个坐标仍有棋子。
@@ -137,16 +150,26 @@ namespace RevGame.Battle
         ///
         /// 【怎么做】
         /// 1) 复制一次真实棋盘，趁棋子还在原位检查全部候选的占格和眼位；
-        ///    通过预检的候选依序“恢复原位 → 试走 → 重算气眼”，互不继承评分状态；
+        ///    通过预检的候选逐一“恢复原位 → 试走 → 重算气眼”。安卓较大的名单可以分两组，在各自的试盘执行；
         /// 2) 硬门槛：不能让自己零气、不能让任何友军掉眼或从有气变零气（PreservesFormation）；
         /// 3) 软评分：新射界数 ×1000、距离更近、自身气数；3 档起加“压缩玩家气”，
-        ///    4 档再减去“走进去会被多少玩家集火”的风险。
+        ///    4 档再减去“走进去会被多少玩家集火”的风险。同分时按原候选顺序选择。
         ///
         /// 【为什么返回原坐标】
         /// 表示“原地等待”，不是失败：可能所有候选都被门槛否决，或都不比现在更接近。
         /// 调用方会把移动冷却推到下一次，堵路时不会每个小步重新全盘搜索。
         /// </summary>
         public static BoardPos ChooseSafeMove(BoardModel board, Piece piece, List<BoardPos> moves, int intelligence = 4)
+        {
+#if UNITY_ANDROID
+            return ChooseSafeMove(board, piece, moves, intelligence, HasMoveWorkers);
+#else
+            return ChooseSafeMove(board, piece, moves, intelligence, false);
+#endif
+        }
+
+        /// <summary>在调用线程准备候选和试盘。调用方在返回之前保持源盘只读，移动仍由调用方提交。</summary>
+        internal static BoardPos ChooseSafeMove(BoardModel board, Piece piece, List<BoardPos> moves, int intelligence, bool allowParallel)
         {
             // 用户授权近战直接跳至射界附近：只扩大候选位置，下面的保眼/占格/零气门禁仍逐一验证。
             if (!piece.Def.IsRanged && !piece.IsBoss && piece.EyeCount == 0)
@@ -166,7 +189,6 @@ namespace RevGame.Battle
                 }
             }
 
-            BoardPos best = piece.Pos;
             // 无眼近战优先选后排；距离场会绕开占格，不能只比曼哈顿距离而在墙边左右横跳。
             Piece prey = !piece.Def.IsRanged ? FindRangedPrey(board, piece) : null;
             int[,] pursuit = prey != null ? BuildPursuitDistances(board, piece, prey) : null;
@@ -178,12 +200,12 @@ namespace RevGame.Battle
                 pursuit = null;
                 oldDistance = NearestPlayerDistance(board, piece.Pos);
             }
-            int bestScore = int.MinValue;
             // Trial 已对原位完整计算气眼。用这一次结果预检整个身体，源棋盘的眼标记也继续生效。
             // 即使调用者尚未刷新源棋盘，试盘重算出的对方眼仍会禁止进入。
-            BoardModel trial = board.Tactics.Trial(board);
+            BoardModel.TacticsWorkspace workspace = board.Tactics;
+            BoardModel trial = workspace.Trial(board);
             Piece moved = trial.FindPiece(piece.Id);
-            List<BoardPos> legalMoves = board.Tactics.LegalAdvanceMoves;
+            List<BoardPos> legalMoves = workspace.LegalAdvanceMoves;
             legalMoves.Clear();
             foreach (BoardPos pos in moves)
             {
@@ -194,45 +216,214 @@ namespace RevGame.Battle
                 }
             }
 
-            List<BoardPos> hits = board.Tactics.Hits;
-            hits.Clear();
-            foreach (BoardPos pos in legalMoves)
+            var search = new AdvanceSearch(board, piece, legalMoves, pursuit, oldDistance, intelligence);
+#if UNITY_ANDROID || UNITY_EDITOR
+            if (allowParallel && legalMoves.Count >= ParallelMoveMinimum)
+            {
+                return ChooseParallel(search, board, workspace, trial);
+            }
+#endif
+            var best = search.ScoreRange(trial, workspace.Hits, 0, legalMoves.Count);
+            return best.Index < 0 ? piece.Pos : legalMoves[best.Index];
+        }
+
+#if UNITY_ANDROID || UNITY_EDITOR
+        /// <summary>派发前复制第二份试盘，两个分组各写一张盘。等两组都结束再按原序合并，异常也由调用线程接收。</summary>
+        private static BoardPos ChooseParallel(AdvanceSearch search, BoardModel board, BoardModel.TacticsWorkspace workspace, BoardModel trial)
+        {
+            // 深复制会记录源盘上的统计，所以在调用线程完成。两个执行者随后只读相同的原盘、候选和距离。
+            BoardModel.TacticsWorkspace worker = workspace.AdvanceWorker();
+            BoardModel workerTrial = worker.Trial(board);
+            int count = search.Moves.Count;
+            int split = count / 2;
+            var job = new AdvanceWork(search, workerTrial, worker.Hits, split, count);
+            (int Score, int Index) first;
+            try
+            {
+                // 只提交一组后台工作。线程池未及时开始时，主线程算完自己这一组也能接着算第二组。
+                ThreadPool.QueueUserWorkItem(AdvanceWork.RunQueued, job);
+                first = search.ScoreRange(trial, workspace.Hits, 0, split);
+            }
+            finally
+            {
+                // 本组出错也要等另一组归还缓冲，下一次查询和回合清理之后才能复用。
+                job.Finish();
+            }
+
+            // 前半组所有候选都排在后半组之前。同分保留前半组，完成先后不参与判定。
+            var second = job.GetResult();
+            int index = second.Score > first.Score ? second.Index : first.Index;
+            return index < 0 ? search.Actor.Pos : search.Moves[index];
+        }
+
+        /// <summary>当前查询的后半组，只能由一个执行者取得所有权。结束即断开输入引用，即使队列回调稍后才到。</summary>
+        private sealed class AdvanceWork
+        {
+            /// <summary>线程池通用回调，收到的 state 是本次查询独有的工作。</summary>
+            internal static readonly WaitCallback RunQueued = state => ((AdvanceWork)state).Run();
+            /// <summary>状态 0 待领取、1 正在执行、2 已归还。用原子操作领取，完成时在锁内通知等候者。</summary>
+            private int _state;
+            /// <summary>只用于等待当前组交还试盘。执行者无需持锁评分。</summary>
+            private readonly object _completion = new object();
+            /// <summary>本次评估的只读输入，完成后清空以免延迟回调保留实盘。</summary>
+            private AdvanceSearch _search;
+            /// <summary>本组独占的深试盘，完成后归还给棋盘的工作区。</summary>
+            private BoardModel _trial;
+            /// <summary>本组独占的射界缓冲，完成后与试盘一起归还。</summary>
+            private List<BoardPos> _hits;
+            /// <summary>本组候选半开区间的起点下标。</summary>
+            private readonly int _start;
+            /// <summary>本组候选半开区间的尾部下标，不含该下标。</summary>
+            private readonly int _end;
+            /// <summary>本组最佳评分和原候选下标，等完成后才从调用线程读取。</summary>
+            private (int Score, int Index) _result;
+            /// <summary>工作线程的异常及堆栈，完成后交回调用线程处理。</summary>
+            private ExceptionDispatchInfo _failure;
+
+            /// <summary>由调用线程准备独立试盘与候选范围，然后交给两个可能的执行者竞争领取。</summary>
+            internal AdvanceWork(AdvanceSearch search, BoardModel trial, List<BoardPos> hits, int start, int end)
+            {
+                _search = search;
+                _trial = trial;
+                _hits = hits;
+                _start = start;
+                _end = end;
+            }
+
+            /// <summary>领取后评分一次。迟到的回调直接返回，成功与异常都必须发布完成状态。</summary>
+            private void Run()
+            {
+                if (Interlocked.CompareExchange(ref _state, 1, 0) != 0)
+                {
+                    return;
+                }
+                try
+                {
+                    _result = _search.ScoreRange(_trial, _hits, _start, _end);
+                }
+                catch (Exception error)
+                {
+                    _failure = ExceptionDispatchInfo.Capture(error);
+                }
+                finally
+                {
+                    _search = default;
+                    _trial = null;
+                    _hits = null;
+                    lock (_completion)
+                    {
+                        _state = 2;
+                        Monitor.Pulse(_completion);
+                    }
+                }
+            }
+
+            /// <summary>先尝试在主线程领取未开工的组，只等待已经被工作线程领取的组。</summary>
+            internal void Finish()
+            {
+                Run();
+                lock (_completion)
+                {
+                    while (_state != 2)
+                    {
+                        Monitor.Wait(_completion);
+                    }
+                }
+            }
+
+            /// <summary>由调用线程在 Finish 后取得评分结果，或带原堆栈重抛该组异常。</summary>
+            internal (int Score, int Index) GetResult()
+            {
+                _failure?.Throw();
+                return _result;
+            }
+        }
+#endif
+
+        /// <summary>保存一次走位评分的只读输入。评分只写各组独占的深试盘与射界缓冲，调用结束后这些输入即可复用。</summary>
+        private readonly struct AdvanceSearch
+        {
+            /// <summary>调用线程持有的原棋盘，比较候选气眼时读回真实数值。</summary>
+            private readonly BoardModel _board;
+            /// <summary>候选格到目标的最短路径步数，空值代表用最近玩家距离评分。</summary>
+            private readonly int[,] _pursuit;
+            /// <summary>原位到目标的距离，单位为格。用于拒绝无法接近敌人的移动。</summary>
+            private readonly int _oldDistance;
+            /// <summary>战术档位，决定是否评估压气和反击。</summary>
+            private readonly int _intelligence;
+            /// <summary>本次试走的原棋，用其身份和起点定位各组副本。</summary>
+            internal readonly Piece Actor;
+            /// <summary>已经通过原位占格和眼位预检的有序候选。两组在评分期间只读。</summary>
+            internal readonly List<BoardPos> Moves;
+
+            /// <summary>引用已准备好的原盘、候选和距离。发起者等全部评分结束才复用这批输入。</summary>
+            internal AdvanceSearch(BoardModel board, Piece actor, List<BoardPos> moves, int[,] pursuit, int oldDistance, int intelligence)
+            {
+                _board = board;
+                Actor = actor;
+                Moves = moves;
+                _pursuit = pursuit;
+                _oldDistance = oldDistance;
+                _intelligence = intelligence;
+            }
+
+            /// <summary>按原顺序评分指定半开区间。无安全落点返回最小分数与下标 -1，表示原地等待。</summary>
+            internal (int Score, int Index) ScoreRange(BoardModel trial, List<BoardPos> hits, int start, int end)
+            {
+                hits.Clear();
+                Piece moved = trial.FindPiece(Actor.Id);
+                int bestScore = int.MinValue;
+                int bestIndex = -1;
+                for (int index = start; index < end; index++)
+                {
+                    int score = ScoreMove(trial, moved, hits, Moves[index]);
+                    if (score > bestScore)
+                    {
+                        bestScore = score;
+                        bestIndex = index;
+                    }
+                }
+                return (bestScore, bestIndex);
+            }
+
+            /// <summary>重算一次候选的完整气眼和射界。未通过安全或接敌门槛时返回最小分数。</summary>
+            private int ScoreMove(BoardModel trial, Piece moved, List<BoardPos> hits, BoardPos pos)
             {
                 // 先还原占格。候选已经用原位的真实气眼判过，搬动副本时跳过上一候选留下的旧眼标记。
                 // 搬完立即完整重算，再按原规则核对锁死和阵型。这样一次候选只计算一次气眼。
-                if (moved.Pos != piece.Pos)
+                if (moved.Pos != Actor.Pos)
                 {
-                    trial.Move(moved, piece.Pos, respectEnemyEyes: false);
+                    trial.Move(moved, Actor.Pos, respectEnemyEyes: false);
                 }
 
                 if (!trial.Move(moved, pos, respectEnemyEyes: false))
                 {
-                    continue;
+                    return int.MinValue;
                 }
                 GoRules.Evaluate(trial);
 
-                if (moved.IsLocked || !PreservesFormation(board, trial))
+                if (moved.IsLocked || !PreservesFormation(_board, trial))
                 {
-                    continue;
+                    return int.MinValue;
                 }
                 MoveRules.GetAttackTargets(trial, moved, hits);
                 int targets = hits.Count;
-                int distance = pursuit != null ? pursuit[pos.X, pos.Y] : NearestPlayerDistance(trial, pos);
+                int distance = _pursuit != null ? _pursuit[pos.X, pos.Y] : NearestPlayerDistance(trial, pos);
 
                 // 只接受能打开射界或真正接近的格子，堵路时等待，避免左右横跳。
-                if (distance == int.MaxValue || (targets == 0 && distance >= oldDistance))
+                if (distance == int.MaxValue || (targets == 0 && distance >= _oldDistance))
                 {
-                    continue;
+                    return int.MinValue;
                 }
                 // 追后排时，接近目标比偶然打到前排更重要；贴到后排立即获得最高接敌评分。
-                int score = pursuit != null ? (oldDistance - distance) * 450 + (distance == 0 ? 2600 : 0) + targets * 80
+                int score = _pursuit != null ? (_oldDistance - distance) * 450 + (distance == 0 ? 2600 : 0) + targets * 80
                     : targets * 1000 - distance * 20;
                 score += System.Math.Min(moved.Liberties, 12);
 
-                if (intelligence >= 3)
+                if (_intelligence >= 3)
                 {
-                    // 前后棋盘都是深快照，比较压气成果不回写真实棋子的气与眼。
-                    foreach (Piece player in board.Pieces)
+                    // 原盘只读，用试盘里同一棋子的气数计算压气成果。
+                    foreach (Piece player in _board.Pieces)
                     {
                         if (player.Side != GameSide.Player)
                         {
@@ -243,7 +434,7 @@ namespace RevGame.Battle
                     }
                 }
 
-                if (intelligence >= 4)
+                if (_intelligence >= 4)
                 {
                     // 后期AI会估计走到该格后有多少玩家能立即反击，避开集火区；不提高移动频率。
                     foreach (Piece player in trial.Pieces)
@@ -264,13 +455,8 @@ namespace RevGame.Battle
                     }
                 }
 
-                if (score > bestScore)
-                {
-                    bestScore = score;
-                    best = pos;
-                }
+                return score;
             }
-            return best;
         }
         /// <summary>
         /// 安全门槛优先于分数：逐个Id找到同一颗棋子的副本，比较它原先与现在的气眼。

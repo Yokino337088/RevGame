@@ -4,3 +4,7 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("RevGame.Campaign")]
 [assembly: InternalsVisibleTo("RevGame.Endless")]
 [assembly: InternalsVisibleTo("RevGame.Runtime")]
+#if UNITY_EDITOR
+// 编辑器性能入口须在同一盘面对比串行与并行评分。播放器继续通过正常走位入口选择执行方式。
+[assembly: InternalsVisibleTo("Assembly-CSharp-Editor")]
+#endif

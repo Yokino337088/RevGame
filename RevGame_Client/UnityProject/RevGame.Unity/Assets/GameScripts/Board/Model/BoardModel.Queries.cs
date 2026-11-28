@@ -214,7 +214,7 @@ namespace RevGame.Board
             result.Clear();
             result.AddRange(entry.Cells);
         }
-        /// <summary>每张源棋盘单独持有一份深试盘与列表，查询结束副本可变，下一轮必须全字段覆盖。</summary>
+        /// <summary>每张源棋盘持有独立的深试盘与列表。同步分组试走时，第二组可借用自己的缓冲，收齐结果后才归还。</summary>
         // 单张源棋盘的同步试算工具箱：深试盘、棋子副本和多个职责缓冲。
         // 深复制表示位置/血量/护盾等可变字段独立；Def是只读图鉴，允许共享。禁止将本工作区传给异步表现。
         internal sealed class TacticsWorkspace
@@ -248,6 +248,17 @@ namespace RevGame.Board
             private readonly List<int> _obsolete = new List<int>(81);
             // 一次补子评分的临时新棋副本。Id/阵营/大小等身份不同时重建，不能复用成另一颗棋。
             private Piece _added;
+#if UNITY_ANDROID || UNITY_EDITOR
+            /// <summary>只在大批量试走时创建的第二组工作区。调用线程先填入深试盘，第二组独占写入直到查询结束。</summary>
+            private TacticsWorkspace _advanceWorker;
+
+            /// <summary>由棋盘所有者在派发前取得第二组的工作区。回合重置时清除该区的棋子引用。</summary>
+            internal TacticsWorkspace AdvanceWorker()
+            {
+                return _advanceWorker ?? (_advanceWorker = new TacticsWorkspace(_size));
+            }
+#endif
+
             // 构造仅创建辅助数组和容器；真正深试盘仍延后到首次Trial，避免完全不试算的战斗额外占内存。
             internal TacticsWorkspace(int size)
             {
@@ -257,6 +268,9 @@ namespace RevGame.Board
             /// <summary>源棋盘回合重置/离场时断开全部旧棋引用，保留容器容量与试盘本身，防止串局。</summary>
             internal void Clear()
             {
+#if UNITY_ANDROID || UNITY_EDITOR
+                _advanceWorker?.Clear();
+#endif
                 _trial?.Reset();
                 _copies.Clear();
                 _obsolete.Clear();

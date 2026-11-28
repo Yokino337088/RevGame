@@ -116,10 +116,13 @@ namespace RevGame.Bootstrap
             RevRuntimeAutomation.Register("game.device-optimization.state", "只读当前适配器、战斗画质预算和热状态",
                 "{\"type\":\"object\",\"properties\":{},\"additionalProperties\":false}",
                 _ => RevServices.GetRequired<GameBattleDeviceSettings>().Snapshot(), readOnly: true, owner: this);
-            RevRuntimeAutomation.Register("game.device-optimization.android-pixels", "安卓隔离交火中切换原生尺寸或候选尺寸，等待相机尺寸回读",
-                "{\"type\":\"object\",\"properties\":{\"reduced\":{\"type\":\"boolean\"}},\"required\":[\"reduced\"],\"additionalProperties\":false}",
-                json => RevServices.GetRequired<GameBattleDeviceSettings>().SetAndroidPixelsForComparison(
-                    JsonUtility.FromJson<AndroidPixelComparison>(json).reduced), owner: this);
+            RevRuntimeAutomation.Register("game.device-optimization.android-pixels", "安卓隔离交火比较原生、0.75 或 0.60 倍世界相机尺寸",
+                "{\"type\":\"object\",\"properties\":{\"reduced\":{\"type\":\"boolean\"},\"economy\":{\"type\":\"boolean\"}},\"required\":[\"reduced\"],\"additionalProperties\":false}",
+                json =>
+                {
+                    var request = JsonUtility.FromJson<AndroidPixelComparison>(json);
+                    return RevServices.GetRequired<GameBattleDeviceSettings>().SetAndroidPixelsForComparison(request.reduced, request.economy);
+                }, owner: this);
             // 自动化服务与启动宿主同寿命，才能从大厅跨场景跑到章节奖励；正式包完全不注册。
             // 执行器只模拟输入和观察结果，游戏规则仍由原来的GameFlow/BattleService决定。
             RevServices.Register<RevGame.Automation.GameAutomationRunner, RevGame.Automation.GameAutomationRunner>(owner: this);
@@ -147,6 +150,8 @@ namespace RevGame.Bootstrap
         {
             /// <summary>真表示试降世界相机像素，假表示恢复原生尺寸。</summary>
             public bool reduced;
+            /// <summary>试降时为真表示选择 0.60 倍档，缺省沿用 0.75 倍档。恢复原生时忽略。</summary>
+            public bool economy;
         }
 #endif
         /// <summary>先用框架资源门面异步读导表数据，再开放主界面；首次真机加载不依赖编辑器直读。</summary>
